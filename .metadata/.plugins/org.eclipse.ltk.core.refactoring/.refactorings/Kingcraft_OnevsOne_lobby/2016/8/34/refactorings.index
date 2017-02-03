@@ -1,0 +1,7 @@
+1472053435770	Rename method 'getdifKitSettingsMenu'
+1472205688524	Encapsulate field 'kitPreMenu'
+1472208480608	Rename field 'choosenOwnKit'
+1472209839420	Rename method 'toggleActivate'
+1472212985736	Rename field 'difKitSettingsMenus'
+1472213023533	Rename method 'addDifKitSettingsMenu'
+1472213028785	Rename method 'getDifKitSettingsMenu'

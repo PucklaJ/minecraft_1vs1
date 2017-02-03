@@ -1,0 +1,188 @@
+package at.kingcraft.OnevsOne_arena.Commands;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import MySQL.MySQL;
+import at.kingcraft.OnevsOne_arena.MainClass;
+import at.kingcraft.OnevsOne_arena.Messenger;
+import at.kingcraft.OnevsOne_arena.Challenges.ChallangeManager;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+import at.kingcraft.OnevsOne_arena.Duels.Duel;
+import at.kingcraft.OnevsOne_arena.Duels.DuelManager;
+import at.kingcraft.OnevsOne_setup.Maps.Map;
+import at.kingcraft.OnevsOne_setup.Maps.MapManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class EndmatchCommand implements CommandExecutor {
+
+	private static MainClass plugin;
+	private static Map map;
+	private static ArrayList<Player> challengers;
+	private static ArrayList<Player> challenged;
+	private static int sendBackID = 0;
+	
+	public EndmatchCommand(MainClass plugin)
+	{
+		EndmatchCommand.plugin = plugin;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args) {
+		
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		if(args.length > 1 || (args.length == 1 && args[0].equalsIgnoreCase("leave")))
+		{
+			return false;
+		}
+		
+		Player p = (Player) sender;
+		
+		
+		return endMatch(p, args,true);
+	}
+	
+	
+	public static boolean endMatch(Player p,String[] args,boolean backToServer)
+	{
+		// delete Duels
+		map = null;
+		Duel d = DuelManager.getDuel(p);
+		if(d!= null)
+		{
+			d.stopCountdown();
+			map = d.getMap();
+			DuelManager.deleteDuel(p);
+			
+			// Delete Challenges
+			Challenge c = ChallangeManager.getChallenge(p);
+			if(c==null)
+			{
+				return true;
+			}
+			
+			challengers = c.getChallengers();
+			challenged = c.getChallenged();
+			
+			if(backToServer)
+			{
+				Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+					
+					@Override
+					public void run()
+					{
+						int u = 0;
+						for(int i = 0;challengers != null && i<challengers.size();i++)
+						{	
+							
+								String[] args1 = new String[1];
+								args1[0] = c.getPreviousServer(u);
+								Messenger.sendMessage(challengers.get(i), "BungeeCord", "Connect", args1);
+							
+								
+							
+							u++;
+						}
+						
+						for(int i = 0;challenged != null && i<challenged.size();i++)
+						{
+								String[] args1 = new String[1];
+								args1[0] = c.getPreviousServer(u);
+								Messenger.sendMessage(challenged.get(i), "BungeeCord", "Connect", args1);
+							
+							u++;
+						}
+						
+						challenged.clear();
+						challengers.clear();
+					}
+				}, 20*3);
+			}
+			
+			
+			
+			
+			ChallangeManager.deleteChallenge(c.ID);
+			
+			if(map != null)
+			{
+				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+					
+					@Override
+					public void run()
+					{
+						map.reload(null, true);
+						
+						sendBackID = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+							
+							@Override
+							public void run() {
+								if(!MapManager.isLoading)
+								{
+									sendBackToFreeServers();
+									System.out.println("Server \"" + plugin.serverName + "\" is Free");
+									Bukkit.getScheduler().cancelTask(sendBackID);
+								}
+								
+							}
+						}, 0, 20).getTaskId();
+						
+					}
+				}, 20*4);
+				
+			}
+			
+			return true;
+		}
+		
+		p.sendMessage(ChatColor.RED + "Keine Herausforderung");
+		
+		return true;
+	}
+	
+	public static void sendBackToFreeServers()
+	{
+		MySQL mysql = plugin.getMySQL();
+		
+		try
+		{
+			if(mysql.isConnected())
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("UPDATE Duel_Servers SET free = 1 WHERE Name = ?");
+				ps.setString(1, plugin.serverName);
+				ps.executeUpdate();
+				
+			}
+			
+		}
+		catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@SuppressWarnings("unused")
+	private static boolean isLeaver(Challenge c,int Role,Player p,String[] args)
+	{
+		int role = ChallangeManager.getRole(p, c);
+		
+		if((args.length == 1 && args[0].equals("leave"))  && role == Role)
+		{
+			return true;
+		}
+		
+		
+		return false;
+	}
+}

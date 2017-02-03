@@ -1,0 +1,182 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.UUID;
+
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import at.Kingcraft.OnevsOne_lobby.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Items.Items;
+
+public class MenuManager {
+
+	private static HashMap<UUID,SettingMenu> settingMenus;
+	private static HashMap<UUID,KitViewerMenu> kitViewerMenus;
+	private static HashMap<UUID,SpectateMenu> spectateMenus;
+	private static HashMap<UUID,TournamentViewMenu> tourViewMenus;
+	private static HashMap<UUID,RankedMenu> rankedMenus;
+	private static MainClass plugin;
+	
+	public static void setup(MainClass plugin)
+	{
+		MenuManager.plugin = plugin;
+		settingMenus = new HashMap<>();
+		kitViewerMenus = new HashMap<>();
+		spectateMenus = new HashMap<>();
+		tourViewMenus = new HashMap<>();
+		rankedMenus = new HashMap<>();
+	}
+	
+	public static void addSettingMenu(Player owner)
+	{
+		if(settingMenus.get(owner.getUniqueId()) == null)
+			settingMenus.put(owner.getUniqueId(),new SettingMenu(owner,plugin));
+	}
+	
+	public static ArrayList<TournamentViewMenu> getTournamentViewMenus()
+	{
+		Iterator<Entry<UUID, TournamentViewMenu>> it = tourViewMenus.entrySet().iterator();
+		
+		ArrayList<TournamentViewMenu> menus = new ArrayList<>();
+		
+		while(it.hasNext())
+		{
+			HashMap.Entry<UUID,TournamentViewMenu> pair = it.next();
+			menus.add(pair.getValue());
+		}
+		
+		return menus;
+	}
+	
+	public static ArrayList<SettingMenu> getAllSettingsMenus()
+	{
+		Iterator<Entry<UUID, SettingMenu>> it = settingMenus.entrySet().iterator();
+		
+		ArrayList<SettingMenu> menus = new ArrayList<>();
+		
+		while(it.hasNext())
+		{
+			HashMap.Entry<UUID,SettingMenu> pair = it.next();
+			menus.add(pair.getValue());
+		}
+		
+		return menus;
+	}
+	
+	public static void deleteSettingMenu(Player owner)
+	{
+		settingMenus.remove(owner.getUniqueId());
+	}
+	
+	public static SettingMenu getSettingMenu(Player owner)
+	{
+		return settingMenus.get(owner.getUniqueId());
+	}
+	
+	public static void deleteTournamentViewMenu(Player p)
+	{
+		if(tourViewMenus.get(p.getUniqueId()) != null)
+		{
+			tourViewMenus.remove(p.getUniqueId());
+		}
+	}
+	
+	public static TournamentViewMenu getTournamentViewMenu(Player owner,boolean create)
+	{
+		if(create && tourViewMenus.get(owner.getUniqueId()) == null)
+		{
+			tourViewMenus.put(owner.getUniqueId(), new TournamentViewMenu(owner));
+		}
+		
+		return tourViewMenus.get(owner.getUniqueId());
+	}
+	
+	public static void updateAllMapMenus()
+	{
+		MapMenu.loadMaps();
+		
+		for(Player p : plugin.getServer().getOnlinePlayers())
+		{
+			MapMenu m = getSettingMenu(p).getMapMenu();
+			m.setOtherMaps();
+		}
+	}
+	
+	public static KitViewerMenu getKitViewerMenu(Player p)
+	{
+		if(kitViewerMenus.get(p.getUniqueId()) == null)
+		{
+			kitViewerMenus.put(p.getUniqueId(), new KitViewerMenu(p));
+		}
+		
+		return kitViewerMenus.get(p.getUniqueId());
+	}
+	
+	public static void deleteKitViewerMenu(Player p)
+	{
+		if(kitViewerMenus.get(p) != null)
+		{
+			kitViewerMenus.remove(p.getUniqueId());
+		}
+	}
+	
+	public static void giveSettingItem(Player p)
+	{
+		ItemStack is = new ItemStack(Material.getMaterial(Items.settingsItemMaterial));
+		ItemMeta im = is.getItemMeta();
+		im.setDisplayName(Items.settingsItemName);
+		im.setLore(Items.settingsItemLore);
+		is.setItemMeta(im);
+		
+		p.getInventory().setItem(plugin.getConfig().getInt("Items.Settings.HotbarPosition"), is);
+	}
+	
+	public static SpectateMenu getSpectateMenu(Player p)
+	{
+		if(spectateMenus.get(p.getUniqueId()) == null)
+		{
+			spectateMenus.put(p.getUniqueId(), new SpectateMenu(p));
+		}
+		
+		return spectateMenus.get(p.getUniqueId());
+	}
+	
+	public static ArrayList<SpectateMenu> getSpectateMenus()
+	{
+		Iterator<Entry<UUID, SpectateMenu>> it = spectateMenus.entrySet().iterator();
+		
+		ArrayList<SpectateMenu> menus = new ArrayList<>();
+		
+		while(it.hasNext())
+		{
+			HashMap.Entry<UUID,SpectateMenu> pair = it.next();
+			menus.add(pair.getValue());
+		}
+		
+		return menus;
+	}
+
+	public static void deleteSpectateMenu(Player p)
+	{
+		if(spectateMenus.get(p.getUniqueId()) != null)
+		{
+			spectateMenus.remove(p.getUniqueId());
+		}
+	}
+	
+	public static RankedMenu getRankedMenu(Player p)
+	{
+		if(rankedMenus.get(p.getUniqueId()) == null)
+		{
+			rankedMenus.put(p.getUniqueId(), new RankedMenu(p));
+		}
+		
+		return rankedMenus.get(p.getUniqueId());
+	}
+}

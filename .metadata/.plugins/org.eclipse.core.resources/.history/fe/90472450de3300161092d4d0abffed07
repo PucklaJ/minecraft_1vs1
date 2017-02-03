@@ -1,0 +1,59 @@
+package at.kingcraft.OnevsOne_arena;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
+import MySQL.MySQL;
+import at.kingcraft.OnevsOne_arena.Commands.EndmatchCommand;
+import at.kingcraft.OnevsOne_arena.Listener.DuelListener;
+
+public class MainClass extends JavaPlugin{
+
+	private MySQL mysql;
+	private String prefix; 
+	
+	@Override
+	public void onDisable()
+	{
+		super.onDisable();
+		System.out.println(prefix + " Successfully disabled");
+	}
+	
+	public MySQL getMySQL()
+	{
+		return mysql;
+	}
+
+	private void setupCommands()
+	{
+		this.getCommand("endmatch").setExecutor(new EndmatchCommand());
+	}
+	
+	@Override
+	public void onEnable()
+	{
+		super.onEnable();
+		
+		prefix = "[" + getName() + "]";
+		
+		mysql = new MySQL(this);
+		if(mysql.isConnected())
+		{
+			System.out.println(prefix + " MySQL connected");
+		}
+		else
+		{
+			System.out.println(prefix + " MySQL Connection failed");
+		}
+		
+		// Setup Messaging System
+		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		
+		// Register Listeners
+		this.getServer().getPluginManager().registerEvents(new DuelListener(this), this);
+		
+		Messenger.setup(this);
+		
+		
+	}
+
+}

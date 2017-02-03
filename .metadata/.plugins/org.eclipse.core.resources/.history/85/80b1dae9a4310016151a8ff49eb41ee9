@@ -1,0 +1,9 @@
+name: OnevsOne_bridge
+version: 1.0.0
+author: PucklaMUGLA03
+main: at.kingcraft.OnevsOne_bridge.MainClass
+
+commands:
+  test:
+    description: Testet Plugin
+    usage: /<command>

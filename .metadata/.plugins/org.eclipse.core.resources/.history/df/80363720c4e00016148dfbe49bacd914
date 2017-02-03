@@ -1,0 +1,113 @@
+package at.kingcraft.OnevsOne_arena.Duels;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class Statistics
+{
+	private int kills;
+	private int deaths;
+	private int wins;
+	private int loses;
+	private int plays;
+	private int tournamentWins;
+	
+	public Statistics(int k,int d,int w,int l,int p,int tw)
+	{
+		kills = (k);
+		deaths = (d);
+		wins = (w);
+		loses = (l);
+		plays = p;
+		tournamentWins = tw;
+	}
+	
+	private static double round(double value, int places)
+	{
+	    if (places < 0) throw new IllegalArgumentException();
+	    BigDecimal bd = new BigDecimal(value);
+	    bd = bd.setScale(places, RoundingMode.HALF_UP);
+	    return bd.doubleValue();
+	}
+
+	public int getKills() {
+		return kills;
+	}
+
+	public int getDeaths() {
+		return deaths;
+	}
+
+	public int getWins() {
+		return wins;
+	}
+
+	public int getLoses() {
+		return loses;
+	}
+	
+	public int getPlays()
+	{
+		return plays;
+	}
+	
+	public int getTournamentWins()
+	{
+		return tournamentWins;
+	}
+	
+	public void setKills(int i)
+	{
+		kills = i;
+	}
+
+	public void setDeaths(int i)
+	{
+		deaths = i;
+	}
+
+	public void setWins(int i)
+	{
+		wins = i;
+	}
+
+	public void setLoses(int i)
+	{
+		loses = i;
+	}
+	
+	public void setPlays(int i)
+	{
+		plays = i;
+	}
+	
+	public void setTournamentWins(int i)
+	{
+		tournamentWins = i;
+	}
+	
+	public double getKD()
+	{
+		return round((double)kills/(deaths==0 ? 1.0 : (double)deaths),2);
+	}
+	
+	public double getWL()
+	{
+		return round((double)wins/(loses==0 ? 1.0 : (double)loses),2);
+	}
+	
+	@Override
+	public String toString()
+	{
+		return kills + ";" + deaths + ";" + wins + ";" + loses + ";" + plays + ";" + tournamentWins;
+	}
+	
+	public static Statistics fromString(String str)
+	{
+		String[] str1 = str.split(";");
+		
+		return new Statistics(Integer.valueOf(str1[0]), Integer.valueOf(str1[1]), Integer.valueOf(str1[2]), Integer.valueOf(str1[3]),Integer.valueOf(str1[4]),Integer.valueOf(str1[5]));
+	}
+	
+	public void 
+}

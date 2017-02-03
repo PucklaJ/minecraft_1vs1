@@ -1,0 +1,36 @@
+package at.kingcraft.OnevsOne_arena.Duels;
+
+import java.util.ArrayList;
+import java.util.Random;
+
+import org.bukkit.plugin.java.JavaPlugin;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+
+public class DuelManager {
+
+	private static JavaPlugin plugin;
+	
+	private static ArrayList<Duel> duels = new ArrayList<Duel>();
+	
+	public static void newDuel(Challenge c)
+	{
+		duels.add(new Duel(c, plugin,getID()));
+	}
+	
+	private static int getID()
+	{
+		Random r = new Random();
+		int id = -1;
+
+		id = r.nextInt(Integer.MAX_VALUE);
+
+
+		return id;
+	}
+
+	public static void setup(JavaPlugin mainClass) {
+		plugin = mainClass;
+		
+	}
+	
+}

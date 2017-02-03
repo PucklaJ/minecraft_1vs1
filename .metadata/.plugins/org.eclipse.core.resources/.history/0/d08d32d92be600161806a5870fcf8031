@@ -1,0 +1,495 @@
+package at.Kingcraft.OnevsOne_lobby;
+
+import java.lang.reflect.Field;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Map;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Commands.FFACommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.KitPlaceCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.KitViewerComand;
+import at.Kingcraft.OnevsOne_lobby.Commands.OnevsOneCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.RefuseCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.SetDifKitCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.SetPreKitCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.SpectateCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.StatsCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.TeamCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.TestCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.TournamentCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.WaitingSnakeCommand;
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Challenge;
+import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.SpectateManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Team;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamEnquiryManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
+import at.Kingcraft.OnevsOne_lobby.Items.Items;
+import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
+import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
+import at.Kingcraft.OnevsOne_lobby.Lobby.OnlinePlayers;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
+import at.Kingcraft.OnevsOne_lobby.Scoreboard.MyScoreboardManager;
+import at.Kingcraft.OnevsOne_lobby.Special.KitDifferentMenu;
+import at.Kingcraft.OnevsOne_lobby.Special.MapMenu;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+import at.Kingcraft.OnevsOne_lobby.Special.TourSettingMenu;
+import at.Kingcraft.OnevsOne_lobby.Stats.StatisticsManager;
+import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.Settings;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.WaitingEntity;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.WaitingSnake;
+import net.md_5.bungee.api.ChatColor;
+import net.minecraft.server.v1_8_R3.EntityInsentient;
+import net.minecraft.server.v1_8_R3.EntityTypes;
+
+public class MainClass extends JavaPlugin {
+
+	private static MainClass instance;
+	private MySQL mysql;
+	public String serverName = "null";
+	private WaitingSnake ws;
+	private WaitingEntity we;
+	private LobbyListener lobbyL;
+	
+	private void setupCommands()
+	{
+		getCommand("test").setExecutor(new TestCommand(this));
+		getCommand("1vs1").setExecutor(new OnevsOneCommand());
+		getCommand("refuse").setExecutor(new RefuseCommand());
+		getCommand("team").setExecutor(new TeamCommand());
+		getCommand("setminkit").setExecutor(new KitPlaceCommand(this));
+		getCommand("setmaxkit").setExecutor(new KitPlaceCommand(this));
+		getCommand("setminnormal").setExecutor(new KitPlaceCommand(this));
+		getCommand("setmaxnormal").setExecutor(new KitPlaceCommand(this));
+		getCommand("warteschlange").setExecutor(new WaitingSnakeCommand(ws));
+		getCommand("turnier").setExecutor(new TournamentCommand());
+		getCommand("setdifkit").setExecutor(new SetDifKitCommand());
+		getCommand("setprekit").setExecutor(new SetPreKitCommand());
+		getCommand("ffa").setExecutor(new FFACommand());
+		getCommand("kit").setExecutor(new KitViewerComand());
+		getCommand("spectate").setExecutor(new SpectateCommand());
+		getCommand("stats").setExecutor(new StatsCommand());
+	}
+
+	private void setupListeners()
+	{
+		lobbyL = new LobbyListener(this);
+		getServer().getPluginManager().registerEvents(lobbyL, this);
+	}
+
+	public MySQL getMySQL()
+	{
+		return mysql;
+	}
+	
+	private void setupConfig() {
+		this.getConfig().options().header("Einstellungen fuer OnevsOne plugin");
+
+		this.getConfig().addDefault("World.Name", "world");
+
+		this.getConfig().addDefault("World.spawn.x", 250.673);
+		this.getConfig().addDefault("World.spawn.y", 66.0);
+		this.getConfig().addDefault("World.spawn.z", -2.444);
+		this.getConfig().addDefault("World.spawn.yaw", 0.0);
+		this.getConfig().addDefault("World.spawn.pitch", 0.0);
+		
+		this.getConfig().addDefault("Arenaserver.Prefix", "pvparena");
+		
+		this.getConfig().addDefault("Kits.Place.World","pvp");
+		this.getConfig().addDefault("Kits.Place.x1",0.0);
+		this.getConfig().addDefault("Kits.Place.y1",0.0);
+		this.getConfig().addDefault("Kits.Place.z1",0.0);
+		this.getConfig().addDefault("Kits.Place.x2",0.0);
+		this.getConfig().addDefault("Kits.Place.y2",0.0);
+		this.getConfig().addDefault("Kits.Place.z2",0.0);
+		
+		this.getConfig().addDefault("Kits.Place.Normal.World","pvp");
+		this.getConfig().addDefault("Kits.Place.Normal.x1",0.0);
+		this.getConfig().addDefault("Kits.Place.Normal.y1",0.0);
+		this.getConfig().addDefault("Kits.Place.Normal.z1",0.0);
+		this.getConfig().addDefault("Kits.Place.Normal.x2",0.0);
+		this.getConfig().addDefault("Kits.Place.Normal.y2",0.0);
+		this.getConfig().addDefault("Kits.Place.Normal.z2",0.0);
+		
+		this.getConfig().addDefault("Items.Skulls.HotbarPosition", 1);
+		
+		this.getConfig().addDefault("Items.Settings.HotbarPosition", 8);
+		
+		this.getConfig().addDefault("Items.Spectate.HotbarPosition", 7);
+		
+		this.getConfig().addDefault("Items.Settings.Maps.Slot", 11);
+		
+		this.getConfig().addDefault("Items.Enquiries.Text", "Anfragen");
+		
+		this.getConfig().addDefault("Items.Enquiries.ChallIN.Material", "DIAMOND_SWORD");
+		this.getConfig().addDefault("Items.Enquiries.ChallIN.Text", "Eingehende Herausforderungen");
+		this.getConfig().addDefault("Items.Enquiries.ChallIN.Slot", 0);
+		
+		this.getConfig().addDefault("Items.Enquiries.ChallOUT.Material", "GOLD_SWORD");
+		this.getConfig().addDefault("Items.Enquiries.ChallOUT.Text", "Ausgehende Herausforderungen");
+		this.getConfig().addDefault("Items.Enquiries.ChallOUT.Slot", 2);
+		
+		this.getConfig().addDefault("Items.Enquiries.TeamIN.Material", "DIAMOND_CHESTPLATE");
+		this.getConfig().addDefault("Items.Enquiries.TeamIN.Text", "Eingehende Teamanfragen");
+		this.getConfig().addDefault("Items.Enquiries.TeamIN.Slot", 4);
+		
+		this.getConfig().addDefault("Items.Enquiries.TeamOUT.Material", "GOLD_CHESTPLATE");
+		this.getConfig().addDefault("Items.Enquiries.TeamOUT.Text", "Ausgehende Teamanfragen");
+		this.getConfig().addDefault("Items.Enquiries.TeamOUT.Slot", 6);
+		
+		this.getConfig().addDefault("Items.Enquiries.Tournaments.Material", "IRON_HELMET");
+		this.getConfig().addDefault("Items.Enquiries.Tournaments.Text", "Startende Turniere");
+		this.getConfig().addDefault("Items.Enquiries.Tournaments.Slot", 8);
+		
+		this.getConfig().addDefault("Items.Enquiries.Gap.Color", 1);
+		
+		this.getConfig().addDefault("WaitingSnake.Entity.Location.X", 0.0);
+		this.getConfig().addDefault("WaitingSnake.Entity.Location.Y", 0.0);
+		this.getConfig().addDefault("WaitingSnake.Entity.Location.Z", 0.0);
+		
+		this.getConfig().addDefault("Scoreboard.Header", ChatColor.LIGHT_PURPLE + "madebylo.net");
+		this.getConfig().addDefault("Scoreboard.Team.Title", ChatColor.YELLOW + "- Team Member -");
+		this.getConfig().addDefault("Scoreboard.Tournament.Title", ChatColor.YELLOW + "- Startende Turniere -");
+		this.getConfig().addDefault("Scoreboard.Linebreak.Prefix", ChatColor.GRAY + "");
+		this.getConfig().addDefault("Scoreboard.Linebreak.String","-");
+		this.getConfig().addDefault("Scoreboard.Kit.Prefix.Normal", ChatColor.YELLOW + "Kit: " + ChatColor.BLUE);
+		this.getConfig().addDefault("Scoreboard.Kit.Prefix.Different", ChatColor.YELLOW + "Kit: " + ChatColor.GOLD);
+		this.getConfig().addDefault("Scoreboard.Team.Prefix.Leader", ChatColor.GOLD + "");
+		this.getConfig().addDefault("Scoreboard.Team.Prefix.Normal", ChatColor.GREEN + "");
+		this.getConfig().addDefault("Scoreboard.Tournament.Text", ChatColor.GREEN + "%leader% [%size%vs%size%] (%players%)");
+		this.getConfig().addDefault("Scoreboard.Kit.Suffix.Normal", "");
+		this.getConfig().addDefault("Scoreboard.Kit.Suffix.Different", "");
+		this.getConfig().addDefault("Scoreboard.Team.Suffix.Leader", "");
+		this.getConfig().addDefault("Scoreboard.Team.Suffix.Normal", "");
+		this.getConfig().addDefault("Scoreboard.Tournament.Max", 5);
+		this.getConfig().addDefault("Scoreboard.Tournament.MaxReached", ChatColor.GRAY + "...");
+		this.getConfig().addDefault("Scoreboard.Player.Prefix", ChatColor.YELLOW + "Spieler: " + ChatColor.BLUE);
+		this.getConfig().addDefault("Scoreboard.Player.Suffix", "");
+		
+
+		this.getConfig().options().copyDefaults(true);
+		this.saveConfig();
+
+		Messages.setup();
+		Items.setup();
+		Sounds.setup();
+		
+		System.out.println("[" + getName() +  "] Successfully setup config.yml");
+	}
+
+	public static MainClass getInstance()
+	{
+		return instance;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void registerEntities()
+	{
+		 try
+		 {
+             Field c = EntityTypes.class.getDeclaredField("c");
+             Field f = EntityTypes.class.getDeclaredField("f");
+             c.setAccessible(true);
+             f.setAccessible(true);
+             ((Map<Class<? extends EntityInsentient>, String>) c.get(null)).put(WaitingEntity.class, "Zombie");
+             ((Map<Class<? extends EntityInsentient>, Integer>) f.get(null)).put(WaitingEntity.class, 54);
+		 }
+		 catch (Exception e)
+		 {
+			 e.printStackTrace();
+		 }
+	}
+	
+	private void updateTimer()
+	{
+		Bukkit.getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				MenuManager.updateAllMapMenus();
+				checkArenaServers();
+				
+			}
+		}, 20*60*5, 20*60*5);
+	}
+	
+	private void checkArenaServers()
+	{
+		if(getServer().getOnlinePlayers().isEmpty())
+		{
+			return;
+		}
+		
+		Messenger.sendMessage(null, "BungeeCord", "GetServers", (String[])null);
+	}
+	
+	@Override
+	public void onEnable() {
+		super.onEnable();
+		
+		registerEntities();
+		
+		MainClass.instance = this;
+
+		setupConfig();
+		
+		try
+		{
+			mysql = new MySQL(this);
+		}
+		catch (SQLException e1)
+		{
+
+		}
+		System.out.println("[" + getName() +  "] MySQL enabled");
+		try
+		{
+			if(mysql.isConnected())
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_Challenges (ChallengerUUID VARCHAR(1000),ChallengedUUID VARCHAR(1000),ChallengerName VARCHAR(1000),ChallengedName VARCHAR(1000),ArenaName VARCHAR(100),ChallengeID INT(100),ServerName VARCHAR(100),ArenaServer VARCHAR(100),Kit VARCHAR(1000),Tournament INT(1),Mode INT(1),Time INT(100))");
+				ps.executeUpdate();
+			}
+			
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		// Init Systems
+		ChallangeManager.setup(this);
+		DuelManager.setup(mysql);
+		ArenaManager.setup(mysql);
+		TeamManager.setup(this);
+		TeamEnquiryManager.setup();
+		MenuManager.setup(this);
+		MapMenu.setup(mysql);
+		KitManager.setup(this);
+		KitDifferentMenu.setupKits();
+		Settings.setup(mysql);
+		ws = new WaitingSnake(this,mysql);
+		TournamentManager.setup(this);
+		TourSettingMenu.setup();
+		OnlinePlayers.setup();
+		MyScoreboardManager.setup();
+		SpectateManager.setup();
+		StatisticsManager.setup();
+		
+		setupCommands();
+		setupListeners();
+		
+		World world = Bukkit.getWorld(getConfig().getString("World.Name"));
+		if(world == null)
+		{
+			System.out.println("[" + getName() + "] Unknown Worldname: \"" + getConfig().getString("World.Name") + "\"");
+		}
+		
+		Location weLoc = null;
+		if(world != null)
+			weLoc = new Location(world,
+										  getConfig().getDouble("WaitingSnake.Entity.Location.X"),
+										  getConfig().getDouble("WaitingSnake.Entity.Location.Y"),
+										  getConfig().getDouble("WaitingSnake.Entity.Location.Z"));
+		
+		
+		
+		if(world != null)
+			we = new WaitingEntity(((CraftWorld)world).getHandle(),weLoc);
+		
+		
+		
+		
+		// SEtup Messeging System
+		Messenger.setup(this);
+		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new Messenger());
+		
+
+		if(world != null)
+			world.setSpawnLocation(456, 345, 348);
+
+		Messenger.sendMessage(null, "BungeeCord", "GetServers", new String[0]);
+		Messenger.sendMessage(null, "BungeeCord", "GetServer", new String[0]);
+		// automatically ask Servers every 5 minutes
+		Bukkit.getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				Messenger.sendMessage(null, "BungeeCord", "GetServers", new String[0]);
+				
+			}
+		}, 20*60*5, 20*60*5);
+		
+		for(Player p : getServer().getOnlinePlayers())
+		{
+			KitManager.setChoosenKit(p,null,0,Integer.MAX_VALUE);
+			KitManager.setChoosenDifKit(p, 1);
+			KitManager.setDif(p, false);
+			KitManager.addToNormal(p);
+			KitManager.loadKits(p);
+			
+			Settings.loadSettings(p);
+			
+			LobbyListener.setupSpawnItems(p, true);
+		}
+		
+		updateTimer();
+		
+		System.out.println("[" + getName() +  "] enabled");
+
+	}
+
+	@Override
+	public void onDisable()
+	{
+		for(Player p : getServer().getOnlinePlayers())
+		{
+			for(Challenge c : ChallangeManager.getChallenges(p))
+			{
+				ChallangeManager.deleteChallenge(null,null,c.ID, false,false);
+			}
+			TeamEnquiryManager.deleteEnquiries(p,false);
+			
+			Team t = TeamManager.getTeam(p);
+			if(t != null)
+			{
+				TeamManager.deleteTeam(t,false,false);
+			}
+			
+			MenuManager.getSettingMenu(p).getMapMenu().writeMapsToMySQL();
+			
+			KitManager.removeFromNormal(p);
+			KitManager.removeFromKit(p);
+			
+			ArrayList<Kit> kits = KitManager.getKits(p);
+			
+			if(kits != null)
+			{
+				for(int i = 0;i<kits.size();i++)
+				{
+					kits.get(i).loadToMySQL(mysql);
+				}
+			}
+			
+			/*kits = KitManager.getSoupKits(p);
+			
+			if(kits != null)
+			{
+				for(int i = 0;i<kits.size();i++)
+				{
+					kits.get(i).loadToMySQL(mysql);
+				}
+			}*/
+			
+			KitManager.uploadDifKit(p);
+			KitManager.uploadChoosenKit(p);
+			
+			KitManager.deleteKits(p);
+			
+			
+			Settings.getSettings(p).loadToMySQL();
+			Settings.removeSettings(p);
+			
+			ws.removePlayer(p,false,false);
+			
+			//Tournament t1 = null;
+			
+			/*System.out.println("Before checking Tournaments");
+			do
+			{
+				System.out.println("Getting Tournament");
+				t1 = TournamentManager.getTournament(p);
+				System.out.println("Got Tournament");
+				
+				if(t1 != null)
+				{
+					System.out.println("Getting Team");
+					Team team = TeamManager.getTeam(p);
+					System.out.println("Got Team");
+					ArrayList<Player> players;
+					if(team != null)
+					{
+						players = team.getPlayers();
+					}
+					else
+					{
+						players = new ArrayList<>();
+						players.add(p);
+					}
+					System.out.println("Starting removing Contestants");
+					t1.removeContestants(players, true,true,true);
+					System.out.println("Removed Contestants");
+				}
+			}while(t1 != null);*/
+			for(int i = 0;i<TournamentManager.getTournaments().size();i++)
+			{
+				TournamentManager.deleteTournament(TournamentManager.getTournaments().get(i), false);
+			}
+			
+			System.out.println("After checking Tournaments");
+			
+			MenuManager.getSettingMenu(p).getTourSettingMenu().loadToMySQL();
+			MenuManager.deleteSettingMenu(p);
+			MenuManager.deleteKitViewerMenu(p);
+			MenuManager.deleteSpectateMenu(p);
+			MenuManager.deleteTournamentViewMenu(p);
+			MenuManager.deleteRankedMenu(p);
+			
+			StatisticsManager.deleteStatistics(p);
+			
+			KitManager.removeDifKitSettingsMenu(p);
+		}
+		
+		ws.stopCheckTask();
+		
+		
+		World world = Bukkit.getWorld(getConfig().getString("World.Name"));
+		
+		for(Entity e : world.getEntities())
+		{
+			if(e instanceof Player)
+			{
+				continue;
+			}
+			else if(e instanceof WaitingEntity)
+			{
+				continue;
+			}
+				e.remove();
+		}
+		
+		OnlinePlayers.deleteFromMySQL();
+		
+		mysql.disconnect();
+	}
+	
+	public WaitingSnake getWaitingSnake()
+	{
+		return ws;
+	}
+
+	public WaitingEntity getWaitingEntity() {
+		return we;
+	}
+
+	public void setWe(WaitingEntity we) {
+		this.we = we;
+	}
+}

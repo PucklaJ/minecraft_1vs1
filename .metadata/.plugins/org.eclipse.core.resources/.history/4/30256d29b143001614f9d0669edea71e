@@ -1,0 +1,86 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import net.minecraft.server.v1_8_R3.Material;
+
+public class Kit
+{
+	private ArrayList<KitItem> items;
+	private Player owner;
+	
+	public Kit(Player owner)
+	{
+		items = new ArrayList<>();
+		this.owner = owner;
+	}
+	
+	public void addItem(int slot,ItemStack is)
+	{
+		items.add(new KitItem(slot,is));
+	}
+	
+	public void getItemsFromInventory(Inventory inv)
+	{
+		items.clear();
+		
+		for(int i = 0;i<inv.getSize();i++)
+		{
+			if(inv.getItem(i) != null && !inv.getItem(i).getType().equals(Material.AIR))
+			{
+				addItem(i,inv.getItem(i));
+			}
+		}
+	}
+	
+	public void kitItemsToInventory(Inventory inv)
+	{
+		inv.clear();
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			inv.setItem(items.get(i).getSlot(), items.get(i).getItem());
+		}
+	}
+	
+	public String itemsToString()
+	{
+		String strItems = "";
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			ItemStack is = items.get(i).getItem();
+			strItems += is.getType().getId() + "(" + is.getAmount() + ";" + is.getDurability() + "#";
+			
+			Map<Enchantment,Integer> mp = is.getEnchantments();
+			
+			Iterator<Map.Entry<Enchantment, Integer>> it = mp.entrySet().iterator();
+			
+			while(it.hasNext())
+			{
+				Map.Entry<Enchantment,Integer> pair = (Map.Entry<Enchantment, Integer>)it.next();
+				strItems += pair.getKey().getName() + ";" + pair.getValue() + "|";
+			}
+			
+			strItems += "#";
+			
+			strItems += (!(is.getItemMeta() == null) ? is.getItemMeta().getDisplayName() : "") + ")\n";
+			
+			
+		}
+		
+		return strItems;
+	}
+	
+	public Player getOwner()
+	{
+		return owner;
+	}
+}

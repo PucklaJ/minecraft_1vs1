@@ -1,0 +1,46 @@
+name: OnevsOne_setup
+version: 0.0.1
+main: at.kingcraft.OnevsOne_setup.MainClass
+author: PucklaMUGLA03
+
+commands:
+  map:
+    description: Command fuer Maps bauen
+    permission: command_setup.map
+    usage: /<command> <start <mapname>> | end | write | <startpoint <mapname>> | endpoint | <load <mapname>> | setspawn1 | setspawn2 | <clear <mapname>>
+  setspawn:
+    description: Setzt den Spawn der Welt zur Spieler Position
+    permission: command_setup.setspawn
+    usage: /<command>
+  spawn:
+    description: Teleportiert zu Spawn
+    usage: /<command>
+    permission: command_setup.spawn
+
+permissions:
+  world.*:
+    description: Erlaubt Veraenderung der Welt
+    children:
+      world.place: true
+      world.destroy: true
+  world.place:
+    description: Erlaubt platzieren von Bloecken
+    default: op
+  world.destroy: 
+    description: Erlaubt zerstoeren von Bloecken
+    default: op
+  command_setup.*:
+    description: Erlaubt Verwendung von commands
+    children:
+      command_setup.spawn: true
+      command_setup.setspawn: true
+      command_setup.map: true
+  command_setup.spawn:
+    description: Erlaubt Benuetzung des Spawn-Commands
+    default: op
+  command_setup.setspawn:
+    description: Erlaubt Benuetzung des setspawn-Commands
+    default: op
+  command_setup.map:
+    description: Permission fuer map-Command
+    default: op

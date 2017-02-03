@@ -1,0 +1,301 @@
+package at.Kingcraft.OnevsOne_lobby.WaitingSnake;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
+import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
+import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
+import at.Kingcraft.OnevsOne_lobby.Special.MapMenu;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+
+public class RankedQueue
+{
+	private static ArrayList<RankedUpload> playersToUpload;
+	private static ArrayList<RankedUpload> playersInQueue;
+	private static final int MAX_ELO_DIF = 15;
+	
+	public static void setup()
+	{
+		playersToUpload = new ArrayList<>();
+		playersInQueue = new ArrayList<>();
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_RankedQueue (UUID VARCHAR(100),Player VARCHAR(10000))");
+			ps.executeUpdate();
+			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_RankedELO (UUID VARCHAR(100),ELO INT(255))");
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		Bukkit.getScheduler().runTaskTimerAsynchronously(MainClass.getInstance(), new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				update();
+			}
+		}, 20*2, 20*2);
+	}
+	
+	private static void uploadPlayers()
+	{
+		while(!playersToUpload.isEmpty())
+		{
+			try
+			{
+				PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_RankedQueue (UUID,Player) VALUES (?,?)");
+				ps.setString(1, playersToUpload.get(0).uuid.toString());
+				ps.setString(2, playersToUpload.get(0).toString());
+				ps.executeUpdate();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+			
+			playersToUpload.remove(0);
+		}
+	}
+	
+	private static void matchPlayers()
+	{
+		loadPlayers();
+		
+		for(int i = 0;i<playersInQueue.size() && !ArenaManager.getServers(1).isEmpty();i++)
+		{
+			int min = getLowestDifference(playersInQueue.get(i));
+			
+			if(min != -1)
+			{
+				removePlayerFromMySQL(playersInQueue.get(min));
+				removePlayerFromMySQL(playersInQueue.get(i));
+				
+				makeDuel(playersInQueue.get(min), playersInQueue.get(i));
+				
+				playersInQueue.remove(min);
+				playersInQueue.remove(i);
+				i=0;
+			}
+		}
+	}
+	
+	private static void loadPlayers()
+	{
+		playersInQueue.clear();
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT Player FROM Duel_RankedQueue");
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				playersInQueue.add(RankedUpload.fromString(rs.getString(1)));
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private static int getLowestDifference(RankedUpload ru)
+	{
+		if(playersInQueue.size() == 1)
+		{
+			return -1;
+		}
+		
+		int minDif = -1, minIndex = -1;
+		
+		for(int i = 0;i<playersInQueue.size();i++)
+		{
+			if(playersInQueue.get(i).uuid.equals(ru.uuid) || playersInQueue.get(i).kit != ru.kit)
+				continue;
+			
+			int dif = Math.abs(ru.elo-playersInQueue.get(i).elo);
+			if(dif > MAX_ELO_DIF)
+				continue;
+			
+			if(dif < minDif || minIndex == -1)
+			{
+				minDif = dif;
+				minIndex = i;
+			}
+		}
+		
+		return minIndex;
+		
+	}
+	
+	private static WaitingSnakeUpload toWaitingSnakeUpload(RankedUpload ru)
+	{
+		WaitingSnakeUpload wsu = new WaitingSnakeUpload(ru.uuid, null, ru.homeServer, "null", ru.map, "null", "null");
+		
+		return wsu;
+	}
+	
+	public static boolean isInMySQL(UUID uuid)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT UUID FROM Duel_RankedQueue WHERE UUID = ?");
+			ps.setString(1, uuid.toString());
+			
+			return ps.executeQuery().first();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private static void makeDuel(RankedUpload ru1, RankedUpload ru2)
+	{
+		WaitingSnakeUpload wsu1 = toWaitingSnakeUpload(ru1);
+		WaitingSnakeUpload wsu2 = toWaitingSnakeUpload(ru2);
+		
+		ArrayList<WaitingSnakeUpload> wsu11 = new ArrayList<>();
+		ArrayList<WaitingSnakeUpload> wsu12 = new ArrayList<>();
+		wsu11.add(wsu1);
+		wsu12.add(wsu2);
+		
+		String arenaServer = "";
+		Kit kit = null;
+		String arena = "";
+		
+		String[] serverNames = new String[2];
+		serverNames[0] = wsu1.serverName;
+		serverNames[1] = wsu2.serverName;
+		
+		switch(new Random().nextInt(2))
+		{
+		case 0:
+			arena = ru1.map;
+			break;
+		case 1:
+			arena = ru2.map;
+			break;
+		}
+		
+		kit = KitManager.getPreKit(15 + ru1.kit);
+		
+		arenaServer = ArenaManager.getServers(1).get(0);
+		
+		if(DuelManager.sendDuelToSQL(wsu11, wsu12, new Random().nextInt(Integer.MAX_VALUE),-5, null, kit.itemsToString(), serverNames, arenaServer, arena, 1, -1) != 1)
+		{
+			System.out.println("[Ranked] Error while creating Duel");
+			return;
+		}
+		
+		OfflinePlayer op1,op2;
+		
+		op1 = Bukkit.getOfflinePlayer(ru1.uuid);
+		op2 = Bukkit.getOfflinePlayer(ru2.uuid);
+		
+		if(!ArenaManager.teleportToArena(op1.getName(),arenaServer))
+		{
+			System.out.println("[Ranked] Error while teleporting " + op1.getName());
+			return;
+		}
+		
+		if(!ArenaManager.teleportToArena(op2.getName(), arenaServer))
+		{
+			System.out.println("[Ranked] Error while teleporting " + op2.getName());
+			return;
+		}
+	}
+	
+	private static void removePlayerFromMySQL(RankedUpload ru)
+	{
+		removePlayerFromMySQL(ru.uuid);
+	}
+	
+	private static void removePlayerFromMySQL(UUID uuid)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("DELETE FROM Duel_RankedQueue WHERE UUID = ?");
+			ps.setString(1, uuid.toString());
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private static void update()
+	{
+		uploadPlayers();
+		matchPlayers();
+	}
+	
+	public static int getELO(Player p)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT ELO FROM Duel_RankedELO WHERE UUID = ? LIMIT 1");
+			ps.setString(1, p.getUniqueId().toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				return rs.getInt(1);
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return -1;
+	}
+	
+	public static void addPlayer(Player p,int kit)
+	{
+		String map;
+		
+		map = MapMenu.getRandomArena(MenuManager.getSettingMenu(p).getMapMenu().getMyMaps(), null);
+		
+		RankedUpload ru = new RankedUpload(p.getUniqueId(), getELO(p), kit, map, MainClass.getInstance().serverName);
+		
+		playersToUpload.add(ru);
+		
+		p.sendMessage(Messages.addToRankedQueue);
+	}
+	
+	public static void removePlayer(Player p)
+	{
+		for(int i = 0;i<playersToUpload.size();i++)
+		{
+			if(playersToUpload.get(i).uuid.equals(p.getUniqueId()))
+			{
+				playersToUpload.remove(i);
+				return;
+			}
+		}
+		
+		removePlayerFromMySQL(p.getUniqueId());
+		
+		p.sendMessage(Messages.removeFromRankedQueue);
+	}
+}

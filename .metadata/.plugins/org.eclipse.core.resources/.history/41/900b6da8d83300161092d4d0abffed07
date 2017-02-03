@@ -1,0 +1,510 @@
+package at.Kingcraft.OnevsOne_lobby.Duels;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
+import org.inventivetalent.bossbar.BossBarAPI;
+
+import at.Kingcraft.OnevsOne_lobby.Special.EnquieryMenu;
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import net.md_5.bungee.api.ChatColor;
+
+public class ChallangeManager {
+	private static MainClass plugin;
+	private static ArrayList<Challenge> challenges = new ArrayList<Challenge>();
+	private static HashMap<UUID, Integer> numChallenges = new HashMap<UUID, Integer>();
+	private static HashMap<UUID, EnquieryMenu> challengeInventoris = new HashMap<UUID, EnquieryMenu>();
+
+	public static void setup(MainClass plugin)
+	{
+		ChallangeManager.plugin = plugin;
+	}
+	
+	private static int getID()
+	{
+		Random r = new Random();
+		int id = -1;
+
+		do
+		{
+			id = r.nextInt(Integer.MAX_VALUE);
+
+		} while (id == Challenge.NO_ID || id == Challenge.IS_CHALLANGED || id == Challenge.IS_CHALLANGER
+				|| id == Challenge.NO_ROLE);
+
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			if (id == challenges.get(i).ID)
+			{
+				do
+				{
+					id = r.nextInt(Integer.MAX_VALUE);
+
+				} while (id == Challenge.NO_ID || id == Challenge.IS_CHALLANGED || id == Challenge.IS_CHALLANGER
+						|| id == Challenge.NO_ROLE);
+				i = -1;
+			}
+		}
+
+		return id;
+	}
+
+	private static Challenge getChallenge(int id) {
+		if (id == Challenge.NO_ID)
+			return null;
+
+		for (Challenge c : challenges)
+		{
+			if (c.ID == id)
+				return c;
+		}
+		return null;
+	}
+
+	private static int isAlreadyIn(Player challenger1, Player challenged1) {
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			Challenge c = challenges.get(i);
+			
+			if (c.getChallengersUUID().contains(challenger1.getUniqueId())
+				&& c.getChallengedUUID().contains(challenged1.getUniqueId()))
+			{
+				return c.ID;
+			}
+		}
+
+		return Challenge.NO_ID;
+	}
+
+	@SuppressWarnings("deprecation")
+	public static void tellChallenge(Player challenger1, Player challenged1) {
+		challenger1.sendMessage(ChatColor.YELLOW + "Challenge an " + ChatColor.GREEN + challenged1.getDisplayName()
+				+ ChatColor.YELLOW + " gesendet");
+		challenged1.sendMessage(ChatColor.GREEN + challenger1.getDisplayName() + ChatColor.YELLOW
+				+ " hat dir eine Challenge geschickt");
+
+		BossBarAPI.setMessage(challenger1,
+				ChatColor.GREEN + challenged1.getDisplayName() + ChatColor.YELLOW + " Anfrage gesendet");
+		BossBarAPI.setMessage(challenged1,
+				ChatColor.GREEN + challenger1.getDisplayName() + ChatColor.YELLOW + " Anfrage bekommen");
+
+	}
+
+	public static void tellRefuse(Player challenger1, Player challenged1) {
+		challenger1.sendMessage(ChatColor.YELLOW + "Challenge zurueckgezogen");
+		challenged1.sendMessage(ChatColor.GREEN + challenger1.getDisplayName() + ChatColor.YELLOW + " hat die Challenge abgelehnt");
+	}
+
+	public static void addNumChallenges(Player p) {
+		numChallenges.put(p.getUniqueId(), numChallenges.get(p.getUniqueId()) + 1);
+	}
+
+	public static void decreaseNumChallenges(Player p) {
+		numChallenges.put(p.getUniqueId(), numChallenges.get(p.getUniqueId()) - 1);
+	}
+
+	public static Inventory getInventory(Player p) {
+		return challengeInventoris.get(p.getUniqueId()).getInventory();
+	}
+
+	public static EnquieryMenu getEnquiryMenu(Player p)
+	{
+		return challengeInventoris.get(p.getUniqueId());
+	}
+	
+	public static void setupSkull(Player p, Player other)
+	{
+		ItemStack item = new ItemStack(Material.SKULL_ITEM, numChallenges.get(p.getUniqueId()), (short) 3);
+		
+		ArrayList<String> lore = null;
+		
+		setupSkullHotbar(item, other, p, lore);
+
+
+		setupSkullInventory(p);
+
+	}
+	
+	private static void setupSkullHotbar(ItemStack item,Player other,Player p,List<String> lore)
+	{
+		SkullMeta sMeta = (SkullMeta) item.getItemMeta();
+		sMeta.setOwner(other.getDisplayName());
+		sMeta.setDisplayName(ChatColor.RED + "Herausforderungen");
+		lore = new ArrayList<String>();
+		lore.add(ChatColor.WHITE + "Zeigt alle " + ChatColor.YELLOW + " HERAUSFORDERUNGEN");
+		sMeta.setLore(lore);
+		item.setItemMeta(sMeta);
+
+		p.getInventory().setItem(plugin.getConfig().getInt("OnevsOne.Lobby.Items.Skulls.HotbarPosition"), item);
+	}
+	
+	private static void setupSkullInventory(Player p)
+	{
+		EnquieryMenu em = getEnquiryMenu(p);
+		
+		em.setChallenges(getChallenges(p));
+		
+		em.updateInventory();
+	}
+
+	public static void setupSkull(Player p, Player other, boolean first) {
+		ItemStack item = null;
+		if(first)
+		{
+			item = new ItemStack(Material.SKULL_ITEM, 0, (short) 3);
+		}
+		else
+		{
+			item = new ItemStack(Material.SKULL_ITEM, numChallenges.get(p.getUniqueId()), (short) 3);
+		}
+
+		ArrayList<String> lore = null;
+		
+		setupSkullHotbar(item, other, p,lore);
+
+
+		if (first)
+		{
+			challengeInventoris.put(p.getUniqueId(), new EnquieryMenu(p,plugin) /*Bukkit.createInventory(p, 18, "Herausforderungen")*/);
+
+
+			setupSkullInventory(p);
+
+		}
+		else
+		{
+			setupSkullInventory(p);
+		}
+
+	}
+	
+	public static Challenge sendChallenge(ArrayList<Player> challenger1, ArrayList<Player> challenged1) {
+
+		int alreadyChallengerChallenged = isAlreadyIn(challenger1, challenged1);
+		int alreadyChallengedChallenger = isAlreadyIn(challenged1, challenger1);
+		
+		if (alreadyChallengerChallenged != Challenge.NO_ID)
+		{
+			return getChallenge(alreadyChallengerChallenged);
+		}
+		else if (alreadyChallengedChallenger != Challenge.NO_ID)
+		{
+			return getChallenge(alreadyChallengedChallenger);
+		}
+
+		String[] serverName = new String[challenger1.size() + challenged1.size()];
+		
+		int u = 0;
+		for(int i = 0;i<challenger1.size();i++)
+		{
+			serverName[u] = plugin.serverName;
+			u++;
+		}
+		
+		for(int i = 0;i<challenged1.size();i++)
+		{
+			serverName[u] = plugin.serverName;
+			u++;
+		}
+		
+		challenges.add(new Challenge(challenger1, challenged1, getID(),serverName));
+
+		
+		for(int i = 0;i<challenger1.size();i++)
+		{
+			addNumChallenges(challenger1.get(i));
+			setupSkull(challenger1.get(i), challenged1.get(0));
+		}
+		
+		for(int i = 0;i<challenged1.size();i++)
+		{
+			addNumChallenges(challenged1.get(i));
+			setupSkull(challenged1.get(i), challenger1.get(0));
+		}
+		
+		return challenges.get(challenges.size() - 1);
+	}
+	
+	private static int isAlreadyIn(ArrayList<Player> challenger1, ArrayList<Player> challenged1) {
+		
+		// Challenges durchgehen
+		for(int i = 0;i<challenges.size();i++)
+		{
+			Challenge c = challenges.get(i);
+			
+			boolean challengerNotFound = false;
+			boolean challengedNotFound = false;
+			
+			// Challenger durchgehen
+			for(int u  = 0;u<c.getChallengers().size();u++)
+			{
+				// Parameter Challenger durchgehen
+				for(int j = 0;j<challenger1.size();j++)
+				{
+					// Wenn Parameter ChallengerUUID nicht teil der Challengers dann Challenge überspringen
+					if(!c.getChallengersUUID().contains(challenger1.get(j).getUniqueId()))
+					{
+						challengerNotFound = true;
+						break;
+					}
+				}
+				if(challengerNotFound)
+				{
+					break;
+				}
+			}
+			if(challengerNotFound)
+			{
+				continue;
+			}
+			
+			// Das Gleiche mit Challenged
+			for(int u  = 0;u<c.getChallenged().size();u++)
+			{
+				for(int j = 0;j<challenged1.size();j++)
+				{
+					if(!c.getChallengedUUID().contains(challenged1.get(j).getUniqueId()))
+					{
+						challengedNotFound = true;
+						break;
+					}
+				}
+				if(challengedNotFound)
+				{
+					break;
+				}
+			}
+			
+			if(!challengedNotFound && !challengerNotFound)
+			{
+				return c.ID;
+			}
+			
+		}
+		
+		
+		return Challenge.NO_ID;
+	}
+
+	public static Challenge sendChallenge(Player challenger1, Player challenged1) {
+
+		if (isAlreadyIn(challenger1, challenged1) != Challenge.NO_ID)
+		{
+			return getChallenge(isAlreadyIn(challenger1, challenged1));
+		}
+		else if (isAlreadyIn(challenged1, challenger1) != Challenge.NO_ID)
+		{
+			return getChallenge(isAlreadyIn(challenged1, challenger1));
+		}
+		
+		ArrayList<Player> challengers = new ArrayList<Player>();
+		ArrayList<Player> challenged = new ArrayList<Player>();
+		
+		challengers.add(challenger1);
+		challenged.add(challenged1);
+		
+		challenges.add(new Challenge(challengers, challenged, getID()));
+
+		addNumChallenges(challenger1);
+		addNumChallenges(challenged1);
+
+		setupSkull(challenger1, challenged1);
+		setupSkull(challenged1, challenger1);
+
+		return challenges.get(challenges.size() - 1);
+	}
+	
+	/// TRUE Challenge existiert
+	/// FALSE Challenge existiert nicht
+	public static boolean deleteChallenge(int id, boolean setupskull) {
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			if (challenges.get(i).ID == id)
+			{
+				ArrayList<Player> challengers = challenges.get(i).getChallengers();
+				ArrayList<Player> challenged = challenges.get(i).getChallenged();
+
+				challenges.remove(i);
+
+				
+				for(int u = 0;u<challengers.size();u++)
+				{
+					decreaseNumChallenges(challengers.get(u));
+					
+					if (setupskull)
+					{
+						setupSkull(challengers.get(u), challenged.get(0));
+					}
+				}
+				
+				for(int u = 0;u<challenged.size();u++)
+				{
+					decreaseNumChallenges(challenged.get(u));
+					
+					if (setupskull)
+					{
+						setupSkull(challenged.get(u), challengers.get(0));
+					}
+				}
+				
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// Gibt Challengers/Challenged zurück
+	/// null Wenn keine Challenge vorhanden
+	public static ArrayList<Player> deleteChallenge(Player p, boolean setupskull) {
+		
+		ArrayList<Player> rv = new ArrayList<Player>();
+		
+		// Challenges durchgehen
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			
+				Challenge c = challenges.get(i);
+				int role = getRole(p, c);
+				
+				if(role != Challenge.NO_ID && role != Challenge.NO_ROLE) 
+				{
+					if(role == Challenge.IS_CHALLANGER)
+					{
+						rv = c.getChallenged();
+					}
+					else if(role == Challenge.IS_CHALLANGED)
+					{
+						rv = c.getChallengers();
+					}
+					
+					ArrayList<Player> challengers = c.getChallengers();
+					ArrayList<Player> challenged = c.getChallenged();
+					
+					challenges.remove(i);
+					
+					
+					for(Player ch : challengers)
+					{
+						decreaseNumChallenges(ch);
+						if (setupskull)
+							setupSkull(ch, challenged.get(0));
+					}
+					
+					for(Player ch : challenged)
+					{
+						decreaseNumChallenges(ch);
+						if (setupskull)
+							setupSkull(ch, challengers.get(0));
+					}
+					
+					return rv;
+				}
+		}
+
+		return null;
+	}
+
+	public static Challenge getChallenge(Player p) {
+		for (Challenge c : challenges)
+		{
+			int role = getRole(p,c);
+			if (role != Challenge.NO_ID && role != Challenge.NO_ROLE)
+			{
+				return c;
+			}
+		}
+
+		return null;
+	}
+
+	public static Challenge getChallenge(Player challenger1, Player challenged1) {
+		return getChallenge(isAlreadyIn(challenger1, challenged1));
+	}
+
+	public static int getRole(Player p, int id)
+	{
+		Challenge rv = getChallenge(id);
+		if (rv != null)
+		{
+			for(int i =0;i<rv.getChallengers().size();i++)
+			{
+				if(rv.getChallengers().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGER;
+				}
+			}
+			
+			for(int i =0;i<rv.getChallenged().size();i++)
+			{
+				if(rv.getChallenged().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGED;
+				}
+			}
+			
+			return Challenge.NO_ROLE;
+			
+		}
+		return Challenge.NO_ID;
+
+	}
+	
+	public static int getRole(Player p, Challenge c)
+	{
+		if (c != null)
+		{
+			for(int i =0;i<c.getChallengers().size();i++)
+			{
+				if(c.getChallengers().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGER;
+				}
+			}
+			
+			for(int i =0;i<c.getChallenged().size();i++)
+			{
+				if(c.getChallenged().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGED;
+				}
+			}
+			
+			return Challenge.NO_ROLE;
+			
+		}
+		return Challenge.NO_ID;
+
+	}
+
+	public static void setNum(Player p, int num) {
+		numChallenges.put(p.getUniqueId(), num);
+	}
+
+	public static void deleteNum(Player p) {
+		numChallenges.remove(p.getDisplayName());
+	}
+
+	public static ArrayList<Challenge> getChallenges(Player p) {
+		ArrayList<Challenge> challs = new ArrayList<Challenge>();
+
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			int role = getRole(p,challenges.get(i));
+			if(role != Challenge.NO_ID && role != Challenge.NO_ROLE)
+			{
+				challs.add(challenges.get(i));
+			}
+		}
+
+		return challs;
+
+	}
+}

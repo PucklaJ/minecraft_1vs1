@@ -1,0 +1,12 @@
+1468318583366	Rename method 'onSkullInteract'
+1468343783853	Rename method 'onCLick'
+1468345313152	Rename field 'mapSlot'
+1468345343542	Rename field 'teamSlot'
+1468347791288	Move compilation unit
+1468355665168	Delete element
+1468421420733	Delete element
+1468423730128	Rename field 'itemsInString'
+1468682311762	Rename field 'playersInWaitingsSnake'
+1468685251169	Rename type 'UploadPlayers'
+1468695849323	Encapsulate field 'we'
+1468695906531	Rename method 'getWe'

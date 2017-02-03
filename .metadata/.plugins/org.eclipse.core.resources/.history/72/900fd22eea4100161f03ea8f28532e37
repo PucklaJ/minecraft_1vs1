@@ -1,0 +1,543 @@
+package at.kingcraft.OnevsOne_arena.Listener;
+
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockFadeEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
+
+import at.kingcraft.OnevsOne_arena.MainClass;
+import at.kingcraft.OnevsOne_arena.Messenger;
+import at.kingcraft.OnevsOne_arena.Challenges.ChallangeManager;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+import at.kingcraft.OnevsOne_arena.Commands.EndmatchCommand;
+import at.kingcraft.OnevsOne_arena.Duels.Duel;
+import at.kingcraft.OnevsOne_arena.Duels.DuelManager;
+import at.kingcraft.OnevsOne_setup.Maps.Map;
+import at.kingcraft.OnevsOne_setup.Maps.MapManager;
+import at.kingcraft.OnevsOne_setup.Maps.SaveBlock;
+import net.md_5.bungee.api.ChatColor;
+
+public class DuelListener implements Listener {
+	
+	private MainClass plugin;
+	private boolean firstJoin = false;
+	private ArrayList<ArrayList<SaveBlock>> explosionBlocks = new ArrayList<>();
+	private BukkitTask explosionHandler = null;
+	
+	private static void setupDuelItems(Player p)
+	{
+		// TODO Kits
+		p.getInventory().clear();
+		
+		// Iron Sword
+		ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
+		p.getInventory().setItem(0,sword);
+		
+		// Armor
+		p.getEquipment().setHelmet(new ItemStack(Material.GOLD_HELMET));
+		p.getEquipment().setChestplate(new ItemStack(Material.GOLD_CHESTPLATE));
+		p.getEquipment().setLeggings(new ItemStack(Material.GOLD_LEGGINGS));
+		p.getEquipment().setBoots(new ItemStack(Material.GOLD_BOOTS));
+		
+	}
+	
+	public DuelListener(MainClass plugin)
+	{
+		this.plugin = plugin;
+	}
+	
+	@EventHandler
+	public void onJoin(PlayerJoinEvent e)
+	{
+		
+		Player p = e.getPlayer();
+		
+		if(!firstJoin)
+		{
+			firstJoin = true;
+			Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+				
+				@Override
+				public void run() {
+				
+					if(Messenger.sendMessage(p, "BungeeCord", "GetServer", null))
+					{
+						System.out.println("Started asking");
+					}
+					else
+					{
+						System.out.println("Asking failed");
+					}
+					
+					
+					
+				}
+			}, 20*1);
+			
+		}
+		
+		
+		
+		
+		
+		organizeSpawn(p);
+		
+		
+	}
+	
+	public static void setupSpawnStats(Player p)
+	{
+		// Setup the stats
+		p.setHealth(p.getMaxHealth());
+		p.setFoodLevel(20);
+		setupDuelItems(p);
+		p.setFireTicks(0);
+		p.setVelocity(new Vector(0.0, 0.0, 0.0));
+		for(PotionEffect pe : p.getActivePotionEffects())
+		{
+			p.removePotionEffect(pe.getType());
+		}
+		p.setFallDistance(0);
+		p.setExp(0);
+		p.setLevel(0);
+		p.setFlying(false);
+		p.setSprinting(false);
+	}
+	
+	private void organizeSpawn(Player p)
+	{
+		Challenge c;
+		
+		if(ChallangeManager.getAllChallenges().size() == 0)
+		{
+			c =  ChallangeManager.newChallenge(p,plugin.getMySQL(),plugin);
+		}
+		else
+		{
+			c = ChallangeManager.getChallenge(p);
+		}
+		
+		if(c == null)
+		{
+			p.sendMessage(ChatColor.RED +  "Keine Herausforderung");
+			p.teleport(p.getWorld().getSpawnLocation());
+		}
+		else
+		{
+
+				Map map = MapManager.getMap(c.arenaName);
+			
+				int role = ChallangeManager.getRole(p, c);
+				if(role != Challenge.NO_ID || role != Challenge.NO_ROLE)
+				{
+					if(map == null)
+					{
+						p.sendMessage(ChatColor.RED + "Hier sind keine Maps");
+						
+						loadMapIfNotThere(p,c);
+						
+						map = MapManager.getMap(c.arenaName);
+						
+					}
+					
+					
+					Duel d = DuelManager.newDuel(c);
+					
+					if(map != null)
+					{
+						if(role == Challenge.IS_CHALLANGER)
+						{
+							Location loc = new Location(p.getWorld(),map.getSpawn1().getX(),map.getSpawn1().getY(),map.getSpawn1().getZ(),
+									map.getSpawn1().getYaw(),map.getSpawn1().getPitch());
+							p.teleport(loc);
+							d.addPlayer(p, 1);
+						}
+						else if(role == Challenge.IS_CHALLANGED)
+						{
+							Location loc = new Location(p.getWorld(),map.getSpawn2().getX(),map.getSpawn2().getY(),map.getSpawn2().getZ(),
+									map.getSpawn2().getYaw(),map.getSpawn2().getPitch());
+							p.teleport(loc);
+							d.addPlayer(p, 2);
+						}
+					}
+					else
+					{
+						if(role == Challenge.IS_CHALLANGER)
+						{
+							d.addPlayer(p, 1);
+						}
+						else if(role == Challenge.IS_CHALLANGED)
+						{
+							d.addPlayer(p, 2);
+						}
+						
+						p.teleport(p.getWorld().getSpawnLocation());
+						
+						EndmatchCommand.teleportBackToLobby(c);
+					}
+					
+					
+				}
+				else
+				{
+					p.sendMessage(ChatColor.RED +  "Keine Rolle");
+					p.teleport(p.getWorld().getSpawnLocation());
+				}
+				
+		}
+	}
+
+	private boolean loadMapIfNotThere(Player p,Challenge c)
+	{
+		Location loc = null;
+		if(plugin.getMySQL().isConnected())
+		{
+			PreparedStatement ps;
+			
+			try
+			{
+				ps = plugin.getMySQL().getConnection().prepareStatement("SELECT X,Y,Z FROM Duel_Maps WHERE Name = ?");
+				ps.setString(1, c.arenaName);
+				ResultSet rs = ps.executeQuery();
+				while(rs.next())
+				{
+					loc = new Location(p.getWorld(),rs.getDouble(1),rs.getDouble(2),rs.getDouble(3));
+				}
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+		Map m = MapManager.loadMap(c.arenaName, loc);
+		if(loc == null)
+		{
+			System.out.println("[IMPORTANT] Couldn't load map " + c.arenaName);
+			System.out.println("[VERY IMPORTANT] Couldn't find map in MySQL");
+			return false;
+		}
+		if(m == null)
+		{
+			System.out.println("[IMPORTANT] Couldn't load map " + c.arenaName);
+			System.out.println("[VERY IMPORTANT] Maybe the file isn't there");
+			return false;
+		}
+		else
+		{
+			MapManager.addMap(m);
+			MapManager.writeToMapConfig(m);
+			m.reload(null, true);
+		}
+		
+		return true;
+		
+	}
+	
+	@EventHandler
+	public void onDeath(PlayerDeathEvent e)
+	{
+		Player p = e.getEntity();
+		Duel d = DuelManager.getDuel(p);
+		
+		if(d!= null)
+		{
+			int death = d.playerDeath(p);
+			if(death == Duel.P1 || death == Duel.P2)
+			{
+				String[] args = new String[0];
+				EndmatchCommand.endMatch(p, args,true);
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onMove(PlayerMoveEvent e)
+	{
+		Player p = e.getPlayer();
+		Duel d = DuelManager.getDuel(p);
+		
+		if(d!= null)
+		{
+			if(!d.isStarted())
+			{
+				p.setFlying(false);
+				p.setSprinting(false);
+				
+				int role = d.getRole(p);
+				
+				double distance;
+				Location pLoc = p.getLocation();
+				
+				if(role == Duel.P1)
+				{
+					Location loc = new Location(p.getWorld(),d.getMap().getSpawn1().getX(),d.getMap().getSpawn1().getY(),
+												d.getMap().getSpawn1().getZ(),d.getMap().getSpawn1().getYaw(),d.getMap().getSpawn1().getPitch());
+					
+					distance = loc.distance(pLoc);
+					
+					if(distance >= 1.0)
+						p.teleport(loc);
+				}
+				else if(role == Duel.P2)
+				{
+					Location loc = new Location(p.getWorld(),d.getMap().getSpawn2().getX(),d.getMap().getSpawn2().getY(),
+												d.getMap().getSpawn2().getZ(),d.getMap().getSpawn2().getYaw(),d.getMap().getSpawn2().getPitch());
+					
+					
+					distance = loc.distance(pLoc);
+					
+					if(distance >= 1.0)
+						p.teleport(loc);
+				}
+				else
+				{
+					p.teleport(p.getWorld().getSpawnLocation());
+				}
+			}
+		}
+	}
+	@EventHandler
+	public void onBurned(BlockBurnEvent e)
+	{
+		ArrayList<Map> maps = MapManager.getMaps();
+		
+		Duel d = DuelManager.getFirstDuel();
+		
+		for(int i = 0;i<maps.size();i++)
+		{
+			if(d == null)
+			{
+				e.setCancelled(true);
+			}
+			else if(!maps.get(i).getName().equals(d.getMap().getName()))
+			{
+				e.setCancelled(true);
+			}
+			else if(!maps.get(i).isInside(e.getBlock().getLocation()))
+			{
+				e.setCancelled(true);
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onBlockFade(BlockFadeEvent e)
+	{
+		ArrayList<Map> maps = MapManager.getMaps();
+		
+		Duel d = DuelManager.getFirstDuel();
+		
+		
+		
+		for(int i = 0;i<maps.size();i++)
+		{
+			if(d == null)
+			{
+				e.setCancelled(true);
+			}
+			else if(!maps.get(i).getName().equals(d.getMap().getName()))
+			{
+				e.setCancelled(true);
+			}
+			else if(!maps.get(i).isInside(e.getBlock().getLocation()))
+			{
+				e.setCancelled(true);
+			}
+		}
+		
+	}
+	
+	@EventHandler
+	public void onLeafDissapear(LeavesDecayEvent e)
+	{
+		ArrayList<Map> maps = MapManager.getMaps();
+		
+		Duel d = DuelManager.getFirstDuel();
+		
+		for(int i = 0;i<maps.size();i++)
+		{
+			if(d == null)
+			{
+				e.setCancelled(true);
+			}
+			else if(!maps.get(i).getName().equals(d.getMap().getName()))
+			{
+				e.setCancelled(true);
+			}
+			else if(!maps.get(i).isInside(e.getBlock().getLocation()))
+			{
+				e.setCancelled(true);
+			}
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	@EventHandler
+	public void onExplosion(EntityExplodeEvent e)
+	{
+		explosionBlocks.add(new ArrayList<SaveBlock>());
+		for(int i = 0;i<e.blockList().size();i++)
+		{
+			Block b = e.blockList().get(i);
+			Location loc = b.getLocation();
+			explosionBlocks.get(explosionBlocks.size()-1).add(new SaveBlock(loc.getX(),loc.getY(),loc.getZ(),b.getData(),b.getType()));
+		}
+		
+		if(explosionHandler == null)
+		{
+			explosionHandler = Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+			
+			for(int i = 0;i<explosionBlocks.size();i++)
+			{
+				ArrayList<SaveBlock> laterBlocks = new ArrayList<>();
+				for(int u = 0;u<explosionBlocks.get(i).size();u++)
+				{
+					Duel d = DuelManager.getFirstDuel();
+					if(d == null)
+					{
+						break;
+					}
+					SaveBlock b = explosionBlocks.get(i).get(u);
+					
+					Location loc = new Location(e.getEntity().getWorld(),b.x,b.y,b.z);
+					if(!d.getMap().isInside(loc))
+					{
+						if(Map.isPlaceLater(b.mat))
+						{
+							laterBlocks.add(b);
+							explosionBlocks.get(i).remove(u);
+							u--;
+							continue;
+						}
+						Block bl = e.getEntity().getWorld().getBlockAt(loc);
+						bl.setType(b.mat);
+						bl.setData(b.data);
+					}
+				}
+				explosionBlocks.remove(i);
+				i=-1;
+				
+				for(int j = 0;j<laterBlocks.size();j++)
+				{
+					SaveBlock b = laterBlocks.get(j);
+					Location loc = new Location(e.getEntity().getWorld(),b.x,b.y,b.z);
+					Block bl = e.getEntity().getWorld().getBlockAt(loc);
+					
+					bl.setType(b.mat);
+					bl.setData(b.data);
+					
+				}
+				
+				
+			}
+			
+			
+			explosionHandler = null;
+				
+			}
+		}, 2);
+		}
+		
+		
+	}
+	
+	@EventHandler
+	public void onLeave(PlayerQuitEvent e)
+	{
+		e.setQuitMessage("");
+		
+		EndmatchCommand.endMatch(e.getPlayer(), null, false);
+		
+		
+	}
+
+	@EventHandler
+	public void onDamage(EntityDamageEvent e)
+	{
+		if(e.getEntity() instanceof Player)
+		{
+			Player p = (Player)e.getEntity();
+			
+			Duel d = DuelManager.getDuel(p);
+			if(d!= null)
+			{
+				if(!d.isStarted())
+				{
+					if(e.getCause().equals(DamageCause.FIRE_TICK))
+					{
+						p.setFireTicks(0);
+					}
+					e.setCancelled(true);
+				}
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onBlockDestroy(BlockBreakEvent e)
+	{	
+		Block b = e.getBlock();
+		Player p = e.getPlayer();
+		Duel d = DuelManager.getDuel(p);
+		if(d != null)
+		{
+			Map map = d.getMap();
+			
+			if(!map.isInside(b.getLocation()))
+			{
+				e.setCancelled(true);
+			}
+		}
+	}
+	
+	
+	@EventHandler
+	public void onBlockPlace(BlockPlaceEvent e)
+	{
+		Block b = e.getBlock();
+		Player p = e.getPlayer();
+		Duel d = DuelManager.getDuel(p);
+		if(d != null)
+		{
+			Map map = d.getMap();
+			
+			if(!map.isInside(b.getLocation()))
+			{
+				e.setCancelled(true);
+			}
+		}
+	}
+
+}

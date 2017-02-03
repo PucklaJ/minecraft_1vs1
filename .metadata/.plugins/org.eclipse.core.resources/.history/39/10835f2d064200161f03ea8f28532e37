@@ -1,0 +1,159 @@
+package at.Kingcraft.OnevsOne_lobby.Duels;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+import org.bukkit.entity.Player;
+import net.md_5.bungee.api.ChatColor;
+
+public class Team
+{
+	private ArrayList<Player> players;
+	private ArrayList<UUID> playersUUID;
+	private Player leader;
+	private int id;
+	
+	public Team(Player p,int id)
+	{
+		players = new ArrayList<Player>();
+		playersUUID = new ArrayList<UUID>();
+		leader = p;
+		this.id = id;
+		
+		addPlayer(p);
+	}
+	
+	public int getID()
+	{
+		return id;
+	}
+	
+	public Player getLeader()
+	{
+		return leader;
+	}
+	
+	private void setLeader(Player p)
+	{
+		leader = p;
+	}
+	
+	public ArrayList<Player> getPlayers()
+	{
+		ArrayList<Player> rv = new ArrayList<>();
+		
+		rv.add(leader);
+		
+		for(int i = 0;i<players.size();i++)
+		{
+			if(!players.get(i).getUniqueId().equals(leader.getUniqueId()))
+			{
+				rv.add(players.get(i));
+			}
+		}
+		
+		return rv;
+	}
+	
+	public void addPlayer(Player p)
+	{
+		for(int i = 0;i<players.size();i++)
+		{
+			players.get(i).sendMessage(ChatColor.GREEN + p.getDisplayName() + ChatColor.YELLOW + " ist dem Team beigetreten");
+		}
+		
+		players.add(p);
+		playersUUID.add(p.getUniqueId());
+		
+		ArrayList<TeamEnquiry> te = TeamEnquiryManager.getEnquiries(leader);
+		for(int i = 0;i<te.size();i++)
+		{
+			TeamEnquiryManager.setupEnquiryMenuTeam(te.get(i).getReciever());
+		}
+		
+		ArrayList<Challenge> cs = ChallangeManager.getChallenges(leader);
+		
+		for(int i = 0;i<cs.size();i++)
+		{
+			int role = ChallangeManager.getRole(leader, cs.get(i));
+			if(role == Challenge.IS_CHALLANGED)
+			{
+				cs.get(i).addPlayer(p, false);
+			}
+			else if(role == Challenge.IS_CHALLANGER)
+			{
+				cs.get(i).addPlayer(p, true);
+			}
+			
+		}
+		
+	}
+	
+	public boolean removePlayer(Player p)
+	{
+		return removePlayer(p.getUniqueId());
+	}
+	
+	public boolean removePlayer(UUID u)
+	{
+		Player p = null;
+		
+		for(int i = 0;i<playersUUID.size();i++)
+		{
+			if(playersUUID.get(i).equals(u))
+			{
+				p = players.get(i);
+				playersUUID.remove(i);
+				players.remove(i);
+				
+				break;
+			}
+		}
+		
+		for(int i = 0;i<players.size();i++)
+		{
+			players.get(i).sendMessage(ChatColor.GREEN + p.getDisplayName() + ChatColor.YELLOW + " hat das Team verlassen");
+		}
+		
+		ArrayList<Challenge> cs = ChallangeManager.getChallenges(leader);
+		for(int i = 0;i<cs.size();i++)
+		{
+			System.out.println("Remove Player: " + p.getDisplayName());
+			cs.get(i).removePlayer(p);
+		}
+		
+		
+		if(players.size() == 1 || players.size() == 0)
+		{
+			TeamEnquiryManager.deleteEnquiries(leader,true);
+			players.get(0).sendMessage(ChatColor.RED + "Team wird aufgrund der Spieleranzahl aufgelöst");
+			return false;
+		}
+		
+		if(u.equals(leader.getUniqueId()))
+		{
+				setLeader(players.get(0));
+				players.get(0).sendMessage(ChatColor.YELLOW + "Du bist jetzt der neue Teamleiter");
+		}
+		
+		return true;
+		
+	}
+	
+	public boolean isPartOf(Player p)
+	{
+		for(int i = 0;i<playersUUID.size();i++)
+		{
+			if(playersUUID.get(i).equals(p.getUniqueId()))
+			{
+				return true;
+			}
+		}
+		if(leader.getUniqueId().equals(p.getUniqueId()))
+		{
+			return true;
+		}
+		
+		return false;
+	}
+}

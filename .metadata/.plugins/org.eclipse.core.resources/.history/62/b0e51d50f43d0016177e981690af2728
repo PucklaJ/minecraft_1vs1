@@ -1,0 +1,26 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.entity.Player;
+
+public class MenuManager {
+
+	private static HashMap<UUID,SettingMenu> settingMenus;
+	
+	public static void setup()
+	{
+		settingMenus = new HashMap<>();
+	}
+	
+	public static void addSettingMenu(Player owner)
+	{
+		settingMenus.put(owner.getUniqueId(),new SettingMenu(owner));
+	}
+	
+	public static SettingMenu getSettingMenu(Player owner)
+	{
+		return settingMenus.get(owner.getUniqueId());
+	}
+}

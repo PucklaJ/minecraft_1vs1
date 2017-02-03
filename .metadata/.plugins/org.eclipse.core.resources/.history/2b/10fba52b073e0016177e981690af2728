@@ -1,0 +1,72 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+
+public class SettingMenu {
+
+	private Inventory inventory;
+	private Player owner;
+	private MapMenu mapMenu;
+	private int mapSlot;
+	
+	public SettingMenu(Player owner,MainClass plugin)
+	{
+		mapMenu = new MapMenu(owner);
+		this.owner = owner;
+		inventory = Bukkit.createInventory(owner, 27,"Einstellungen");
+		setInventoryContents(plugin);
+	}
+	
+	private void setInventoryContents(MainClass plugin)
+	{
+		ItemStack[] contents = new ItemStack[inventory.getSize()];
+		
+		for(int i = 0;i<inventory.getSize();i++)
+		{
+			ItemStack is = new ItemStack(Material.STAINED_GLASS_PANE,1,(byte)15);
+			ItemMeta im = is.getItemMeta();
+			im.setDisplayName(" ");
+			is.setItemMeta(im);
+			contents[i] = is.clone();
+		}
+		
+		mapSlot = plugin.getConfig().getInt("OnevsOne.Lobby.Items.Settings.Maps.Slot");
+		
+		contents[mapSlot].setType(Material.getMaterial(plugin.getConfig().getString("OnevsOne.Lobby.Items.Settings.Maps.Material")));
+		contents[mapSlot].setDurability((short)plugin.getConfig().getInt("OnevsOne.Lobby.Items.Settings.Maps.Durability"));
+		ItemMeta im = contents[mapSlot].getItemMeta();
+		im.setDisplayName(plugin.getConfig().getString("OnevsOne.Lobby.Items.Settings.Maps.Text"));
+		contents[mapSlot].setItemMeta(im);
+		
+		inventory.setContents(contents);
+	}
+	
+	public void open()
+	{
+		owner.openInventory(inventory);
+	}
+	
+	public MapMenu getMapMenu()
+	{
+		return mapMenu;
+	}
+	
+	public void onClick(int slot,ClickType ct)
+	{
+		if(slot == mapSlot)
+		{
+			if(ct.isLeftClick())
+			{
+				mapMenu.open();
+			}
+		}
+	}
+}

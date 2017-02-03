@@ -1,0 +1,58 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import net.md_5.bungee.api.ChatColor;
+
+public class MenuManager {
+
+	private static HashMap<UUID,SettingMenu> settingMenus;
+	private static MainClass plugin;
+	
+	public static void setup(MainClass plugin)
+	{
+		MenuManager.plugin = plugin;
+		settingMenus = new HashMap<>();
+	}
+	
+	public static void addSettingMenu(Player owner)
+	{
+		settingMenus.put(owner.getUniqueId(),new SettingMenu(owner,plugin));
+	}
+	
+	public static void deleteSettingMenu(Player owner)
+	{
+		settingMenus.remove(owner.getUniqueId());
+	}
+	
+	public static SettingMenu getSettingMenu(Player owner)
+	{
+		return settingMenus.get(owner.getUniqueId());
+	}
+	
+	public void updateAllMapMenus()
+	{
+		
+	}
+	
+	public static void giveSettingItem(Player p)
+	{
+		ItemStack is = new ItemStack(Material.getMaterial(plugin.getConfig().getString("OnevsOne.Lobby.Items.Settings.Material")));
+		ItemMeta im = is.getItemMeta();
+		im.setDisplayName(plugin.getConfig().getString("OnevsOne.Lobby.Items.Settings.Text"));
+		ArrayList<String> lore = new ArrayList<>();
+		lore.add(ChatColor.YELLOW + "RECHTS" + ChatColor.WHITE + "-Klick öffnet die Einstellungen");
+		im.setLore(lore);
+		is.setItemMeta(im);
+		
+		p.getInventory().setItem(plugin.getConfig().getInt("OnevsOne.Lobby.Items.Settings.HotbarPosition"), is);
+	}
+}

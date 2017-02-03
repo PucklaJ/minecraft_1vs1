@@ -1,0 +1,135 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import MySQL.MySQL;
+import net.minecraft.server.v1_8_R3.Material;
+
+public class Kit
+{
+	private ArrayList<KitItem> items;
+	private Player owner;
+	boolean needsMySQLUpdate = false;
+	private final int number;
+	
+	public Kit(Player owner,int number)
+	{
+		items = new ArrayList<>();
+		this.owner = owner;
+		this.number = number;
+	}
+	
+	public void addItem(int slot,ItemStack is)
+	{
+		items.add(new KitItem(slot,is));
+	}
+	
+	public void getItemsFromInventory(Inventory inv)
+	{
+		items.clear();
+		needsMySQLUpdate = true;
+		for(int i = 0;i<inv.getSize();i++)
+		{
+			if(inv.getItem(i) != null && !inv.getItem(i).getType().equals(Material.AIR))
+			{
+				addItem(i,inv.getItem(i));
+			}
+		}
+	}
+	
+	public void loadToMySQL(MySQL mysql)
+	{
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, owner.getUniqueId().toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			ps.close();
+			if(!rs.first())
+			{
+				ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_Kits (UUID,Kit1,Kit2,Kit3,Kit4,Kit5) VALUES (?,?,?,?,?,?)");
+				ps.setString(1, owner.getUniqueId().toString());
+				for(int i = 2;i<=6;i++)
+				{
+					if(i == number+1)
+					{
+						ps.setString(i, itemsToString());
+					}
+					else
+					{
+						ps.setString(i, "null");
+					}
+				}
+				
+			}
+			else
+			{
+				ps.close();
+				ps = mysql.getConnection().prepareStatement("UPDATE Duel_Kits SET Kit? = ? WHERE UUID = ?");
+				ps.setString(1, String.valueOf(number));
+			}
+		}
+		catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void kitItemsToInventory(Inventory inv)
+	{
+		inv.clear();
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			inv.setItem(items.get(i).getSlot(), items.get(i).getItem());
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public String itemsToString()
+	{
+		String strItems = "";
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			ItemStack is = items.get(i).getItem();
+			strItems += is.getType().getId() + "(" + is.getAmount() + ";" + is.getDurability() + "#";
+			
+			Map<Enchantment,Integer> mp = is.getEnchantments();
+			
+			Iterator<Map.Entry<Enchantment, Integer>> it = mp.entrySet().iterator();
+			
+			while(it.hasNext())
+			{
+				Map.Entry<Enchantment,Integer> pair = (Map.Entry<Enchantment, Integer>)it.next();
+				strItems += pair.getKey().getId() + ";" + pair.getValue() + "|";
+			}
+			
+			strItems += "#";
+			
+			strItems += (!(is.getItemMeta() == null) ? is.getItemMeta().getDisplayName() : "") + ")\n";
+			
+			
+		}
+		
+		return strItems;
+	}
+	
+	public Player getOwner()
+	{
+		return owner;
+	}
+}

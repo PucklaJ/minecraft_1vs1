@@ -1,0 +1,60 @@
+package at.kingcraft.OnevsOne_arena;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.PluginMessageListener;
+
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+
+public class Messenger implements PluginMessageListener {
+
+	private static JavaPlugin plugin;
+	
+	public static void setup(JavaPlugin plugin)
+	{
+		Messenger.plugin = plugin;
+	}
+	
+	@Override
+	public void onPluginMessageReceived(String channel, Player p, byte[] msg)
+	{
+		
+		
+	}
+	
+	public static boolean sendMessage(Player p,String plugin,String subChannel,String[] args)
+	{
+		ByteArrayDataOutput bo = ByteStreams.newDataOutput();
+		bo.writeUTF(subChannel);
+		
+		if(args != null)
+		{
+			for(int i = 0;i<args.length;i++)
+			{
+				bo.writeUTF(args[i]);
+			}
+		}
+		
+		
+		if(p == null)
+		{
+			if(Messenger.plugin.getServer().getOnlinePlayers().isEmpty())
+			{
+				return false;
+			}
+			p=(Player) Messenger.plugin.getServer().getOnlinePlayers().toArray()[0];
+			if(p == null)
+			{
+				return false;
+			}
+		}
+		
+		p.sendPluginMessage(Messenger.plugin, plugin, bo.toByteArray());
+		
+		return true;
+	}
+
+}

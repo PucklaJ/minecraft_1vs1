@@ -1,0 +1,13 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import java.util.ArrayList;
+
+public class MenuManager {
+
+	private ArrayList<SettingMenu> settingMenus;
+	
+	public static void setup()
+	{
+		settingMenus = new ArrayList<>();
+	}
+}

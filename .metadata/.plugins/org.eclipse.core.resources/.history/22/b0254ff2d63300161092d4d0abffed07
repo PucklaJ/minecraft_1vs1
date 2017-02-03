@@ -1,0 +1,98 @@
+package at.Kingcraft.OnevsOne_lobby.Duels;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.bukkit.entity.Player;
+
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.Arenas.Arena;
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+
+
+public class DuelManager {
+	
+	private static MySQL mysql;
+	private static MainClass plugin;
+	
+	public static void setup(MySQL mysql,MainClass plugin)
+	{
+		DuelManager.mysql = mysql;
+		DuelManager.plugin = plugin;
+	}
+	
+	public static boolean sendDuelToSQL(Challenge c,Arena a)
+	{
+		
+		// Überprüfen ob Challenge schon vorhanden
+		try
+		{
+			PreparedStatement ps1 = mysql.getConnection().prepareStatement("SELECT ChallengeID FROM Duel_Challenges WHERE ChallengeID = ?");
+			ps1.setInt(1, c.ID);
+			ResultSet rs1 = ps1.executeQuery();
+			if(rs1.first())
+			{
+				return false;
+			}
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		
+		
+		// Example: pvparena-1 Send challenger1 challenger2 ; challenged1 challenged2 ; arenaName
+		
+		ArrayList<Player> challengers = c.getChallengers();
+		ArrayList<Player> challenged = c.getChallenged();
+		
+		String uuid1="",uuid2="",arenaName="",names1="",names2="";
+		int cID = c.ID;
+		
+		for(int i = 0;i<challengers.size();i++)
+		{
+			uuid1 += challengers.get(i).getUniqueId().toString() + "|";
+			names1 += challengers.get(i).getDisplayName() + "|";
+		}
+		
+		for(int i = 0;i<challenged.size();i++)
+		{
+			uuid2 += challenged.get(i).getUniqueId().toString() + "|";
+			names2 += challenged.get(i).getDisplayName() + "|";
+		}
+		
+		arenaName = a.getArena();
+		
+		if(mysql.isConnected())
+		{
+			try
+			{
+				System.out.println("Sends to MySQL");
+				 PreparedStatement ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_Challenges (ChallengerUUID,ChallengedUUID,ChallengerName,ChallengedName,ArenaName,ChallengeID,ServerName) VALUES (?,?,?,?,?,?,?)");
+				ps.setString(1, uuid1);
+				ps.setString(2, uuid2);
+				ps.setString(3, names1);
+				ps.setString(4, names2);
+				ps.setString(5, arenaName);
+				ps.setInt(6, cID);
+				ps.setString(7, plugin.serverName);
+				
+				ps.executeUpdate();
+				
+				return true;
+			}
+			catch (SQLException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
+		
+	}
+}

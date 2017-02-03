@@ -1,0 +1,17 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+
+public class SettingMenu {
+
+	private Inventory inventory;
+	private Player owner;
+	
+	public SettingMenu(Player owner)
+	{
+		this.owner = owner;
+		inventory = Bukkit.createInventory(owner, 27);
+	}
+}

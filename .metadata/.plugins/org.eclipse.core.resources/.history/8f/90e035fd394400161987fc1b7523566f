@@ -1,0 +1,163 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import MySQL.MySQL;
+import net.minecraft.server.v1_8_R3.Material;
+
+public class Kit
+{
+	private ArrayList<KitItem> items;
+	private Player owner;
+	boolean needsMySQLUpdate = false;
+	private final int number;
+	
+	public Kit(Player owner,int number)
+	{
+		items = new ArrayList<>();
+		this.owner = owner;
+		this.number = number;
+	}
+	
+	public void addItem(int slot,ItemStack is)
+	{
+		items.add(new KitItem(slot,is,false));
+	}
+	
+	public void addEquipment(int slot,ItemStack is)
+	{
+		items.add(new KitItem(slot,is,true));
+	}
+	
+	public void getItemsFromInventory(Inventory inv)
+	{
+		items.clear();
+		needsMySQLUpdate = true;
+		for(int i = 0;i<inv.getSize();i++)
+		{
+			if(inv.getItem(i) != null && !inv.getItem(i).getType().equals(Material.AIR))
+			{
+				addItem(i,inv.getItem(i));
+			}
+		}
+	}
+	
+	public void loadToMySQL(MySQL mysql)
+	{
+		if(!mysql.isConnected() || !needsMySQLUpdate)
+			return;
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, owner.getUniqueId().toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.first())
+			{
+				ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_Kits (UUID,Kit1,Kit2,Kit3,Kit4,Kit5) VALUES (?,?,?,?,?,?)");
+				ps.setString(1, owner.getUniqueId().toString());
+				for(int i = 2;i<=6;i++)
+				{
+					if(i == number+1)
+					{
+						ps.setString(i, itemsToString());
+					}
+					else
+					{
+						ps.setString(i, "null");
+					}
+				}
+				
+				ps.executeUpdate();
+			}
+			else
+			{
+				ps.close();
+				String query =  "UPDATE Duel_Kits SET Kit" + number + " = '" + itemsToString() + "' WHERE UUID = '" + owner.getUniqueId().toString() + "'";
+				ps = mysql.getConnection().prepareStatement(query);
+				
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		needsMySQLUpdate = false;
+	}
+	
+	public void kitItemsToInventory(Player p)
+	{
+		p.getInventory().clear();
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			if(items.get(i).isEquipment())
+			{
+				switch(items.get(i).getSlot())
+				{
+				case 0:
+					break;
+				case 1:
+					break;
+				case 2:
+					break;
+				case 3:
+					break;
+				}
+			}
+			else
+			{
+				p.getInventory().setItem(items.get(i).getSlot(), items.get(i).getItem());
+			}
+			
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public String itemsToString()
+	{
+		String strItems = "";
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			ItemStack is = items.get(i).getItem();
+			strItems += is.getType().getId() + "(" + (items.get(i).isEquipment() ? "e" : "") + items.get(i).getSlot() + ";" + is.getAmount() + ";" + is.getDurability() + "#";
+			
+			Map<Enchantment,Integer> mp = is.getEnchantments();
+			
+			Iterator<Map.Entry<Enchantment, Integer>> it = mp.entrySet().iterator();
+			
+			while(it.hasNext())
+			{
+				Map.Entry<Enchantment,Integer> pair = (Map.Entry<Enchantment, Integer>)it.next();
+				strItems += pair.getKey().getId() + ";" + pair.getValue() + "|";
+			}
+			
+			strItems += "#";
+			
+			strItems += (!(is.getItemMeta() == null) ? is.getItemMeta().getDisplayName() : "") + ")\n";
+			
+			
+		}
+		
+		return strItems;
+	}
+	
+	public Player getOwner()
+	{
+		return owner;
+	}
+}

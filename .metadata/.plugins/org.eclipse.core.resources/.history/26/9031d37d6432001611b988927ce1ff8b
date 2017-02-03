@@ -1,0 +1,290 @@
+package at.kingcraft.OnevsOne_arena.Challenges;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.entity.Player;
+
+
+import MySQL.MySQL;
+import net.md_5.bungee.api.ChatColor;
+
+public class ChallangeManager {
+	private static ArrayList<Challenge> challenges = new ArrayList<Challenge>();
+
+	private static Challenge getChallenge(int id) {
+		if (id == Challenge.NO_ID)
+			return null;
+
+		for (Challenge c : challenges)
+		{
+			if (c.ID == id)
+				return c;
+		}
+		return null;
+	}
+
+	private static int isAlreadyIn(Player challenger1, Player challenged1) {
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			Challenge c = challenges.get(i);
+			
+			if (c.getChallengersUUID().contains(challenger1.getUniqueId())
+				&& c.getChallengedUUID().contains(challenged1.getUniqueId()))
+			{
+				return c.ID;
+			}
+		}
+
+		return Challenge.NO_ID;
+	}
+
+	private static ArrayList<UUID> decodeUUIDMySQL(String str)
+	{
+		ArrayList<UUID> uuis =  new ArrayList<UUID>();
+		
+		int i = 0;
+		String uuid = "";
+		while(i < str.length())
+		{
+			uuid = "";
+			for(i=0;str.charAt(i)!= '|';i++)
+			{
+				uuid+=str.charAt(i);
+			}
+			
+			uuis.add(UUID.fromString(uuid));
+		}
+		
+		return uuis;
+		
+		
+		
+	}
+	
+	public static Challenge newChallenge(Player p,MySQL mysql)
+	{
+		if(mysql.isConnected())
+		{
+			try
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT * FROM Duel_Challenges");
+				ResultSet rs = ps.executeQuery();
+				
+				String challengerUUID="",challengedUUID="";
+				int id;String arenaName ="";
+				
+				while(rs.next())
+				{
+					challengerUUID = rs.getString(1);
+					challengedUUID = rs.getString(2);
+					arenaName = rs.getString(5);
+					id = rs.getInt(6);
+					if(challengerUUID.contains(p.getUniqueId().toString()))
+					{
+						ArrayList<UUID> challenger = decodeUUIDMySQL(challengerUUID);
+						ArrayList<UUID> challenged = decodeUUIDMySQL(challengedUUID);
+						
+						challenges.add(new Challenge(challenger, challenged,arenaName,id));
+						
+						return challenges.get(challenges.size()-1);
+					}
+					else if(challengedUUID.contains(p.getUniqueId().toString()))
+					{
+						ArrayList<UUID> challenger = decodeUUIDMySQL(challengerUUID);
+						ArrayList<UUID> challenged = decodeUUIDMySQL(challengedUUID);
+						
+						challenges.add(new Challenge(challenger, challenged,arenaName,id));
+						
+						return challenges.get(challenges.size()-1);
+					}
+				}
+				
+				return null;
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+				return null;
+			}
+			
+		}
+		
+		return null;
+		
+	}
+
+	public static void tellRefuse(Player challenger1, Player challenged1) {
+		challenger1.sendMessage(ChatColor.YELLOW + "Challenge zurueckgezogen");
+		challenged1.sendMessage(ChatColor.GREEN + challenger1.getDisplayName() + ChatColor.YELLOW + " hat die Challenge abgelehnt");
+	}
+
+	
+	public static ArrayList<Challenge> getAllChallenges()
+	{
+		return challenges;
+	}
+	
+	/// TRUE Challenge existiert
+	/// FALSE Challenge existiert nicht
+	public static boolean deleteChallenge(int id) {
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			if (challenges.get(i).ID == id)
+			{
+
+				challenges.remove(i);
+
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// Gibt Challengers/Challenged zurück
+	/// null Wenn keine Challenge vorhanden
+	public static ArrayList<Player> deleteChallenge(Player p) {
+		
+		ArrayList<Player> rv = new ArrayList<Player>();
+		
+		// Challenges durchgehen
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			
+				Challenge c = challenges.get(i);
+				int role = getRole(p, c);
+				
+				if(role != Challenge.NO_ID && role != Challenge.NO_ROLE) 
+				{
+					if(role == Challenge.IS_CHALLANGER)
+					{
+						rv = c.getChallenged();
+					}
+					else if(role == Challenge.IS_CHALLANGED)
+					{
+						rv = c.getChallengers();
+					}
+					
+					ArrayList<Player> challengers = c.getChallengers();
+					ArrayList<Player> challenged = c.getChallenged();
+					
+					challenges.remove(i);
+					
+					
+					for(Player ch : challengers)
+					{
+						decreaseNumChallenges(ch);
+					}
+					
+					for(Player ch : challenged)
+					{
+						decreaseNumChallenges(ch);
+					}
+					
+					return rv;
+				}
+		}
+
+		return null;
+	}
+
+	public static Challenge getChallenge(Player p) {
+		for (Challenge c : challenges)
+		{
+			int role = getRole(p,c);
+			if (role != Challenge.NO_ID && role != Challenge.NO_ROLE)
+			{
+				return c;
+			}
+		}
+
+		return null;
+	}
+
+	public static Challenge getChallenge(Player challenger1, Player challenged1) {
+		return getChallenge(isAlreadyIn(challenger1, challenged1));
+	}
+
+	public static int getRole(Player p, int id)
+	{
+		Challenge rv = getChallenge(id);
+		if (rv != null)
+		{
+			for(int i =0;i<rv.getChallengers().size();i++)
+			{
+				if(rv.getChallengers().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGER;
+				}
+			}
+			
+			for(int i =0;i<rv.getChallenged().size();i++)
+			{
+				if(rv.getChallenged().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGED;
+				}
+			}
+			
+			return Challenge.NO_ROLE;
+			
+		}
+		return Challenge.NO_ID;
+
+	}
+	
+	public static int getRole(Player p, Challenge c)
+	{
+		if (c != null)
+		{
+			for(int i =0;i<c.getChallengers().size();i++)
+			{
+				if(c.getChallengers().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGER;
+				}
+			}
+			
+			for(int i =0;i<c.getChallenged().size();i++)
+			{
+				if(c.getChallenged().get(i).getUniqueId() == p.getUniqueId())
+				{
+					return Challenge.IS_CHALLANGED;
+				}
+			}
+			
+			return Challenge.NO_ROLE;
+			
+		}
+		return Challenge.NO_ID;
+
+	}
+
+	public static void setNum(Player p, int num) {
+		numChallenges.put(p.getUniqueId(), num);
+	}
+
+	public static void deleteNum(Player p) {
+		numChallenges.remove(p.getDisplayName());
+	}
+
+	public static ArrayList<Challenge> getChallenges(Player p) {
+		ArrayList<Challenge> challs = new ArrayList<Challenge>();
+
+		for (int i = 0; i < challenges.size(); i++)
+		{
+			int role = getRole(p,challenges.get(i));
+			if(role != Challenge.NO_ID && role != Challenge.NO_ROLE)
+			{
+				challs.add(challenges.get(i));
+			}
+		}
+
+		return challs;
+
+	}
+}

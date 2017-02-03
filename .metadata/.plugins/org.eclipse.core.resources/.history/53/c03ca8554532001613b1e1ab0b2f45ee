@@ -1,0 +1,30 @@
+package at.Kingcraft.OnevsOne_lobby.Arenas;
+
+import org.bukkit.entity.Player;
+
+public class Arena {
+
+	private int ID;
+	private String server;
+	
+	public Arena(String server,int ID)
+	{
+		this.server = server;
+		this.ID = ID;
+	}
+
+	public String getServer() {
+		return server;
+	}
+
+	public int getID() {
+		return ID;
+	}
+	
+	public void teleport(Player p)
+	{
+		//TODO Send Player to server
+	}
+
+
+}

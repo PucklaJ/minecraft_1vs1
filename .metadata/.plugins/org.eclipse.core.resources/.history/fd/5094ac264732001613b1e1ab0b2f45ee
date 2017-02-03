@@ -1,0 +1,106 @@
+package at.Kingcraft.OnevsOne_lobby.Arenas;
+
+import java.util.ArrayList;
+import java.util.Random;
+
+public class ArenaManager {
+	
+	public static final int NO_ARENA = 0;
+	public static final int FREE_ARENA = 1;
+	
+	private static ArrayList<Arena> freeArenas = new ArrayList<Arena>();
+	private static ArrayList<Arena> usedArenas = new ArrayList<Arena>();
+	private static ArrayList<String> freeArenasString = new ArrayList<String>();
+	private static ArrayList<String> usedArenasString = new ArrayList<String>();
+	
+	public static Arena giveArena()
+	{
+		if(freeArenas.size() == 0)
+		{
+			return null;
+		}
+		
+		usedArenas.add(freeArenas.get(0));
+		freeArenas.remove(0);
+		
+		return usedArenas.get(usedArenas.size()-1);
+	}
+	
+	public static void startServer(String server)
+	{
+		// TODO Start Server
+		
+		if(usedArenasString.contains(server) || freeArenasString.contains(server))
+		{
+			return;
+		}
+		
+		freeArenas.add(new Arena(server,getID()));
+		freeArenasString.add(server);
+	}
+	public static void stopServer(String server)
+	{
+		// TODO Stop Server
+		
+		for(int i =0;i<usedArenas.size();i++)
+		{
+			if(usedArenas.get(i).getServer().equals(server))
+			{
+				usedArenas.remove(i);
+			}
+		}
+		
+		for(int i =0;i<freeArenas.size();i++)
+		{
+			if(freeArenas.get(i).getServer().equals(server))
+			{
+				freeArenas.remove(i);
+			}
+		}
+		
+		
+		for(int i =0;i<usedArenasString.size();i++)
+		{
+			if(usedArenasString.get(i).equals(server))
+			{
+				usedArenasString.remove(i);
+			}
+		}
+		
+		for(int i =0;i<freeArenasString.size();i++)
+		{
+			if(freeArenasString.get(i).equals(server))
+			{
+				freeArenasString.remove(i);
+			}
+		}
+	}
+
+	
+	private static int getID()
+	{
+		Random r = new Random();
+		int id = -1;
+		
+		do
+		{
+			id = r.nextInt(Integer.MAX_VALUE);
+			
+		}while(id == NO_ARENA || id == FREE_ARENA);
+		
+		for(int i =0;i<freeArenas.size();i++)
+		{
+			if(id == freeArenas.get(i).getID())
+			{
+				do
+				{
+					id = r.nextInt(Integer.MAX_VALUE);
+					
+				}while(id == NO_ARENA || id == FREE_ARENA);
+				i=-1;
+			}
+		}
+		
+		return id;
+	}
+}

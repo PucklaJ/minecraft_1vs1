@@ -1,0 +1,32 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+
+import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
+
+public class RankedMenu extends Menu
+{
+	private static final int KIT1_POS = 11;
+	private static final int KIT2_POS = 13;
+	private static final int KIT3_POS = 15;
+	
+	public RankedMenu(Player owner)
+	{
+		super(owner, 27, "Ranked", null);
+	}
+	
+	@Override
+	protected void setInventoryContents()
+	{
+		Kit kit1;
+		Kit kit2;
+		Kit kit3;
+	}
+
+	@Override
+	public void onClick(int slot, ClickType ct)
+	{
+		
+	}
+}

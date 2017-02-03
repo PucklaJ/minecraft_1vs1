@@ -1,0 +1,5 @@
+package at.kingcraft.OnevsOne_bridge.Messaging;
+
+public class Messenger {
+
+}

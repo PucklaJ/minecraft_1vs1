@@ -1,0 +1,420 @@
+package at.kingcraft.OnevsOne_setup.Commands;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import at.kingcraft.OnevsOne_setup.MainClass;
+import at.kingcraft.OnevsOne_setup.Maps.Map;
+import at.kingcraft.OnevsOne_setup.Maps.MapManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class MapCommand implements CommandExecutor {
+
+	private Location startPoint;
+	private Location endPoint;
+	private boolean Glass;
+	private String bMat;
+	private boolean inside;
+	private Location firstBlock;
+	private Location midBlock;
+	@SuppressWarnings("unused")
+	private MainClass plugin;
+	private String symbol;
+	
+	public MapCommand(MainClass plugin) {
+		this.plugin = plugin;
+		symbol = "";
+	} 
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args) {
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		
+		
+		Player me = (Player) sender;
+		
+		if(!me.hasPermission("world.*"))
+		{
+			me.sendMessage(ChatColor.RED + "Du hast keine Permission!");
+			return true;
+		}
+		
+		
+		
+		if(args.length == 2) // start <mapname> | startpoint <mapname> | load <mapname> 
+		{
+			if(args[0].equalsIgnoreCase("startpoint"))
+			{
+				return startpoint(me,args,true,"GLASS",false);
+			}
+			else if(args[0].equalsIgnoreCase("load"))
+			{
+				return load(me,args);
+			}
+			else if(args[0].equalsIgnoreCase("clear"))
+			{
+				return clear(me,args);
+			}
+			
+		}
+		else if(args.length == 1) // end | endpoint | write | setspawn1 | setspawn2 | setmid | finish
+		{
+			if(args[0].equalsIgnoreCase("end"))
+			{
+				return end(me,Glass,bMat,inside,symbol);
+			}
+			else if(args[0].equalsIgnoreCase("write"))
+			{
+				return write(me);
+			}
+			else if(args[0].equalsIgnoreCase("finish"))
+			{
+				return finish(me);
+			}
+			else if(args[0].equalsIgnoreCase("endpoint"))
+			{
+				return endpoint(me);
+			}
+			else if(args[0].equalsIgnoreCase("setspawn1"))
+			{
+				return setspawn(me,1);
+			}
+			else if(args[0].equalsIgnoreCase("setspawn2"))
+			{
+				return setspawn(me,2);
+			}
+			else if(args[0].equalsIgnoreCase("setmid"))
+			{
+				return setMid(me);
+			}
+			else if(args[0].equalsIgnoreCase("reload"))
+			{
+				return reload(me);
+			}
+				
+				
+		}
+		else if(args.length == 3)
+		{
+			if(args[0].equalsIgnoreCase("startpoint"))
+			{
+				if(args[2].equalsIgnoreCase("true") || args[2].equalsIgnoreCase("false"))
+				{
+					return startpoint(me, args, args[2].equalsIgnoreCase("true") ? true : false,"GLASS",false);
+				}
+			}
+		}
+		else if(args.length == 4)
+		{
+			if(args[0].equalsIgnoreCase("startpoint"))
+			{
+				if(args[2].equalsIgnoreCase("true") || args[2].equalsIgnoreCase("false"))
+				{
+					return startpoint(me, args, args[2].equalsIgnoreCase("true") ? true : false,args[3],false);
+				}
+			}
+		}
+		else if(args.length == 5)
+		{
+			if(args[0].equalsIgnoreCase("startpoint"))
+			{
+				if(args[2].equalsIgnoreCase("true") || args[2].equalsIgnoreCase("false"))
+				{
+					if(args[4].equalsIgnoreCase("in") || args[4].equalsIgnoreCase("out"))
+					{
+						return startpoint(me, args,
+										  args[2].equalsIgnoreCase("true") ? true : false,
+										  args[3],
+										  args[4].equalsIgnoreCase("in") ? true : false);
+					}
+					
+				}
+			}
+		}
+		
+		onHelp(me);
+		return true;
+	}
+	
+	private boolean clear(Player me, String[] args)
+	{
+		ArrayList<Map> clearMaps = MapManager.getMaps();
+		
+		int numMaps = 0;
+		
+		for(int i = 0;i<clearMaps.size();i++)
+		{
+			if(clearMaps.get(i).getName().equals(args[1]))
+			{
+				numMaps++;
+				clearMaps.get(i).clear();
+				MapManager.deleteMap(i);
+				i--;
+			}
+		}
+		
+		if(numMaps == 0)
+		{
+			me.sendMessage(ChatColor.RED +  "Keine Maps mit dem Namen " + ChatColor.BLUE + args[1]);
+			return true;
+		}
+		
+		MapManager.reloadMapConfig();
+		
+		me.sendMessage(ChatColor.DARK_BLUE + "[" + args[1] + "] " + ChatColor.BLUE + "" + numMaps + "" + ChatColor.YELLOW + " Maps aus der config geloescht");
+		
+		
+		
+		return true;
+	}
+
+	private boolean setspawn(Player me,int num)
+	{
+		MapManager.setSpawn(me.getLocation(), num);
+		
+		me.sendMessage(ChatColor.YELLOW + "Spawn" + num + " gesetzt");
+		
+		return true;
+	}
+	
+	private boolean setMid(Player me)
+	{
+		
+		midBlock = me.getLocation();
+		
+		me.sendMessage(ChatColor.YELLOW + "Mitte gesetzt");
+		
+		return true;
+	}
+	
+	private boolean write(Player me)
+	{
+		if(!MapManager.writeBlocks(me))
+		{
+			me.sendMessage(ChatColor.RED + "Keine Map ausgewaehlt");
+			return true;
+		}
+		return true;
+	}
+	
+	private boolean end(Player me,boolean glass,String material,boolean inside,String symbol)
+	{
+		me.sendMessage(ChatColor.BLUE + MapManager.getCurrentMap() + ChatColor.YELLOW + " wird gespeichert");
+		
+		if(MapManager.getCurrentMap().equals(""))
+		{
+			me.sendMessage(ChatColor.RED + "Keine Map ausgewaehlt");
+			return true;
+		}
+		
+		me.sendMessage(ChatColor.YELLOW + "Bau von " + ChatColor.BLUE + MapManager.getCurrentMap() + ChatColor.YELLOW + " beendet");
+		
+		
+		try
+		{
+			if(midBlock == null)
+			{
+				midBlock = firstBlock;
+				me.sendMessage(ChatColor.RED + "Du musst die Mitte setzen!");
+				me.sendMessage(ChatColor.RED + "Sonst funktioniert die Mitte nicht richtig");
+			}
+			MapManager.end(midBlock,glass,material,inside,symbol);
+			
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		
+		return true;
+	}
+	
+	private boolean finish(Player me)
+	{
+		if(startPoint == null || endPoint == null)
+		{
+			me.sendMessage(ChatColor.RED + "Bitte zuerst Startpunkt und Endpunkt setzen");
+			return true;
+		}
+		
+		int x=(int)startPoint.getX(),
+				y=(int)startPoint.getY(),
+				z=(int)startPoint.getZ();
+			
+			int maxx = (int)endPoint.getX(),
+				maxy = (int)endPoint.getY(),
+				maxz = (int)endPoint.getZ();
+			
+			int minx = (int)startPoint.getX(),
+				miny = (int)startPoint.getY(),
+				minz = (int)startPoint.getZ();
+			
+			boolean firstNotAir = false;
+			
+				
+				
+				for(z=minz;minz > maxz ? z > maxz : z < maxz;)
+				{
+					for(y=miny;miny > maxy ? y > maxy : y < maxy;)
+					{
+						for(x=minx;minx > maxx ? x > maxx : x < maxx;)
+						{
+							Block b = me.getWorld().getBlockAt(new Location(me.getWorld(),(double)x,(double)y,(double)z));
+				
+							if(b.getType() != Material.AIR)
+							{
+								if(!firstNotAir)
+								{
+									firstNotAir = true;
+									firstBlock = b.getLocation();
+								}
+								
+								
+								
+								MapManager.onPlaceBlock(b);
+							}
+								
+							
+							if(minx > maxx)
+							{
+								x--;
+							}
+							else if(minx < maxx)
+							{
+								x++;
+							}
+						}
+						if(miny > maxy)
+						{
+							y--;
+						}
+						else if(miny < maxy)
+						{
+							y++;
+						}
+					}
+					if(minz > maxz)
+					{
+						z--;
+					}
+					else if(minz < maxz)
+					{
+						z++;
+					}
+				}
+				me.performCommand("map end");
+		return true;
+	}
+	
+	
+	private boolean load(Player me,String args[])
+	{
+		
+				
+		me.sendMessage(ChatColor.YELLOW + "Map wird geladen");
+		Map map = MapManager.loadMap(args[1],me.getLocation());
+		me.sendMessage(ChatColor.YELLOW + "Map wurde geladen");
+		MapManager.addMap(map);
+		
+		if(map == null || map.getBlocks() == null)
+		{
+			me.sendMessage(ChatColor.BLUE + args[1] + ChatColor.RED + " nicht gefunden oder Fehler");
+			return true;
+		}
+		
+		me.sendMessage(ChatColor.YELLOW + "Map wird platziert");
+		
+		// Platzieren
+		map.reload(me,false);
+		
+		
+		MapManager.writeToMapConfig(map);
+			
+		
+		
+		return true;
+	
+	}
+	
+	private boolean startpoint(Player me,String args[],boolean glass,String bMaterial,boolean inside)
+	{
+		Glass = glass;
+		bMat = bMaterial;
+		this.inside = inside;
+		midBlock = null;
+		startPoint = null;
+		endPoint = null;
+		
+		if(!MapManager.getCurrentMap().equals(""))
+		{
+			me.performCommand("map end");
+		}
+		
+		if(!MapManager.start(args[1],me))
+		{
+			me.sendMessage(ChatColor.BLUE + args[1] + ChatColor.YELLOW + " wird geloescht");
+			MapManager.delete(args[1]);
+			
+		}
+		startPoint = me.getLocation();
+		me.sendMessage(ChatColor.YELLOW + "Bau von " + ChatColor.BLUE + args[1] + ChatColor.YELLOW + " gestartet");
+		
+		return true;
+	}
+	
+	private boolean reload(Player me)
+	{
+		int size = MapManager.getMaps().size();
+		if(size == 0)
+		{
+			me.sendMessage(ChatColor.RED + "Keine Maps platziert");
+			return true;
+		}
+		Map map = MapManager.getMaps().get(size-1);
+		map.reload(null,true);
+		
+		me.sendMessage(ChatColor.BLUE + map.getName() + ChatColor.YELLOW + " neu geladen");
+		
+		
+		return true;
+	}
+	
+	private boolean endpoint(Player me)
+	{
+		endPoint = me.getLocation();
+		
+		me.sendMessage(ChatColor.YELLOW + "Endpunkt gesetzt");
+			
+		return true;
+	}
+
+	private void onHelp(Player me)
+	{
+		me.sendMessage(ChatColor.GREEN + "-----" + ChatColor.AQUA + "OnevsOne_setup" + ChatColor.GREEN + "-----");
+		me.sendMessage(ChatColor.BLUE + "/map end" + ChatColor.WHITE + " - Beended Mapbau Block fuer Block");
+		me.sendMessage(ChatColor.BLUE + "/map setspawn1" + ChatColor.WHITE + " - Setzt ersten Spawn");
+		me.sendMessage(ChatColor.BLUE + "/map setspawn2" + ChatColor.WHITE + " - Setzt zweiten Spawn");
+		me.sendMessage(ChatColor.BLUE + "/map setmid" + ChatColor.WHITE + " - Setzt die Mitte");
+		me.sendMessage(ChatColor.BLUE + "/map startpoint <mapname> [true|false] [material] [in|out]" + ChatColor.WHITE + " - Setzt den Startpunkt fuer <mapname>\n  [true|false] ob Boarder\n  [material] aus welchem Block besteht Boarder\n  [in|out] ob border innerhalb oder auﬂerhalb");
+		me.sendMessage(ChatColor.BLUE + "/map reload" + ChatColor.WHITE + " - Ladet zuletzt geladene Map neu");
+		me.sendMessage(ChatColor.BLUE + "/map endpoint" + ChatColor.WHITE + " - Setzt den Endpunkt");
+		me.sendMessage(ChatColor.BLUE + "/map finish" + ChatColor.WHITE + " - Schreibt die Map in eine Datei");
+		me.sendMessage(ChatColor.BLUE + "/map load <mapname>" + ChatColor.WHITE + " - Platziert eine <mapname> beim Spieler");
+		me.sendMessage(ChatColor.BLUE + "/map clear <mapname>" + ChatColor.WHITE + " - Loescht alle Maps mit dem Namen <mapname> ");
+		me.sendMessage(ChatColor.BLUE + "/map write" + ChatColor.WHITE + " - Gibt aus welche Bloecke gespeichert wurden beim Block fuer Block Bau");
+		me.sendMessage(ChatColor.GREEN + "------------------------");
+	}
+}

@@ -1,0 +1,256 @@
+package at.Kingcraft.OnevsOne_lobby.Commands;
+
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Team;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamEnquiry;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamEnquiryManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class TeamCommand implements CommandExecutor {
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args)
+	{
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		
+		Player me = (Player)sender;
+		
+		if(args.length == 1)
+		{
+			if(args[0].equalsIgnoreCase("refuse"))
+			{
+				return false;
+			}
+			
+			Team t = TeamManager.getTeam(me);
+			if(t != null)
+			{
+				if(args[0].equalsIgnoreCase("leave"))
+				{
+					if(!t.removePlayer(me))
+					{
+						TeamManager.deleteTeam(t,false);
+					}
+					me.sendMessage(ChatColor.YELLOW + "Du hast das Team verlassen");
+					return true;
+				}
+				
+				
+				// Send Enquiry
+				
+				// Get Player
+				
+				Player other = null;
+				
+				for(Player p : Bukkit.getOnlinePlayers())
+				{
+					if(p.getDisplayName().equalsIgnoreCase(args[0]))
+					{
+						other = p;
+						break;
+					}
+				}
+				
+				if(other == null)
+				{
+					me.sendMessage(ChatColor.GREEN + args[0] + ChatColor.RED + " ist nicht online");
+					return true;
+				}
+				
+				
+				// Check if other is in a Team
+				
+				Team tOther = TeamManager.getTeam(other);
+				if(tOther != null)
+				{
+					if(tOther.getID() == t.getID())
+					{
+						me.sendMessage(ChatColor.GREEN + other.getDisplayName() + ChatColor.RED + " ist bereits Teil deines Teams");
+					}
+					else
+					{
+						if(!t.getLeader().getUniqueId().equals(me.getUniqueId()))
+						{
+							me.sendMessage(ChatColor.RED + "Nur der Leiter kann Anfragen versenden");
+							return true;
+						}
+						me.sendMessage(ChatColor.GREEN + other.getDisplayName() + ChatColor.RED + " ist bereits in einem Team");
+					}
+					
+					return true;
+				}
+				if(!t.getLeader().getUniqueId().equals(me.getUniqueId()))
+				{
+					me.sendMessage(ChatColor.RED + "Nur der Leiter kann Anfragen versenden");
+					return true;
+				}
+				
+				// Accept Enqiry if exists
+				
+				TeamEnquiry exists = TeamEnquiryManager.getEnquiry(me,other);
+				if(exists != null)
+				{
+					int role = exists.getRole(me);
+					if(role == TeamEnquiryManager.SENDER)
+					{
+						me.sendMessage(ChatColor.RED + "Anfrage existiert bereits");
+						return true;
+					}
+					else if(role == TeamEnquiryManager.RECIEVER)
+					{
+						exists.acceptEnqiry();
+						TeamEnquiryManager.deleteEnquiries(me,other,false);
+					}
+				}
+				
+				
+				// Make Enquiry
+				if(!t.isPartOf(other))
+				{
+					TeamEnquiryManager.newEnqiry(t, other);
+					me.sendMessage(ChatColor.YELLOW + "Team Anfrage an " + ChatColor.GREEN + other.getDisplayName() + ChatColor.YELLOW + " gesendet");
+					other.sendMessage(ChatColor.GREEN + me.getDisplayName() + ChatColor.YELLOW + " hat dir eine Team Anfrage gesendet");
+				}
+				else
+				{
+					me.sendMessage(ChatColor.GREEN + other.getDisplayName() + ChatColor.RED + "  ist Teil deines Teams");
+				}
+				
+				return true;
+				
+			}
+			else
+			{
+				
+				// Send Enquiry
+				
+				// Get Player
+				
+				Player other = null;
+				
+				for(Player p : Bukkit.getOnlinePlayers())
+				{
+					if(p.getDisplayName().equalsIgnoreCase(args[0]))
+					{
+						other = p;
+						break;
+					}
+				}
+				
+				if(other == null)
+				{
+					if(args[0].equalsIgnoreCase("leave"))
+					{
+						me.sendMessage(ChatColor.RED + "Du bist in keinem Team");
+					}
+					else
+					{
+						me.sendMessage(ChatColor.GREEN + args[0] + ChatColor.RED + " ist nicht online");
+					}
+					return true;
+				}
+				
+				// Accept Enqiry if exists
+				
+				TeamEnquiry exists = TeamEnquiryManager.getEnquiry(me,other);
+				if(exists != null)
+				{
+					int role = exists.getRole(me);
+					if(role == TeamEnquiryManager.SENDER)
+					{
+						me.sendMessage(ChatColor.RED + "Anfrage existiert bereits");
+						return true;
+					}
+					else if(role == TeamEnquiryManager.RECIEVER)
+					{
+						TeamEnquiryManager.deleteEnquiries(me,other,false);
+						TeamEnquiryManager.deleteEnquiriesIn(other, true);
+						ChallangeManager.deleteChallenges(me,other,true);
+						ChallangeManager.deleteChallenges(other,me,true);
+						
+						exists.acceptEnqiry();
+					}
+					return true;
+				}
+				
+				// Check if other is in a Team
+				
+				Team tOther = TeamManager.getTeam(other);
+				if(tOther != null)
+				{
+					me.sendMessage(ChatColor.GREEN + other.getDisplayName() + ChatColor.RED + " ist bereits in einem Team");
+					return true;
+				}
+				
+				
+				
+				TeamEnquiryManager.newEnqiry(me, other);
+				me.sendMessage(ChatColor.YELLOW + "Team Anfrage an " + ChatColor.GREEN + other.getDisplayName() + ChatColor.YELLOW + " gesendet");
+				other.sendMessage(ChatColor.GREEN + me.getDisplayName() + ChatColor.YELLOW + " hat dir eine Team Anfrage gesendet");
+				
+				return true;
+			}
+			
+			
+		}
+		else if(args.length == 2)
+		{
+			if(args[0].equalsIgnoreCase("refuse"))
+			{
+				Player other = null;
+				
+				for(Player p : Bukkit.getOnlinePlayers())
+				{
+					if(p.getDisplayName().equalsIgnoreCase(args[1]))
+					{
+						other = p;
+						break;
+					}
+				}
+				
+				if(other == null)
+				{
+					me.sendMessage(ChatColor.GREEN + args[1] + ChatColor.RED + " ist nicht online");
+					return true;
+				}
+				int role = TeamEnquiryManager.exists(me, other);
+				
+				if(role == TeamEnquiryManager.SENDER)
+				{
+					TeamEnquiryManager.deleteEnquiry(me,other);
+					me.sendMessage(ChatColor.YELLOW + "Team Anfrage zurückgezogen");
+					other.sendMessage(ChatColor.GREEN + me.getDisplayName() + " hat die Team Anfrage zurückgezogen");
+				}
+				else if(role == TeamEnquiryManager.RECIEVER)
+				{
+					TeamEnquiryManager.deleteEnquiry(me,other);
+					me.sendMessage(ChatColor.YELLOW + "Team Anfrage abgelehnt");
+					other.sendMessage(ChatColor.GREEN + me.getDisplayName() + " hat die Team Anfrage abgelehnt");
+				}
+				else
+				{
+					me.sendMessage(ChatColor.YELLOW + "Du hast keine Team Anfrage mit " + ChatColor.GREEN + other.getDisplayName());
+				}
+				
+				return true;
+			}
+		}
+		
+		
+		
+		
+		return false;
+	}
+
+}

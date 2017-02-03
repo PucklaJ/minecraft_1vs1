@@ -1,0 +1,23 @@
+package at.Kingcraft.OnevsOne_lobby.WaitingSnake;
+
+import java.util.UUID;
+
+public class RankedUpload
+{
+	public UUID uuid;
+	public int elo;
+	public int kit;
+	
+	public RankedUpload(UUID uuid,int elo,int kit)
+	{
+		this.uuid = uuid;
+		this.elo = elo;
+		this.kit = kit;
+	}
+	
+	@Override
+	public String toString()
+	{
+		
+	}
+}

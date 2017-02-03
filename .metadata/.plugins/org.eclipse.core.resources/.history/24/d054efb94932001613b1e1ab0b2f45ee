@@ -1,0 +1,40 @@
+package at.Kingcraft.OnevsOne_lobby.Arenas;
+
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
+
+public class Arena {
+
+	private int ID;
+	private String server;
+	private String arena = "basic";
+	
+	public Arena(String server,int ID)
+	{
+		this.server = server;
+		this.ID = ID;
+	}
+
+	public String getServer() {
+		return server;
+	}
+
+	public int getID() {
+		return ID;
+	}
+	
+	public void teleport(Player p)
+	{
+		String[] args = new String[1];
+		args[0] = server; 
+		Messenger.sendMessage(p, "BungeeCord", "Connect", args);
+	}
+
+	
+	public void setArena(String arena)
+	{
+		
+	}
+
+}

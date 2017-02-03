@@ -1,0 +1,218 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+
+import MySQL.MySQL;
+
+public class Kit
+{
+	private ArrayList<KitItem> items;
+	private Player owner;
+	boolean needsMySQLUpdate = false;
+	private final int number;
+	private String itemsInString;
+	
+	public Kit(Player owner,int number)
+	{
+		items = new ArrayList<>();
+		this.owner = owner;
+		this.number = number;
+		itemsInString = "";
+	}
+	
+	public void addItem(int slot,ItemStack is)
+	{
+		items.add(new KitItem(slot,is,false));
+	}
+	
+	public void addEquipment(int slot,ItemStack is)
+	{
+		is.setAmount(1);
+		items.add(new KitItem(slot,is,true));
+	}
+	
+	public void setOldItems(String str)
+	{
+		itemsInString = str;
+	}
+	
+	public void getItemsFromInventory(Player p)
+	{
+		items.clear();
+		for(int i = 0;i<p.getInventory().getSize();i++)
+		{
+			if(p.getInventory().getItem(i) != null && !p.getInventory().getItem(i).getType().equals(Material.AIR))
+			{
+				addItem(i,p.getInventory().getItem(i));
+			}
+		}
+		if(p.getEquipment().getHelmet() != null)
+		{
+			addEquipment(0, p.getEquipment().getHelmet());
+		}
+		if(p.getEquipment().getChestplate() != null)
+		{
+			addEquipment(1, p.getEquipment().getChestplate());
+		}
+		if(p.getEquipment().getLeggings() != null)
+		{
+			addEquipment(2, p.getEquipment().getLeggings());
+		}
+		if(p.getEquipment().getBoots() != null)
+		{
+			addEquipment(3, p.getEquipment().getBoots());
+		}
+		
+		if(!itemsInString.equals(itemsToString()))
+		{
+			needsMySQLUpdate = true;
+		}
+		else
+		{
+			needsMySQLUpdate = false;
+		}
+	}
+	
+	public void loadToMySQL(MySQL mysql)
+	{
+		if(!mysql.isConnected() || !needsMySQLUpdate)
+			return;
+		
+		System.out.println("Updated");
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, owner.getUniqueId().toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			if(!rs.first())
+			{
+				ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_Kits (UUID,Kit1,Kit2,Kit3,Kit4,Kit5) VALUES (?,?,?,?,?,?)");
+				ps.setString(1, owner.getUniqueId().toString());
+				for(int i = 2;i<=6;i++)
+				{
+					if(i == number+1)
+					{
+						ps.setString(i, itemsToString());
+					}
+					else
+					{
+						ps.setString(i, "null");
+					}
+				}
+				
+				ps.executeUpdate();
+			}
+			else
+			{
+				ps.close();
+				String query =  "UPDATE Duel_Kits SET Kit" + number + " = '" + itemsToString() + "' WHERE UUID = '" + owner.getUniqueId().toString() + "'";
+				ps = mysql.getConnection().prepareStatement(query);
+				
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		
+		
+		needsMySQLUpdate = false;
+	}
+	
+	public void kitItemsToInventory(Player p)
+	{
+		p.getInventory().clear();
+		p.getEquipment().clear();
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			if(items.get(i).isEquipment())
+			{
+				switch(items.get(i).getSlot())
+				{
+				case 0:
+					p.getEquipment().setHelmet(items.get(i).getItem());
+					break;
+				case 1:
+					p.getEquipment().setChestplate(items.get(i).getItem());
+					break;
+				case 2:
+					p.getEquipment().setLeggings(items.get(i).getItem());
+					break;
+				case 3:
+					p.getEquipment().setBoots(items.get(i).getItem());
+					break;
+				}
+			}
+			else
+			{
+				p.getInventory().setItem(items.get(i).getSlot(), items.get(i).getItem());
+			}
+			
+		}
+	}
+	
+	private String getColorOfLeather(ItemStack is)
+	{
+		if(is.getType().equals(Material.LEATHER_HELMET) || is.getType().equals(Material.LEATHER_CHESTPLATE) ||
+		   is.getType().equals(Material.LEATHER_LEGGINGS) || is.getType().equals(Material.LEATHER_BOOTS))
+		{
+			LeatherArmorMeta lam = (LeatherArmorMeta) is.getItemMeta();
+			return String.valueOf(lam.getColor().asRGB());
+		}
+		else
+		{
+			return "";
+		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public String itemsToString()
+	{
+		String strItems = "";
+		
+		for(int i = 0;i<items.size();i++)
+		{
+			ItemStack is = items.get(i).getItem();
+			strItems += is.getType().getId() + "(" + (items.get(i).isEquipment() ? "e" : "") + "#" + getColorOfLeather(is) + "#" + items.get(i).getSlot() + ";" + is.getAmount() + ";" + is.getDurability() + "#";
+			
+			Map<Enchantment,Integer> mp = is.getEnchantments();
+			
+			Iterator<Map.Entry<Enchantment, Integer>> it = mp.entrySet().iterator();
+			
+			while(it.hasNext())
+			{
+				Map.Entry<Enchantment,Integer> pair = (Map.Entry<Enchantment, Integer>)it.next();
+				strItems += pair.getKey().getId() + ";" + pair.getValue() + "|";
+			}
+			
+			strItems += "#";
+			
+			strItems += (!(is.getItemMeta() == null) ? is.getItemMeta().getDisplayName() : "") + ")\n";
+			
+			
+		}
+		
+		return strItems;
+	}
+	
+	public Player getOwner()
+	{
+		return owner;
+	}
+}

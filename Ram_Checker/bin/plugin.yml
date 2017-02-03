@@ -1,0 +1,24 @@
+name: Ram_Checker
+version: 1.0.0
+author: PucklaMotzer09
+main: at.pucher.ram_checker.MainClass
+
+commands:
+  ram:
+    usage: /<command>
+    description: Gibt aus wie viel RAM gebraucht wird
+    
+permissions:
+  command_ram.*:
+    description: Permission fuer das ganze Ram-Command
+    children:
+      command_ram.ram: true
+      command_ram.reload: true
+  
+  command_ram.ram:
+    description: Permission den Ram anzeigen zu lassen
+    default: true
+  
+  command_ram.reload:
+    description: Permission die Config zu reloaden
+    default: op

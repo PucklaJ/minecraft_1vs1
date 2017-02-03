@@ -1,0 +1,168 @@
+name: OnevsOne_lobby
+version: 1.0.0
+main: at.Kingcraft.OnevsOne_lobby.MainClass
+description: Plugin for One vs One Fights
+author: PucklaMUGLA03
+commands:
+  test:
+    usage: /<command>
+    description: Testet ob Plugin funktioniert
+  1vs1:
+    usage: /<command> <player>
+    description: Schickt eine Challenge an einen Spieler
+    aliases: c
+    permission: command.1vs1
+  refuse:
+    usage: /<command> [player]
+    description: Lehnt die derzeitige Challenge ab
+    permission: command.refuse
+  team:
+    usage: /<command> <player> | <leave> | <<refuse> <player>>
+    description: Commands fuer Teams
+    permission: command.team
+  setminkit:
+    usage: /<command>
+    description: Setzt die erste Kitposition
+    permission: command.setminkit
+  setmaxkit:
+    usage: /<command>
+    description: Setzt die zweite Kitposition
+    permission: command.setmaxkit
+  setminnormal:
+    usage: /<command>
+    description: Setzt die erste Normalposition
+    permission: command.setminnormal
+  setmaxnormal:
+    usage: /<command>
+    description: Setzt die zweite Normalposition
+    permission: command.setmaxnormal
+  warteschlange:
+    usage: /<command>
+    description: Fuegt Spieler zu Warteschalnge hinzu bzw. entfernt ihn
+    aliases: ws
+    permission: command.warteschlange
+  turnier:
+    usage: /<command> <create|start|join [player]|spectate <id>>
+    description: Turniercommand
+    aliases: t
+  setdifkit:
+    usage: /<command> <1|2|3> [set] 
+    description: Laesst jeweiliges Verschiedenes Kit einstellen
+    permission: command.setdifkit
+  setprekit:
+    usage: /<command> <number> [set] 
+    description: Laesst jeweiliges Vorgegebenes Kit einstellen 
+    permission: command.setprekit
+  ffa:
+    usage: /<command>
+    description: Startet FFA Spiel mit Team
+    permission: command.ffa
+  kit:
+    usage: /<command> [name]
+    description: Zeigt die Items und Einstellungen eines Kits
+    permission: command.kit
+  spectate:
+    usage: /<command> <player>
+    description: Spectated Kampf mit Spieler
+    permission: command.spectate
+    aliases: [spec,sp]
+  stats:
+    usage: /<command> [reset] [player]
+    description: Zeigt Statstiken von dir oder einem anderen Spieler
+    
+permissions:
+  world.*:
+    description: Permissions um die Welt zu veraendern
+    children:
+      world.destroy: true
+      world.place: true
+  command.*:
+    description: Permission fuer alle Commands
+    children:
+      command.1vs1: true
+      command.refuse: true
+      command.team: true
+      command.setminkit: true
+      command.setmaxkit: true
+      command.setminnormal: true
+      command.setmaxnormal: true
+      command.warteschlange: true
+      command.turnier.*: true
+      command.setdifkit: true
+      command.setprekit: true
+      command.ffa: true
+      command.kit: true
+      command.spectate: true
+      command.stats.*: true
+  command.1vs1:
+    description: Permission fuer 1vs1-Command
+    default: true
+  command.refuse:
+    description: Permission fuer refuse-Command
+    default: true
+  command.team:
+    description: Permission fuer team-Command
+    default: true
+  command.setminkit:
+    description: Permission fuer setminkit-Command
+    default: op
+  command.setmaxkit:
+    description: Permission fuer setmaxkit-Command
+    default: op
+  command.setminnormal:
+    description: Permission fuer setminnormal-Command
+    default: op
+  command.setmaxnormal:
+    description: Permission fuer setmaxnormal-Command
+    default: op
+  command.warteschlange:
+    description: Permission fuer warteschlange-Command
+    default: true
+  command.turnier.*:
+    description: Permission fuer turnier-Command
+    children:
+      command.turnier.create: true
+      command.turnier.join: true
+  command.turnier.create:
+    description: Permission fuer das Erstellen von Turnieren
+    default: true
+  command.turnier.join:
+    description: Permission fuer das Beitreten von Turnieren
+    default: true
+  command.setdifkit:
+    description: Permission fuer setdifkit-Command
+    default: op
+  command.setprekit:
+    description: Permission fuer setprekit-Command
+    default: op
+  world.destroy:
+    description: Permission um Bloecke zerstoeren zu koennen
+    default: op
+  world.place:
+    description: Permission um Bloecke platzieren zu koennen
+    default: op
+  command.ffa:
+    description: Permission fuer FFA-Command
+    default: true
+  command.kit:
+    description: Permission fuer kit-Command
+    default: true
+  command.spectate:
+    description: Permission fuer spectate-Command
+    default: true
+  command.stats.*:
+    description: Permission fuer stats-Command
+    default: true
+    children:
+      command.stats.view: true
+      command.stats.reset: true
+      command.stats.resetother: true
+  command.stats.view:
+    description: Permission die Stats anzuschauen
+    default: true
+  command.stats.reset:
+    description: Permission die Stats von sich selbst zu resetten
+    default: true
+  command.stats.resetother:
+    description: Permission die Stats von jemand anderem zu resetten
+    default: op

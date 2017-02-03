@@ -1,0 +1,90 @@
+package at.kingcraft.OnevsOne_arena;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.PluginMessageListener;
+
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+
+public class Messenger implements PluginMessageListener {
+
+	private static JavaPlugin plugin;
+	
+	public static void setup(JavaPlugin plugin)
+	{
+		Messenger.plugin = plugin;
+	}
+	
+	@Override
+	public void onPluginMessageReceived(String channel, Player p, byte[] msg)
+	{
+		
+		ByteArrayDataInput in = ByteStreams.newDataInput(msg);
+		
+		String subChannel = in.readUTF();
+		
+		if(channel.equals("BungeeCord"))
+		{
+			if(subChannel.equals("GetServers"))
+			{
+				String[] serverList = in.readUTF().split(", ");
+				
+				for(int i = 0;i<serverList.length;i++)
+				{
+					if(serverList[i].contains("pvparena"))
+						ArenaManager.startServer(serverList[i]);
+				}
+				
+				Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable()
+				{
+					
+					@Override
+					public void run()
+					{
+						
+						ByteArrayDataInput i = ByteStreams.newDataInput(msg);
+						i.readUTF();
+						System.out.println("TestAusgabe: " + i.readUTF());
+						
+					}
+				}, 20*10);
+			}
+		}
+	}
+	
+	public static boolean sendMessage(Player p,String plugin,String subChannel,String[] args)
+	{
+		ByteArrayDataOutput bo = ByteStreams.newDataOutput();
+		bo.writeUTF(subChannel);
+		
+		if(args != null)
+		{
+			for(int i = 0;i<args.length;i++)
+			{
+				bo.writeUTF(args[i]);
+			}
+		}
+		
+		
+		if(p == null)
+		{
+			if(Messenger.plugin.getServer().getOnlinePlayers().isEmpty())
+			{
+				return false;
+			}
+			p=(Player) Messenger.plugin.getServer().getOnlinePlayers().toArray()[0];
+			if(p == null)
+			{
+				return false;
+			}
+		}
+		
+		p.sendPluginMessage(Messenger.plugin, plugin, bo.toByteArray());
+		
+		return true;
+	}
+
+}

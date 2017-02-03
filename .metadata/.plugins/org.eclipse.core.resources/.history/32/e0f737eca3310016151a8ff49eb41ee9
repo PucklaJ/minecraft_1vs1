@@ -1,0 +1,29 @@
+package at.kingcraft.OnevsOne_bridge.Commands;
+
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.Plugin;
+
+public class TestCommand extends Command {
+
+	public TestCommand(String name,String pluginName) {
+		super(name);
+	}
+
+	@Override
+	public void execute(CommandSender sender, String[] args)
+	{
+		if(sender instanceof ProxiedPlayer)
+		{
+			ProxiedPlayer me = (ProxiedPlayer)sender;
+			me.sendMessage(new TextComponent(ChatColor.YELLOW + "Hallo, " + ChatColor.GREEN + me.getDisplayName()));
+		}
+		
+		sender.sendMessage(new TextComponent(ChatColor.YELLOW + "["));
+		
+	}
+
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;maps&apos; in &apos;at.kingcraft.OnevsOne_arena.Listener.DuelListener.onJoin(...)&apos; to &apos;map&apos;&#x0D;&#x0A;- Original project: &apos;Kingcraft_OnevsOne_arena&apos;&#x0D;&#x0A;- Original element: &apos;at.kingcraft.OnevsOne_arena.Listener.DuelListener.onJoin(PlayerJoinEvent).maps&apos;&#x0D;&#x0A;- Renamed element: &apos;maps&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;maps&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;at.kingcraft.OnevsOne_arena.Listener{DuelListener.java[DuelListener~onJoin~QPlayerJoinEvent;@maps!3910!3951!3914!3917!QMap;!0!false" name="map" references="true" stamp="1467572751118" version="1.0"/>
+</session>

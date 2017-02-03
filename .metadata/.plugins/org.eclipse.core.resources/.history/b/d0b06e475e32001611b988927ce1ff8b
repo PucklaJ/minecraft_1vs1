@@ -1,0 +1,30 @@
+package at.kingcraft.OnevsOne_arena;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
+import MySQL.MySQL;
+
+public class MainClass extends JavaPlugin{
+
+	private MySQL mysql;
+	
+	@Override
+	public void onDisable()
+	{
+		super.onDisable();
+		System.out.println("[OnevsOne_arena] Successfully disabled");
+	}
+
+	@Override
+	public void onEnable()
+	{
+		super.onEnable();
+		
+		mysql = new MySQL(this);
+		
+		// Setup Messaging System
+		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		
+	}
+
+}

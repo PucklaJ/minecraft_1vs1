@@ -1,0 +1,636 @@
+package at.kingcraft.OnevsOne_setup;
+
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
+
+import net.md_5.bungee.api.ChatColor;
+
+public class Map
+{
+	private ArrayList<SaveBlock> blocks;
+	private ArrayList<SaveBlock> laterPlaceBlocks;
+	private Location[] spawns;
+	private Location firstBlock;
+	private Location lastBlock;
+	private String name;
+	private Location[] corners = new Location[8];
+	private Location[] insideCorners = new Location[8];
+	private boolean loadedInsideCorners = false;
+	private boolean loadedCorners = false;
+	private MainClass plugin;
+	private BukkitTask Reload = null;
+	private int ReloadIteration = 0;
+	
+	private boolean placeLater(Material mat)
+	{
+		return mat == Material.REDSTONE_WIRE || mat == Material.TORCH || mat == Material.ACACIA_DOOR ||
+				mat == Material.BIRCH_DOOR || mat == Material.SPRUCE_DOOR || mat == Material.DARK_OAK_DOOR ||
+				mat == Material.JUNGLE_DOOR || mat == Material.WOODEN_DOOR || mat == Material.WOOD_DOOR ||
+				mat == Material.FIRE;
+	}
+	
+	public Map(MainClass plugin,ArrayList<SaveBlock> saveBlocks,Location loc,Location[] spawns,String name)
+	{
+		blocks = new ArrayList<SaveBlock>();
+		laterPlaceBlocks = new ArrayList<SaveBlock>();
+		firstBlock = loc;
+		
+		System.out.println("[" + name +  "] Blocksize: " + saveBlocks.size());
+		
+		
+		this.plugin = plugin;
+		
+		
+		
+		for(int i = 0;i<saveBlocks.size();i++)
+		{
+			if(placeLater(saveBlocks.get(i).mat))
+			{
+				laterPlaceBlocks.add(new SaveBlock(saveBlocks.get(i).x + loc.getX(),
+						 saveBlocks.get(i).y + loc.getY(),
+						 saveBlocks.get(i).z + loc.getZ(),
+						 saveBlocks.get(i).data,
+						 saveBlocks.get(i).mat));
+			}
+			else
+			{
+				blocks.add(new SaveBlock(saveBlocks.get(i).x + loc.getX(),
+									 saveBlocks.get(i).y + loc.getY(),
+									 saveBlocks.get(i).z + loc.getZ(),
+									 saveBlocks.get(i).data,
+									 saveBlocks.get(i).mat));
+			}
+			
+			
+		}
+		
+		calculateFirstBlock();
+		calculateLastBlock();
+		
+		this.spawns = new Location[2];
+		
+		this.spawns[0] = spawns[0];
+		this.spawns[0].setX(this.spawns[0].getX()+loc.getX());
+		this.spawns[0].setY(this.spawns[0].getY()+loc.getY());
+		this.spawns[0].setZ(this.spawns[0].getZ()+loc.getZ());
+		
+		this.spawns[1] = spawns[1];
+		this.spawns[1].setX(this.spawns[1].getX()+loc.getX());
+		this.spawns[1].setY(this.spawns[1].getY()+loc.getY());
+		this.spawns[1].setZ(this.spawns[1].getZ()+loc.getZ());
+		
+		this.name = name;
+		
+	}
+	
+	public Location getSpawn1()
+	{
+		return spawns[0];
+	}
+	
+	public Location getSpawn2()
+	{
+		return spawns[1];
+	}
+	
+	public Location getBlock0()
+	{
+		SaveBlock block0 = blocks.get(0);
+		
+		return new Location(firstBlock.getWorld(), block0.x, block0.y, block0.z);
+	}
+	
+	public String getName()
+	{
+		return name;
+	}
+	
+	public ArrayList<SaveBlock> getBlocks()
+	{
+		return blocks;
+	}
+	
+	public void clear()
+	{
+		
+		Location tempFirst = firstBlock.clone();
+		Location tempLast = lastBlock.clone();
+		
+		int minx = (int)tempFirst.getX();
+		int miny = (int)tempFirst.getY();
+		int minz = (int)tempFirst.getZ();
+		
+		int x = minx;
+		int y = miny;
+		int z = minz;
+		
+		int maxx = (int)tempLast.getX();
+		int maxy = (int)tempLast.getY();
+		int maxz = (int)tempLast.getZ();
+		
+		if(minx < maxx)
+		{
+			x-=2;
+			minx-=2;
+			maxx+=2;
+		}
+		else
+		{
+			x+=2;
+			minx+=2;
+			maxx-=2;
+		}
+		
+		if(miny < maxy)
+		{
+			y-=2;
+			miny-=2;
+			maxy+=2;
+		}
+		else
+		{
+			y+=2;
+			miny+=2;
+			maxy-=2;
+		}
+		
+		if(minz < maxz)
+		{
+			z-=2;
+			minz-=2;
+			maxz+=2;
+		}
+		else
+		{
+			z+=2;
+			minz+=2;
+			maxz-=2;
+		}
+		
+		tempFirst.setX((double)x);
+		tempFirst.setY((double)y);
+		tempFirst.setZ((double)z);
+		
+		tempLast.setX((double)maxx);
+		tempLast.setY((double)maxy);
+		tempLast.setZ((double)maxz);
+		
+		loadCorners(corners);
+		
+		setBlocksBetween(corners[0], corners[6], Material.AIR, (byte)0);
+		
+		// Clear all Entities
+		for(Entity e :firstBlock.getWorld().getEntities())
+		{
+			if(!(e instanceof Player))
+			{
+				e.remove();
+			}
+		}
+		
+		loadCorners(corners);
+		
+		// Clear Glass Border
+		setBlocksBetween(corners[0], corners[2], Material.AIR, (byte)0);
+		setBlocksBetween(corners[4], corners[6], Material.AIR, (byte)0);
+		setBlocksBetween(corners[0], corners[7], Material.AIR, (byte)0);
+		setBlocksBetween(corners[1], corners[6], Material.AIR, (byte)0);
+		setBlocksBetween(corners[0], corners[5], Material.AIR, (byte)0);
+		setBlocksBetween(corners[3], corners[6], Material.AIR, (byte)0);
+	}
+	
+	private void calculateFirstBlock()
+	{
+		double minx,miny,minz;
+		
+		minx = blocks.get(0).x;
+		miny = blocks.get(0).y;
+		minz = blocks.get(0).z;
+		
+		for(int i =0;i<blocks.size();i++)
+		{
+			if(blocks.get(i).x < minx)
+			{
+				minx = blocks.get(i).x;
+			}
+			if(blocks.get(i).y < miny)
+			{
+				miny = blocks.get(i).y;
+			}
+			if(blocks.get(i).z < minz)
+			{
+				minz = blocks.get(i).z;
+			}
+		}
+		
+		for(int i =0;i<laterPlaceBlocks.size();i++)
+		{
+			if(laterPlaceBlocks.get(i).x < minx)
+			{
+				minx = laterPlaceBlocks.get(i).x;
+			}
+			if(laterPlaceBlocks.get(i).y < miny)
+			{
+				miny = laterPlaceBlocks.get(i).y;
+			}
+			if(laterPlaceBlocks.get(i).z < minz)
+			{
+				minz = laterPlaceBlocks.get(i).z;
+			}
+		}
+		
+		firstBlock = new Location(firstBlock.getWorld(), minx, miny, minz);
+		
+	}
+	
+	private void calculateLastBlock()
+	{
+		double maxx,maxy,maxz;
+		
+		maxx = blocks.get(0).x;
+		maxy = blocks.get(0).y;
+		maxz = blocks.get(0).z;
+		
+		for(int i =0;i<blocks.size();i++)
+		{
+			if(blocks.get(i).x > maxx)
+			{
+				maxx = blocks.get(i).x;
+			}
+			if(blocks.get(i).y > maxy)
+			{
+				maxy = blocks.get(i).y;
+			}
+			if(blocks.get(i).z > maxz)
+			{
+				maxz = blocks.get(i).z;
+			}
+		}
+		
+		for(int i =0;i<laterPlaceBlocks.size();i++)
+		{
+			if(laterPlaceBlocks.get(i).x > maxx)
+			{
+				maxx = laterPlaceBlocks.get(i).x;
+			}
+			if(laterPlaceBlocks.get(i).y > maxy)
+			{
+				maxy = laterPlaceBlocks.get(i).y;
+			}
+			if(laterPlaceBlocks.get(i).z > maxz)
+			{
+				maxz = laterPlaceBlocks.get(i).z;
+			}
+		}
+		
+		lastBlock = new Location(firstBlock.getWorld(), maxx, maxy, maxz);
+		
+	}
+	
+	private void loadCorners(Location[] corners)
+	{
+		if(loadedCorners)
+		{
+			return;
+		}
+		
+		World world = firstBlock.getWorld();
+		
+		
+		// Define all corners
+		for(int i = 0;i<corners.length;i++)
+		{
+			double firstX,firstY,firstZ,lastX,lastY,lastZ;
+			firstX = Math.floor(firstBlock.getX());
+			firstY = Math.floor(firstBlock.getY());
+			firstZ = Math.floor(firstBlock.getZ());
+			lastX = Math.floor(lastBlock.getX());
+			lastY = Math.floor(lastBlock.getY());
+			lastZ = Math.floor(lastBlock.getZ());
+			switch(i)
+			{
+			case 0:
+				corners[i] = new Location(world, firstX, firstY,firstZ);
+				break;
+			case 1:
+				corners[i] = new Location(world, firstX, firstY, lastZ);
+				break;
+			case 2:
+				corners[i] = new Location(world, firstX, lastY, lastZ);
+				break;
+			case 3:
+				corners[i] = new Location(world, firstX, lastY, firstZ);
+				break;
+			case 4:
+				corners[i] = new Location(world,lastX , firstY, firstZ);
+				break;
+			case 5:
+				corners[i] = new Location(world,lastX ,firstY , lastZ);
+				break;
+			case 6:
+				corners[i] = new Location(world, lastX, lastY,lastZ);
+				break;
+			case 7:
+				corners[i] = new Location(world, lastX, lastY, firstZ);
+				break;
+			}
+		}
+		
+			corners[2].setY(corners[2].getY()+50.0);
+			corners[3].setY(corners[3].getY()+50.0);
+			corners[6].setY(corners[6].getY()+50.0);
+			corners[7].setY(corners[7].getY()+50.0);
+		
+		
+		// Offset all corners once
+			corners[0].setZ(corners[0].getZ()-1.0);
+			corners[1].setZ(corners[1].getZ()+1.0);
+			corners[2].setZ(corners[2].getZ()+1.0);
+			corners[3].setZ(corners[3].getZ()-1.0);
+			corners[4].setZ(corners[4].getZ()-1.0);
+			corners[5].setZ(corners[5].getZ()+1.0);
+			corners[6].setZ(corners[6].getZ()+1.0);
+			corners[7].setZ(corners[7].getZ()-1.0);
+		
+		
+			corners[0].setX(corners[0].getX()-1.0);
+			corners[1].setX(corners[1].getX()-1.0);
+			corners[2].setX(corners[2].getX()-1.0);
+			corners[3].setX(corners[3].getX()-1.0);
+			corners[4].setX(corners[4].getX()+1.0);
+			corners[5].setX(corners[5].getX()+1.0);
+			corners[6].setX(corners[6].getX()+1.0);
+			corners[7].setX(corners[7].getX()+1.0);
+			
+		
+			corners[0].setY(corners[0].getY()-1.0);
+			corners[1].setY(corners[1].getY()-1.0);
+			corners[4].setY(corners[4].getY()-1.0);
+			corners[5].setY(corners[5].getY()-1.0);
+	
+		loadedCorners = true;
+	}
+	
+	public void loadGlassBorder()
+	{
+		loadCorners(corners);
+		
+		// Loop through blocks between corners and set to glass
+		setBlocksBetween(corners[0], corners[2], Material.GLASS, (byte)0);
+		setBlocksBetween(corners[4], corners[6], Material.GLASS, (byte)0);
+		setBlocksBetween(corners[0], corners[7], Material.GLASS, (byte)0);
+		setBlocksBetween(corners[1], corners[6], Material.GLASS, (byte)0);
+		setBlocksBetween(corners[0], corners[5], Material.GLASS, (byte)0);
+		setBlocksBetween(corners[3], corners[6], Material.GLASS, (byte)0);
+		
+		
+		
+	}
+	
+	@SuppressWarnings("deprecation")
+	private void setBlocksBetween(Location loc1,Location loc2,Material mat,byte data)
+	{
+		World world = loc1.getWorld();
+		
+		double x=loc1.getX(),
+			   y=loc1.getY(),
+			   z=loc1.getZ();
+		
+		double maxx = loc2.getX(),
+			   maxy = loc2.getY(),
+			   maxz = loc2.getZ();
+		
+		double minx = x,
+			   miny = y,
+			   minz = z;
+		
+		// Block für Block durchgehen zwischen ersten und letzten Block
+		// und löschen
+			
+			
+			for(z=minz;minz > maxz ? z >= maxz : z <= maxz;)
+			{
+				for(y=miny;miny > maxy ? y >= maxy : y <= maxy;)
+				{
+					for(x=minx;minx > maxx ? x >= maxx : x <= maxx;)
+					{
+						Block b = world.getBlockAt(new Location(world,x,y,z));
+						
+						b.setType(mat);
+						b.setData(data);
+							
+						
+						if(minx > maxx)
+						{
+							x--;
+						}
+						else if(minx < maxx)
+						{
+							x++;
+						}
+						else
+						{
+							break;
+						}
+					}
+					if(miny > maxy)
+					{
+						y--;
+					}
+					else if(miny < maxy)
+					{
+						y++;
+					}
+					else
+					{
+						break;
+					}
+				}
+				if(minz > maxz)
+				{
+					z--;
+				}
+				else if(minz < maxz)
+				{
+					z++;
+				}
+				else
+				{
+					break;
+				}
+			}
+	}
+
+	@SuppressWarnings("deprecation")
+	private void placeLaterBlocks()
+	{
+		World world = firstBlock.getWorld();
+		for(int i = 0;i<laterPlaceBlocks.size();i++)
+		{
+			Location loc = new Location(world,laterPlaceBlocks.get(i).x,laterPlaceBlocks.get(i).y,laterPlaceBlocks.get(i).z);
+			Block b = world.getBlockAt(loc);
+			
+			b.setType(laterPlaceBlocks.get(i).mat);
+			b.setData(laterPlaceBlocks.get(i).data);
+		}
+	}
+	
+	private boolean loadInsideCorners(Location[] corners)
+	{
+		if(loadedInsideCorners)
+		{
+			return false;
+		}
+		
+			loadCorners(corners);
+		
+		
+			World world = firstBlock.getWorld();
+		
+		// Define all corners
+					double firstX,firstY,firstZ,lastX,lastY,lastZ;
+							firstX = Math.floor(firstBlock.getX());
+							firstY = Math.floor(firstBlock.getY());
+							firstZ = Math.floor(firstBlock.getZ());
+							lastX = Math.floor(lastBlock.getX());
+							lastY = Math.floor(lastBlock.getY());
+							lastZ = Math.floor(lastBlock.getZ());
+					
+					insideCorners[0] = new Location(world, firstX, firstY,firstZ);
+				
+					insideCorners[1] = new Location(world, firstX, firstY, lastZ);
+					
+					insideCorners[2] = new Location(world, firstX, lastY, lastZ);
+				
+					insideCorners[3] = new Location(world, firstX, lastY, firstZ);
+						
+					
+					insideCorners[4] = new Location(world,lastX , firstY, firstZ);
+						
+					
+					insideCorners[5] = new Location(world,lastX ,firstY , lastZ);
+					
+					
+					insideCorners[6] = new Location(world, lastX, lastY,lastZ);
+						
+					
+					insideCorners[7] = new Location(world, lastX, lastY, firstZ);
+						
+				
+				
+					insideCorners[2].setY(insideCorners[2].getY()+49.0);
+					insideCorners[3].setY(insideCorners[3].getY()+49.0);
+					insideCorners[6].setY(insideCorners[6].getY()+49.0);
+					insideCorners[7].setY(insideCorners[7].getY()+49.0);
+	
+				
+				return true;
+	}
+	
+	public boolean isInside(Location loc)
+	{
+		loadInsideCorners(insideCorners);
+		
+		
+		// AABB
+		if(loc.getX() >= insideCorners[0].getX() && loc.getX() <= insideCorners[6].getX() &&
+		   loc.getY() >= insideCorners[0].getY() && loc.getY() <= insideCorners[6].getY() &&
+		   loc.getZ() >= insideCorners[0].getZ() && loc.getZ() <= insideCorners[6].getZ() )
+		{
+			return true;
+		}
+		
+		
+		return false;
+	}
+	
+	public Location getFirstBlock()
+	{
+		return firstBlock;
+	}
+	
+	public Location getLastBlock()
+	{
+		return lastBlock;
+	}
+	
+	@SuppressWarnings("deprecation")
+	public boolean reload(Player me,boolean clear)
+	{
+		if(Reload != null)
+		{
+			return false;
+		}
+		
+		World world = firstBlock.getWorld();
+		if(clear)
+			clear();
+		
+		Reload = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				
+				for(int start = 0;ReloadIteration<blocks.size() && ReloadIteration<start+100;ReloadIteration++)
+				{
+					if(!(ReloadIteration<blocks.size())) // Wenn fertig mit MapBlöcke
+					{
+						placeLaterBlocks();
+						loadGlassBorder();
+						
+						int id = Reload.getTaskId();
+						Reload = null;
+						ReloadIteration = 0;
+						if(me != null)
+						{
+							me.sendMessage(ChatColor.BLUE + name + ChatColor.YELLOW + " wurde platziert");
+						}
+						Bukkit.getScheduler().cancelTask(id);
+					}
+				
+					Location loc = new Location(world,blocks.get(ReloadIteration).x,blocks.get(ReloadIteration).y,blocks.get(ReloadIteration).z);
+					Block b = world.getBlockAt(loc);
+					
+					b.setType(blocks.get(ReloadIteration).mat);
+					b.setData(blocks.get(ReloadIteration).data);
+					
+					start++;
+				}
+				
+				if(!(ReloadIteration<blocks.size())) // Wenn fertig mit MapBlöcke
+				{
+					placeLaterBlocks();
+					loadGlassBorder();
+					
+					int id = Reload.getTaskId();
+					Reload = null;
+					ReloadIteration = 0;
+					if(me != null)
+					{
+						me.sendMessage(ChatColor.BLUE + name + ChatColor.YELLOW + " wurde platziert");
+					}
+					Bukkit.getScheduler().cancelTask(id);
+				}
+				
+				
+			}
+		}, 0, 10);
+		
+			
+		
+		
+		
+		
+		return true;
+		
+	}
+}

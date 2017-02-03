@@ -1,0 +1,222 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.GameMode;
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import net.md_5.bungee.api.ChatColor;
+
+public class KitManager {
+
+	@SuppressWarnings("unused")
+	private static MainClass plugin;
+	private static ArrayList<Player> normalPlayers;
+	private static ArrayList<Player> kitPlayers;
+	private static HashMap<UUID,ArrayList<Kit>> playerKits;
+	
+	public static void setup(MainClass plugin)
+	{
+		KitManager.plugin = plugin;
+		normalPlayers = new ArrayList<Player>();
+		kitPlayers = new ArrayList<>();
+		playerKits = new HashMap<>();
+		
+		if(plugin.getMySQL().isConnected())
+		{
+			try
+			{
+				PreparedStatement ps = plugin.getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_Kits (UUID VARCHAR(100), Kit1 VARCHAR(1000),Kit2 VARCHAR(1000),Kit3 VARCHAR(1000),Kit4 VARCHAR(1000),Kit5 VARCHAR(1000))");
+				ps.executeUpdate();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void setKitMode(Player p)
+	{
+		if(kitPlayers.contains(p))
+		{
+			return;
+		}
+		kitPlayers.add(p);
+		p.setGameMode(GameMode.CREATIVE);
+		p.getInventory().clear();
+		p.sendMessage(ChatColor.YELLOW + "Du kannst jetzt deine Kits einstellen");
+		if(normalPlayers.contains(p))
+		{
+			normalPlayers.remove(p);
+		}
+		
+		if(playerKits.get(p.getUniqueId()) == null)
+		{
+			playerKits.put(p.getUniqueId(), new ArrayList<>());
+		}
+		
+		if(playerKits.get(p.getUniqueId()).size() == 0)
+		{
+			playerKits.get(p.getUniqueId()).add(new Kit(p,1));
+		}
+		
+		playerKits.get(p.getUniqueId()).get(0).kitItemsToInventory(p.getInventory());
+	}
+	
+	public static void addToNormal(Player p)
+	{
+		if(normalPlayers.contains(p))
+			return;
+		normalPlayers.add(p);
+	}
+	
+	public static void removeFromNormal(Player p)
+	{
+		if(!normalPlayers.contains(p))
+			return;
+		normalPlayers.remove(p);
+	}
+	
+	public static void removeFromKit(Player p)
+	{
+		if(!kitPlayers.contains(p))
+			return;
+		kitPlayers.remove(p);
+	}
+	
+	public static void loadKits(Player p)
+	{
+		if(!plugin.getMySQL().isConnected())
+			return;
+		
+		if(playerKits.get(p.getUniqueId()) == null)
+		{
+			playerKits.put(p.getUniqueId(), new ArrayList<>());
+		}
+		
+		playerKits.get(p.getUniqueId()).clear();
+		
+		try
+		{
+			PreparedStatement ps = plugin.getMySQL().getConnection().prepareStatement("SELECT Kit1,Kit2,Kit3,Kit4,Kit5 FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, p.getUniqueId().toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				for(int i = 1;i<=5;i++)
+				{
+					Kit kit = decodeMySQLKit(rs.getString(i));
+				
+					if(kit != null)
+					{
+						playerKits.get(p.getUniqueId()).add(kit);
+					}
+				}
+				
+				
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+	private static Kit decodeMySQLKit(String str)
+	{
+		String[] kitStr = str.split("\n");
+		
+		for(int i = 0;i<kitStr.length;i++)
+		{
+			if(kitStr[i].equals("null"))
+				continue;
+			
+			String type = "";
+			String amount = "";
+			String durability = "";
+			ArrayList<String> enchantments = new ArrayList<String>();
+			ArrayList<String> enchantmentsInt = new ArrayList<String>();
+			
+			int j = 0;
+			for(j = 0;kitStr[i].charAt(j) != '(';j++)
+			{
+				type += kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != ';';j++)
+			{
+				amount+=kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != '#';j++)
+			{
+				durability+=kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != '#';j++)
+			{
+				String enchantments1 = "";
+				String enchantmentsInt1 = "";
+				for(;kitStr[i].charAt(j) != ';';j++)
+				{
+					enchantments1 += kitStr[i].charAt(j);
+				}
+				for(j++;kitStr[i].charAt(j) != '|';j++)
+				{
+					enchantmentsInt1 += kitStr[i].charAt(j);
+				}
+			}
+			
+		}
+		
+		return null;
+	}
+	
+	public static ArrayList<Kit> getKits(Player p)
+	{
+		return playerKits.get(p.getUniqueId());
+	}
+	
+	public static void setNormalMode(Player p)
+	{
+		if(normalPlayers.contains(p))
+		{
+			return;
+		}
+		
+		if(playerKits.get(p.getUniqueId()) == null)
+		{
+			playerKits.put(p.getUniqueId(), new ArrayList<>());
+		}
+		
+		if(playerKits.get(p.getUniqueId()).size() == 0)
+		{
+			playerKits.get(p.getUniqueId()).add(new Kit(p,1));
+		}
+		
+		playerKits.get(p.getUniqueId()).get(0).getItemsFromInventory(p.getInventory());
+		
+		System.out.println("-------Items------\n" + playerKits.get(p.getUniqueId()).get(0).itemsToString());
+		
+		normalPlayers.add(p);
+		p.setGameMode(GameMode.SURVIVAL);
+		LobbyListener.setupSpawnItems(p, false);
+		p.sendMessage(ChatColor.YELLOW + "Du hast den Kit-Ort verlassen");
+		if(kitPlayers.contains(p))
+		{
+			kitPlayers.remove(p);
+		}
+		
+		
+		
+	}
+}

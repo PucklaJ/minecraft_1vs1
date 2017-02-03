@@ -1,0 +1,27 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import org.bukkit.inventory.ItemStack;
+
+public class KitItem {
+
+	private int slot;
+	private ItemStack item;
+	
+	public KitItem(int slot,ItemStack item)
+	{
+		this.slot = (slot);
+		this.setItem(item);
+	}
+
+	public int getSlot() {
+		return slot;
+	}
+
+	public ItemStack getItem() {
+		return item;
+	}
+
+	public void setItem(ItemStack item) {
+		this.item = item;
+	}
+}

@@ -1,0 +1,113 @@
+package at.Kingcraft.OnevsOne_lobby.Duels;
+
+import java.util.ArrayList;
+import java.util.Random;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import net.md_5.bungee.api.ChatColor;
+
+public class TeamManager {
+	private static ArrayList<Team> teams;
+	private static MainClass plugin;
+	
+	public static void setup(MainClass plugin)
+	{
+		teams = new ArrayList<Team>();
+		TeamManager.plugin = plugin;
+	}
+	
+	public static Team newTeam(Player p)
+	{
+		teams.add(new Team(p,getID()));
+		
+		return teams.get(teams.size()-1);
+	}
+	
+	private static int getID()
+	{
+		Random r = new Random();
+		
+		int id = r.nextInt(Integer.MAX_VALUE);
+		
+		for(int i = 0;i<teams.size();i++)
+		{
+			if(teams.get(i).getID() == id)
+			{
+				id = r.nextInt(Integer.MAX_VALUE);
+				i=-1;
+			}
+		}
+		
+		return id;
+	}
+	
+	public static Team newTeam(Player p1,Player p2)
+	{
+		teams.add(new Team(p1,getID()));
+		teams.get(teams.size()-1).addPlayer(p2);
+		
+		return teams.get(teams.size()-1);
+	}
+	
+	public static Team getTeam(Player p)
+	{
+		for(int i = 0;i<teams.size();i++)
+		{
+			ArrayList<Player> players = teams.get(i).getPlayers();
+			for(int u = 0;u<players.size();u++)
+			{
+				if(players.get(u).getUniqueId().equals(p.getUniqueId()))
+				{
+					return teams.get(i);
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+	public static void checkTeam(Team t)
+	{
+		if(t != null)
+		{
+			Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+				
+				@Override
+				public void run()
+				{
+					ArrayList<Player> players = t.getPlayers();
+					ArrayList<Player> onlinePlayers = new ArrayList<Player>();
+					for(int i = 0;i<players.size();i++)
+					{
+						for(Player p : plugin.getServer().getOnlinePlayers())
+						{
+							if(p.getUniqueId().equals(players.get(i).getUniqueId()))
+							{
+								onlinePlayers.add(p);
+							}
+						}
+					}
+					
+					t.reload();
+					
+				}
+			}, 20*5);
+		}
+	}
+	
+	public static void deleteTeam(Team t,boolean message)
+	{
+		if(message)
+		{
+			ArrayList<Player> ps = t.getPlayers();
+			for(int i = 0;i<ps.size();i++)
+			{
+				ps.get(i).sendMessage(ChatColor.YELLOW + "Das Team wurde aufgelöst");
+			}
+		}
+		teams.remove(t);
+	}
+}

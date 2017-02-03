@@ -1,0 +1,101 @@
+package at.kingcraft.OnevsOne_arena.Duels;
+
+import java.util.ArrayList;
+
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+
+public class DuelManager {
+
+	private static JavaPlugin plugin;
+	
+	private static ArrayList<Duel> duels = new ArrayList<Duel>();
+	
+	public static Duel getFirstDuel()
+	{
+		if(duels.size() == 0)
+			return null;
+		return duels.get(0);
+	}
+	
+	public static Duel newDuel(Challenge c)
+	{
+		Duel d = getDuel(c.ID);
+		if(d == null)
+		{
+			duels.add(new Duel(c, plugin));
+			return duels.get(duels.size()-1);
+		}
+		
+		return d;
+		
+		
+	}
+	
+	public static Duel getDuel(Player p)
+	{
+		for(int i = 0;i<duels.size();i++)
+		{
+			if(duels.get(i).isPartOf(p))
+			{
+				return duels.get(i);
+			}
+		}
+		
+		return null;
+	}
+	
+	public static Duel getDuel(int id)
+	{
+		for(int i = 0;i<duels.size();i++)
+		{
+			if(duels.get(i).id == id)
+			{
+				return duels.get(i);
+			}
+		}
+		
+		return null;
+	}
+	
+	public static ArrayList<Player> deleteDuel(Player p)
+	{
+		Duel d = getDuel(p);
+		if(d != null)
+		{
+			d.endDuel(p);
+			
+			ArrayList<Player> rv = new ArrayList<Player>();
+			
+			Challenge c = d.getChallenge();
+			
+			ArrayList<Player> challengers = c.getChallengers();
+			ArrayList<Player> challenged = c.getChallenged();
+			
+			for(int i = 0;i<challengers.size();i++)
+			{
+					rv.add(challengers.get(i));
+			}
+			
+			for(int i = 0;i<challenged.size();i++)
+			{
+					rv.add(challenged.get(i));
+			}
+			
+			duels.remove(d);
+			return rv;
+			
+		}
+		
+		return null;
+		
+		
+	}
+	
+	public static void setup(JavaPlugin mainClass) {
+		plugin = mainClass;
+		
+	}
+	
+}

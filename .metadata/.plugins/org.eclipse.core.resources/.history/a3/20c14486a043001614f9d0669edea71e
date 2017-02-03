@@ -1,0 +1,47 @@
+package at.Kingcraft.OnevsOne_lobby.Commands;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import net.md_5.bungee.api.ChatColor;
+
+public class KitPlaceCommand implements CommandExecutor {
+
+	private MainClass plugin;
+	
+	public KitPlaceCommand(MainClass plugin)
+	{
+		this.plugin = plugin;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args) {
+		
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		
+		Player me = (Player)sender;
+		
+		if(cmd.getName().equalsIgnoreCase("setminkit"))
+		{
+			
+		}
+		else if(cmd.getName().equalsIgnoreCase("setmaxkit"))
+		{
+			
+		}
+		
+		
+		
+		
+		
+		return true;
+	}
+
+}

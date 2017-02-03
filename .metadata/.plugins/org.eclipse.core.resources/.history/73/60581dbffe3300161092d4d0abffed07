@@ -1,0 +1,121 @@
+package at.kingcraft.OnevsOne_arena.Commands;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import at.kingcraft.OnevsOne_arena.MainClass;
+import at.kingcraft.OnevsOne_arena.Messenger;
+import at.kingcraft.OnevsOne_arena.Challenges.ChallangeManager;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+import at.kingcraft.OnevsOne_arena.Duels.DuelManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class EndmatchCommand implements CommandExecutor {
+
+	public static ArrayList<UUID> leftEndmatch = new ArrayList<UUID>();
+	private static MainClass plugin;
+	
+	public EndmatchCommand(MainClass plugin)
+	{
+		super();
+		EndmatchCommand.plugin = plugin;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args) {
+		
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		if(args.length > 1 || (args.length == 1 && args[0].equalsIgnoreCase("leave")))
+		{
+			return false;
+		}
+		
+		Player p = (Player) sender;
+		
+		
+		return endMatch(p, args);
+	}
+	
+	
+	public static boolean endMatch(Player p,String[] args)
+	{
+		System.out.println("Here 2");
+		// delete Duels
+		DuelManager.deleteDuel(p);
+		
+		// Delete Challenges
+		Challenge c = ChallangeManager.getChallenge(p);
+		if(c==null)
+		{
+			return true;
+		}
+		
+		System.out.println("Disconnect " + p.getDisplayName());
+		
+		ArrayList<Player> challengers = c.getChallengers();
+		ArrayList<Player> challenged = c.getChallenged();
+		
+		int u = 0;
+		for(int i = 0;challengers != null && i<challengers.size();i++)
+		{	
+			
+			System.out.println("Hallo 1");
+				String[] args1 = new String[1];
+				args1[0] = c.getPreviousServer(u);
+				System.out.println("Port " + challengers.get(i).getDisplayName() +" back to: " + args1[0]);
+				Messenger.sendMessage(challengers.get(i), "BungeeCord", "Connect", args1);
+				leftEndmatch.add(challengers.get(i).getUniqueId());
+			
+				
+			
+			u++;
+		}
+		
+		for(int i = 0;challenged != null && i<challenged.size();i++)
+		{
+				System.out.println("Hallo");
+				String[] args1 = new String[1];
+				args1[0] = c.getPreviousServer(u);
+				System.out.println("Port " + challenged.get(i).getDisplayName() +" back to: " + args1[0]);
+				Messenger.sendMessage(challenged.get(i), "BungeeCord", "Connect", args1);
+				leftEndmatch.add(challenged.get(i).getUniqueId());
+				
+			
+			u++;
+		}
+		
+		// Give arena back to free
+		String[] args2 = new String[1];
+		args2[0] = plugin.serverName;
+		Messenger.sendMessage(p,plugin.serverName, "Free", args2);
+		
+		ChallangeManager.deleteChallenge(c.ID);
+		
+		System.out.println("Here 3");
+		
+		return true;
+	}
+
+	@SuppressWarnings("unused")
+	private static boolean isLeaver(Challenge c,int Role,Player p,String[] args)
+	{
+		int role = ChallangeManager.getRole(p, c);
+		
+		if((args.length == 1 && args[0].equals("leave"))  && role == Role)
+		{
+			return true;
+		}
+		
+		
+		return false;
+	}
+}

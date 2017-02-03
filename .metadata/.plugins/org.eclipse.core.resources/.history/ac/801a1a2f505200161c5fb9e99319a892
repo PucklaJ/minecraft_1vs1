@@ -1,0 +1,439 @@
+package at.Kingcraft.OnevsOne_lobby.WaitingSnake;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
+import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Special.MapMenu;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import net.md_5.bungee.api.ChatColor;
+
+public class WaitingSnake
+{
+	private MySQL mysql;
+	private MainClass plugin;
+	private ArrayList<Player> playersToUpload;
+	private ArrayList<UploadPlayer> playersToUploadO;
+	private int checkThreadID = 0;
+	private ArrayList<UUID> playersInWaitingSnake;
+	private ArrayList<UUID> playersLeftByWaitingSnake;
+	
+	public WaitingSnake(MainClass plugin,MySQL mysql)
+	{
+		this.mysql = mysql;
+		playersToUpload = new ArrayList<>();
+		playersToUploadO = new ArrayList<>();
+		playersInWaitingSnake = new ArrayList<>();
+		playersLeftByWaitingSnake = new ArrayList<>();
+		this.plugin = plugin;
+		
+		if(mysql.isConnected())
+		{
+			try
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_WaitingSnake_Players (UUID VARCHAR(100), Settings VARCHAR(100),ServerName VARCHAR(100),Kit VARCHAR(1000), Arena VARCHAR(100))");
+				ps.executeUpdate();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+			
+			checkPlayers(plugin);
+		}
+	}
+	
+	public boolean isIn(Player p)
+	{
+		return playersInWaitingSnake.contains(p.getUniqueId());
+	}
+	
+	public void addPlayer(Player p)
+	{
+		playersToUpload.add(p);
+		playersInWaitingSnake.add(p.getUniqueId());
+		playersLeftByWaitingSnake.add(p.getUniqueId());
+		p.sendMessage(ChatColor.YELLOW + "Zu Warteschlange hinzugefügt");
+	}
+	
+	private void removeFromUpload(String uuid)
+	{
+		for(int i = 0;i<playersToUploadO.size();i++)
+		{
+			if(uuid.equals(playersToUploadO.get(i).uuid))
+			{
+				playersToUploadO.remove(i);
+				return;
+			}
+		}
+	}
+	
+	public void removeFromLeftBy(Player p)
+	{
+		playersLeftByWaitingSnake.remove(p.getUniqueId());
+		System.out.println("Removed " + p.getDisplayName() + " from LeftBy");
+	}
+	
+	public boolean leftsByWaitingSnake(Player p)
+	{
+		return playersLeftByWaitingSnake.contains(p.getUniqueId());
+	}
+	
+	public void removePlayer(Player p)
+	{
+		playersToUpload.remove(p);
+		removeFromUpload(p.getUniqueId().toString());
+		playersInWaitingSnake.remove(p.getUniqueId());
+		
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_WaitingSnake_Players WHERE UUID = ?");
+			ps.setString(1, p.getUniqueId().toString());
+			
+			if(ps.executeQuery().first())
+			{
+				ps = mysql.getConnection().prepareStatement("DELETE FROM Duel_WaitingSnake_Players WHERE UUID = ?");
+				ps.setString(1, p.getUniqueId().toString());
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		p.sendMessage(ChatColor.YELLOW + "Von Warteschlange entfernt");
+	}
+	
+	private void removeFromPlayersToUpload(UUID uuid)
+	{
+		for(int i = 0;i<playersToUpload.size();i++)
+		{
+			if(playersToUpload.get(i).getUniqueId().equals(uuid))
+			{
+				playersToUpload.remove(i);
+				return;
+			}
+		}
+	}
+	
+	public void removePlayer(UUID uuid)
+	{
+		removeFromPlayersToUpload(uuid);
+		removeFromUpload(uuid.toString());
+		playersInWaitingSnake.remove(uuid);
+		
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_WaitingSnake_Players WHERE UUID = ?");
+			ps.setString(1,uuid.toString());
+			
+			if(ps.executeQuery().first())
+			{
+				ps = mysql.getConnection().prepareStatement("DELETE FROM Duel_WaitingSnake_Players WHERE UUID = ?");
+				ps.setString(1, uuid.toString());
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private void checkPlayers(MainClass plugin)
+	{
+		checkThreadID = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				if(plugin.getServer().getOnlinePlayers().size() != 0)
+				{
+					uploadPlayers();
+					makeDuels();
+				}
+			}
+		}, 20*2, 20*2).getTaskId();
+	}
+	
+	public void stopCheckTask()
+	{
+		Bukkit.getScheduler().cancelTask(checkThreadID);
+	}
+	
+	private void uploadPlayers()
+	{
+		if(!mysql.isConnected())
+		{
+			return;
+		}
+		
+		for(int i = 0;i<playersToUpload.size();i++)
+		{
+			
+			try
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_WaitingSnake_Players WHERE UUID = ?");
+				ps.setString(1, playersToUpload.get(i).getUniqueId().toString());
+				ResultSet rs = ps.executeQuery();
+				
+				if(!rs.first())
+				{
+					uploadPlayer(playersToUpload.get(i));
+					playersToUpload.remove(playersToUpload.get(i));
+				}
+				else
+				{
+					playersToUpload.remove(playersToUpload.get(i));
+					continue;
+				}
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		for(int i = 0;i<playersToUploadO.size();i++)
+		{
+			
+			try
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT UUID FROM Duel_WaitingSnake_Players WHERE UUID = ?");
+				ps.setString(1, playersToUploadO.get(i).uuid);
+				ResultSet rs = ps.executeQuery();
+				
+				if(!rs.first())
+				{
+					uploadPlayer(playersToUploadO.get(i).uuid,playersToUploadO.get(i).settings,playersToUploadO.get(i).serverName,playersToUploadO.get(i).kit,playersToUploadO.get(i).arena);
+					playersToUploadO.remove(playersToUploadO.get(i));
+				}
+				else
+				{
+					playersToUploadO.remove(playersToUploadO.get(i));
+					continue;
+				}
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
+
+	private void makeDuels()
+	{
+		ArrayList<OfflinePlayer> checkOPlayers = new ArrayList<>();
+		ArrayList<Settings> checkSettings = new ArrayList<>();
+		ArrayList<String> serverNames = new ArrayList<>();
+		ArrayList<String> kit = new ArrayList<>();
+		ArrayList<String> arenas = new ArrayList<>();
+		
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT * FROM Duel_WaitingSnake_Players");
+			ResultSet rs = ps.executeQuery();
+			
+			
+			while(rs.next())
+			{
+				OfflinePlayer p = Bukkit.getOfflinePlayer(UUID.fromString(rs.getString(1)));
+				if(p == null)
+				{
+					System.out.println("Player: \"" + rs.getString(1) + "\" not found");
+					continue;
+				}
+				
+				checkOPlayers.add(p);
+				checkSettings.add(Settings.fromString(rs.getString(2)));
+				serverNames.add(rs.getString(3));
+				kit.add(rs.getString(4));
+				arenas.add(rs.getString(5));
+			}
+			
+			
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		if(checkOPlayers.isEmpty())
+		{
+			return;
+		}
+		
+		for(int i = 0;i<checkOPlayers.size();i++)
+		{
+			boolean found = false;
+			for(int j = 0;j<checkSettings.size();j++)
+			{
+				if(j!=i)
+				{
+					if(checkSettings.get(i).same(checkSettings.get(j)))
+					{
+						
+						String arena1 = arenas.get(i),arena2 = arenas.get(j);
+						int rArena = new Random().nextInt(2);
+						String arena;
+						if(rArena == 0)
+						{
+							arena = arena1;
+						}
+						else
+						{
+							arena = arena2;
+						}
+						
+						OfflinePlayer op1 = checkOPlayers.get(i),op2 = checkOPlayers.get(j);
+						Settings set1 = checkSettings.get(i),set2 = checkSettings.get(j);
+						String serverName1 = serverNames.get(i),serverName2 = serverNames.get(j);
+						String kit1 = kit.get(i),kit2 = kit.get(j);
+						
+						
+						
+						if(!makeNewDuel(op1,op2,set2,serverName1,serverName2,kit1,arena))
+						{
+							break;
+						}
+						
+						removePlayer(op1.getUniqueId());
+						removePlayer(op2.getUniqueId());
+						
+						
+						
+						checkOPlayers.remove(op2);
+						checkOPlayers.remove(op1);
+						checkSettings.remove(set1);
+						checkSettings.remove(set2);
+						serverNames.remove(serverName1);
+						serverNames.remove(serverName2);
+						kit.remove(kit1);
+						kit.remove(kit2);
+						arenas.remove(arena1);
+						arenas.remove(arena2);
+						
+						
+						i=-1;
+						
+						found = true;
+						break;
+					}
+				}
+			}
+			
+			if(!found)
+			{	
+				checkOPlayers.remove(checkOPlayers.get(i));
+				checkSettings.remove(checkSettings.get(i));
+				serverNames.remove(serverNames.get(i));
+				kit.remove(kit.get(i));
+				arenas.remove(arenas.get(i));
+				
+				i=-1;
+			}
+		}
+	}
+	
+	private void uploadPlayer(Player p)
+	{
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_WaitingSnake_Players (UUID,Settings,ServerName,Kit,Arena) VALUES (?,?,?,?,?)");
+			ps.setString(1, p.getUniqueId().toString());
+			ps.setString(2, Settings.getSettings(p).toString());
+			ps.setString(3, plugin.serverName);
+			
+			String kit;
+			if(KitManager.getChoosenKit(p) < 5)
+			{
+				kit = KitManager.getKits(p).get(KitManager.getChoosenKit(p)).itemsToString();
+			}
+			else
+			{
+				kit = KitManager.getSoupKits(p).get(KitManager.getChoosenKit(p)-5).itemsToString();
+			}
+			
+			ps.setString(4, kit);
+			ps.setString(5, MapMenu.getRandomArena(MenuManager.getSettingMenu(p).getMapMenu().getMyMaps(), null));
+			ps.executeUpdate();
+			
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private void uploadPlayer(String uuid,String settings,String serverName,String kit,String arena)
+	{
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_WaitingSnake_Players (UUID,Settings,ServerName,Kit,Arena) VALUES (?,?,?,?,?)");
+			ps.setString(1, uuid);
+			ps.setString(2, settings);
+			ps.setString(3, serverName);
+			ps.setString(4, kit);
+			ps.setString(5, arena);
+			ps.executeUpdate();
+			
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private boolean makeNewDuel(OfflinePlayer op1,OfflinePlayer op2,Settings set,String serverName1,String serverName2,String kit,String arena)
+	{
+		String[] serverNames = new String[2];
+		serverNames[0] = serverName1;
+		serverNames[1] = serverName2;
+		
+		ArrayList<OfflinePlayer> chers = new ArrayList<>();
+		chers.add(op1);
+		ArrayList<OfflinePlayer> ched = new ArrayList<>();
+		ched.add(op2);
+		
+		String server = ArenaManager.giveArena();
+		
+		if(server.length() == 0)
+		{
+			return false;
+		}
+		
+		if(DuelManager.sendDuelToSQL(chers,ched, (new Random()).nextInt(Integer.MAX_VALUE), set, kit, serverNames,server, arena) != 1)
+		{
+			return false;
+		}
+		
+		if(!ArenaManager.teleportToArena(op1.getName(), server))
+		{
+			return false;
+		}
+		
+		if(!ArenaManager.teleportToArena(op2.getName(), server))
+		{
+			return false;
+		}
+		
+		return true;
+	}
+	
+}

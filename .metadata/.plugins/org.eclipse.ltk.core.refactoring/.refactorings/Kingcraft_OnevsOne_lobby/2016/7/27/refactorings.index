@@ -1,0 +1,7 @@
+1467825935333	Rename field 'onKitTriggerPlayer'
+1467831136591	Encapsulate field 'slot'
+1467831154126	Encapsulate field 'item'
+1467836460167	Rename local variable 'echantments'
+1467892188595	Rename field 'isEquipment'
+1467895601845	Copy compilation units
+1467897422296	Rename local variable 'leaderColor'

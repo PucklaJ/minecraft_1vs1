@@ -1,0 +1,1192 @@
+package at.Kingcraft.OnevsOne_lobby.Kits;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Sounds;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
+import at.Kingcraft.OnevsOne_lobby.Scoreboard.MyScoreboardManager;
+import at.Kingcraft.OnevsOne_lobby.Special.KitSettingMenu;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+import at.Kingcraft.OnevsOne_lobby.Special.SettingMenu;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.Settings;
+import net.md_5.bungee.api.ChatColor;
+
+public class KitManager {
+
+	private static MainClass plugin;
+	private static ArrayList<Player> normalPlayers;
+	private static ArrayList<Player> kitPlayers;
+	private static HashMap<UUID,ArrayList<Kit>> playerKits;
+	//private static HashMap<UUID,ArrayList<Kit>> soupKits;
+	private static HashMap<UUID,ChooseKit> choosenKit;
+	private static HashMap<UUID,Integer> choosenDifKit;
+	private static HashMap<UUID,Boolean> difSet;
+	private static HashMap<UUID,Integer> difKitSetter;
+	private static HashMap<UUID,Integer> preKitSetter;
+	private static ArrayList<Kit> difKits;
+	private static ArrayList<Kit> preKits;
+	private static HashMap<UUID,KitSettingMenu> difPreKitSettingsMenus;
+	public static ArrayList<Integer> IDs;
+	
+	public static void setup(MainClass plugin)
+	{
+		KitManager.plugin = plugin;
+		normalPlayers = new ArrayList<Player>();
+		kitPlayers = new ArrayList<>();
+		playerKits = new HashMap<>();
+		//soupKits = new HashMap<>();
+		choosenKit = new HashMap<>();
+		choosenDifKit = new HashMap<>();
+		difSet = new HashMap<>();
+		difKitSetter = new HashMap<>();
+		preKitSetter = new HashMap<>();
+		difKits = new ArrayList<>();
+		difPreKitSettingsMenus = new HashMap<>();
+		preKits = new ArrayList<>();
+		IDs = new ArrayList<>();
+		
+		if(plugin.getMySQL().isConnected())
+		{
+			try
+			{
+				PreparedStatement ps = plugin.getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_Kits (UUID VARCHAR(100), Kit1 VARCHAR(1000),Kit2 VARCHAR(1000),Kit3 VARCHAR(1000),Kit4 VARCHAR(1000),Kit5 VARCHAR(1000),SoupKit1 VARCHAR(1000),SoupKit2 VARCHAR(1000)," + /*"SoupKit3 VARCHAR(1000),SoupKit4 VARCHAR(1000),SoupKit5 VARCHAR(1000)," +*/ "DifKit INT(3),ChoosenKit VARCHAR(100))");
+				ps.executeUpdate();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		loadDifKits();
+		loadPreKits();
+		
+	}
+	
+	public static Kit getKit(Player p,int cKit)
+	{
+		if(cKit < 5 && cKit > -1)
+		{
+			return getKits(p).get(cKit);
+		}
+		/*else if(cKit >= 5)
+		{
+			return getSoupKits(p).get(cKit-5);
+		}
+		else*/
+		{
+			return getPreKit(-cKit);
+		}
+	}
+	
+	public static Kit getPreKit(int number)
+	{
+		return preKits.get(number-1);
+	}
+	
+	private static void loadPreKits()
+	{
+		loadPreKits(1);
+		loadPreKits(2);
+		loadPreKits(3);
+	}
+	
+	private static void loadPreKits(int number)
+	{
+		MySQL mysql = MainClass.getInstance().getMySQL();
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT * FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, "PreKits"+number);
+			
+			ResultSet rs = ps.executeQuery();
+			if(rs.first())
+			{
+				for(int i = 2;i<9;i++)
+				{
+					String str = rs.getString(i);
+					Kit kit = decodeMySQLKit(null, str,false);
+					preKits.add(kit);
+				}
+			}
+			else
+			{
+				for(int i = 0;i<7;i++)
+				{
+					Kit kit = new Kit(null,i+(1-number)*-7+1,false);
+					setupDefaultKit(kit);
+					preKits.add(kit);
+				}
+				
+				ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_Kits (UUID,Kit1,Kit2,Kit3,Kit4,Kit5,SoupKit1,SoupKit2) VALUES (?,?,?,?,?,?,?,?)");
+				ps.setString(1, "PreKits"+number);
+				for(int i = 2;i<9;i++)
+				{
+					ps.setString(i, preKits.get(i-2+(1-number)*-7).itemsToString());
+				}
+				
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public static void removeDifKitSettingsMenu(Player p)
+	{
+		difPreKitSettingsMenus.remove(p.getUniqueId());
+	}
+	
+	public static Kit getDifKit(int number)
+	{
+		return difKits.get(number-1);
+	}
+	
+	public static void addDifPreKitSettingsMenu(Player p)
+	{
+		difPreKitSettingsMenus.put(p.getUniqueId(), new KitSettingMenu(p,null,"Verschiedene Kit Einstellungen"));
+	}
+	
+	public static KitSettingMenu getDifPreKitSettingsMenu(Player p)
+	{
+		return difPreKitSettingsMenus.get(p.getUniqueId());
+	}
+	
+	public static void uploadDifKit(int number)
+	{
+		Kit kit = getDifKit(number);
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT UUID FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, "Settings");
+			
+			if(ps.executeQuery().first())
+			{
+				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("UPDATE Duel_Kits SET Kit" + number + " = ? WHERE UUID = ?");
+				ps.setString(1, kit.itemsToString());
+				ps.setString(2, "Settings");
+				
+				ps.executeUpdate();
+			}
+			else
+			{
+				ps.close();
+				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_Kits (UUID,Kit1,Kit2,Kit3) VALUES (?,?,?,?)");
+				ps.setString(1, "Settings");
+				ps.setString(2,2 == number+1 ? kit.itemsToString() : "null");
+				ps.setString(3, 3 == number+1 ? kit.itemsToString() : "null");
+				ps.setString(4, 4 == number+1 ? kit.itemsToString() : "null");
+				
+				ps.executeUpdate();
+				
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		if(kit.getOwner() != null)
+		kit.getOwner().sendMessage(ChatColor.YELLOW + "Different Kit " + number + " defined");
+	}
+	
+	private static void loadDifKits()
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT Kit1,Kit2,Kit3 FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, "Settings");
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				difKits.add(decodeMySQLKit(null, rs.getString(1),true));
+				difKits.add(decodeMySQLKit(null, rs.getString(2),true));
+				difKits.add(decodeMySQLKit(null, rs.getString(3),true));
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		if(difKits.isEmpty())
+		{
+			difKits.add(new Kit(null,1,true));
+			difKits.add(new Kit(null,2,true));
+			difKits.add(new Kit(null,3,true));
+			
+			for(int i = 0;i<difKits.size();i++)
+			{
+				difKits.get(i).setOwnerName("Verschieden");
+			}
+			
+			KitManager.uploadDifKit(1);
+			KitManager.uploadDifKit(2);
+			KitManager.uploadDifKit(3);
+		}
+		
+		if(difKits.get(0) == null)
+		{
+			difKits.set(0, new Kit(null,1,true));
+		}
+		if(difKits.get(1) == null)
+		{
+			difKits.set(1, new Kit(null,2,true));
+		}
+		if(difKits.get(2) == null)
+		{
+			difKits.set(2, new Kit(null,3,true));
+		}
+	}
+	
+	private static void setupDefaultKit(Kit defaultKit)
+	{
+		defaultKit.addEquipment(0, new ItemStack(Material.IRON_HELMET));
+		defaultKit.addEquipment(1, new ItemStack(Material.IRON_CHESTPLATE));
+		defaultKit.addEquipment(2, new ItemStack(Material.IRON_LEGGINGS));
+		defaultKit.addEquipment(3, new ItemStack(Material.IRON_BOOTS));
+		
+		defaultKit.addItem(0, new ItemStack(Material.IRON_SWORD));
+		defaultKit.addItem(1,new ItemStack(Material.BOW));
+		defaultKit.addItem(9, new ItemStack(Material.ARROW,15));
+		
+		int settings = 0;
+		
+		for(KitSettings ks : KitSettings.values())
+		{
+			if(ks.isDefaultActive())
+			{
+				settings |= ks.getBit();
+			}
+		}
+		
+		defaultKit.setSettings(settings);
+		
+		defaultKit.onlySetName("Kit" + defaultKit.getNumber());
+	}
+	
+	public static void setKitMode(Player p)
+	{
+		if(kitPlayers.contains(p))
+		{
+			return;
+		}
+		kitPlayers.add(p);
+		p.setGameMode(GameMode.CREATIVE);
+		p.getInventory().clear();
+		if(normalPlayers.contains(p))
+		{
+			normalPlayers.remove(p);
+		}
+		
+		if(playerKits.get(p.getUniqueId()) == null)
+		{
+			playerKits.put(p.getUniqueId(), new ArrayList<>());
+		}
+		/*if(soupKits.get(p.getUniqueId()) == null)
+		{
+			soupKits.put(p.getUniqueId(), new ArrayList<>());
+		}*/
+		
+		if(playerKits.get(p.getUniqueId()).size() == 0)
+		{
+			playerKits.get(p.getUniqueId()).add(new Kit(p,1,false));
+		}
+		/*if(soupKits.get(p.getUniqueId()).size() == 0)
+		{
+			soupKits.get(p.getUniqueId()).add(new Kit(p,6,false));
+		}*/
+		
+		
+		Kit kit = null;
+		
+		if(difKitSetter.get(p.getUniqueId()) != null)
+		{
+			int number = difKitSetter.get(p.getUniqueId());
+			kit = getDifKit(number);
+			
+			//kit.kitItemsToInventory(p);
+		}
+		else if(preKitSetter.get(p.getUniqueId()) != null)
+		{
+			int number = preKitSetter.get(p.getUniqueId());
+			kit = getPreKit(number);
+			
+			//kit.kitItemsToInventory(p);
+		}
+		else
+		{
+			int cKit = getChoosenKit(p).myNumber;
+			
+			if(cKit < 5 && cKit >=0)
+			{
+				kit = playerKits.get(p.getUniqueId()).get(cKit);
+			}
+			/*else if(cKit >= 5)
+			{
+				kit = soupKits.get(p.getUniqueId()).get(cKit-5);
+			}*/
+			else
+			{
+				kit = playerKits.get(p.getUniqueId()).get(0);
+			}
+		}
+		
+		if(kit != null)
+		{
+			kit.kitItemsToInventory(p);
+			p.sendMessage(Messages.kitPlaceJoin(kit.getName(false,false,false)));
+			p.playSound(p.getLocation(), Sounds.kitPlaceJoin, Sounds.kitPlaceJoinVolume, Sounds.DEFAULT_PITCH);
+		}
+		
+		
+		
+	}
+	
+	public static void addToNormal(Player p)
+	{
+		if(normalPlayers.contains(p))
+			return;
+		normalPlayers.add(p);
+	}
+	
+	public static void removeFromNormal(Player p)
+	{
+		if(!normalPlayers.contains(p))
+			return;
+		normalPlayers.remove(p);
+	}
+	
+	public static void removeFromKit(Player p)
+	{
+		if(!kitPlayers.contains(p))
+			return;
+		kitPlayers.remove(p);
+	}
+	
+	public static boolean isKitPlayer(Player p)
+	{
+		return kitPlayers.contains(p);
+	}
+	
+	public static void deleteKits(Player p)
+	{
+		if(playerKits.get(p.getUniqueId()) != null)
+		{
+			ArrayList<Kit> kits = playerKits.get(p.getUniqueId());
+			
+			for(int i = 0;i<kits.size();i++)
+			{
+				IDs.remove((Object)kits.get(i).getID());
+			}
+			
+			playerKits.get(p.getUniqueId()).clear();
+			playerKits.remove(p.getUniqueId());
+		}
+		/*if(soupKits.get(p.getUniqueId()) != null)
+		{
+			ArrayList<Kit> kits = soupKits.get(p.getUniqueId());
+			
+			for(int i = 0;i<kits.size();i++)
+			{
+				IDs.remove((Object)kits.get(i).getID());
+			}
+			
+			soupKits.get(p.getUniqueId()).clear();
+			soupKits.remove(p.getUniqueId());
+		}*/
+		
+		choosenKit.remove(p.getUniqueId());
+		choosenDifKit.remove(p.getUniqueId());
+		difSet.remove(p.getUniqueId());
+		
+		if(preKitSetter.get(p.getUniqueId()) != null)
+		{
+			preKitSetter.remove(p.getUniqueId());
+		}
+		if(difKitSetter.get(p.getUniqueId()) != null)
+		{
+			difKitSetter.remove(p.getUniqueId());
+		}
+	}
+	
+	public static void setDif(Player p,boolean dif)
+	{
+		boolean here = difSet.get(p.getUniqueId()) != null;
+		
+		difSet.put(p.getUniqueId(), dif);
+		Settings.getSettings(p).setDif(dif);
+		
+		if(here)
+		{
+			MyScoreboardManager.updateScoreboard(p);
+		}
+	}
+	
+	public static boolean getDif(Player p)
+	{
+		if(p == null || difSet.get(p.getUniqueId()) == null)
+			return false;
+		return difSet.get(p.getUniqueId());
+	}
+	
+	public static void loadKits(Player p)
+	{
+		if(!plugin.getMySQL().isConnected())
+			return;
+		
+		if(playerKits.get(p.getUniqueId()) == null)
+		{
+			playerKits.put(p.getUniqueId(), new ArrayList<>());
+		}
+		/*if(soupKits.get(p.getUniqueId()) == null)
+		{
+			soupKits.put(p.getUniqueId(), new ArrayList<>());
+		}*/
+		
+		playerKits.get(p.getUniqueId()).clear();
+		//soupKits.get(p.getUniqueId()).clear();
+		
+		try
+		{
+			PreparedStatement ps = plugin.getMySQL().getConnection().prepareStatement("SELECT Kit1,Kit2,Kit3,Kit4,Kit5" + /*",SoupKit1,SoupKit2,SoupKit3,SoupKit4,SoupKit5" +*/ ",DifKit,ChoosenKit FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, p.getUniqueId().toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				for(int i = 1;i<=5;i++)
+				{
+					Kit kit = decodeMySQLKit(p,rs.getString(i),false);
+				
+					if(kit == null)
+					{
+						kit = new Kit(p,i,false);
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					if(kit.getItems().size() == 0)
+					{
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					playerKits.get(p.getUniqueId()).add(kit);
+				}
+				/*for(int i = 6;i<=10;i++)
+				{
+					Kit kit = decodeMySQLKit(p, rs.getString(i),false);
+					
+					if(kit == null)
+					{
+						kit = new Kit(p,i,false);
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					if(kit.getItems().size() == 0)
+					{
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					soupKits.get(p.getUniqueId()).add(kit);
+				}*/
+				
+				int cdk = rs.getInt(/*11*/6);
+				
+				if((cdk & 1) == 1  && (cdk & 2) == 2)
+				{
+					setChoosenDifKit(p, 3);
+				}
+				else if(!((cdk & 1) == 1)  && (cdk & 2) == 2)
+				{
+					setChoosenDifKit(p, 2);
+				}
+				else if((cdk & 1) == 1  && !((cdk & 2) == 2))
+				{
+					setChoosenDifKit(p, 1);
+				}
+				
+				if((cdk & 4) == 4)
+				{
+					setDif(p,true);
+				}
+				else
+				{
+					setDif(p,false);
+				}
+				
+				String cKit = rs.getString(/*12*/7);
+				
+				ChooseKit ChKit = ChooseKit.fromString(p, cKit);
+				
+				setChoosenKit(p,ChKit.otherOPlayer,ChKit.myNumber,ChKit.otherNumber);
+				
+				
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		if(playerKits.get(p.getUniqueId()).size() == 0)
+		{
+			for(int i = 1;i<=5;i++)
+			{
+				Kit kit = new Kit(p,i,false);
+				setupDefaultKit(kit);
+				playerKits.get(p.getUniqueId()).add(kit);
+				kit.loadToMySQL(plugin.getMySQL());
+			}
+		}
+		
+		/*if(soupKits.get(p.getUniqueId()).size() == 0)
+		{
+			for(int i = 6;i<=10;i++)
+			{
+				Kit kit = new Kit(p,i,false);
+				setupDefaultKit(kit);
+				soupKits.get(p.getUniqueId()).add(kit);
+				kit.loadToMySQL(plugin.getMySQL());
+			}
+		}*/
+		
+		for(Kit kit : playerKits.get(p.getUniqueId()))
+		{
+			kit.setOldItems(kit.itemsToString());
+		}
+		
+		for(Kit kit : playerKits.get(p.getUniqueId()))
+		{
+			if(!kit.getOwnerName().equals(p.getName()))
+			{
+				kit.setOwnerName(p.getName());
+				kit.loadToMySQL(MainClass.getInstance().getMySQL());
+			}
+		}
+		
+		/*for(Kit kit : soupKits.get(p.getUniqueId()))
+		{
+			kit.setOldItems(kit.itemsToString());
+		}*/
+		
+		
+	}
+	
+	public static void uploadDifKit(Player p)
+	{
+		try
+		{
+			PreparedStatement ps = plugin.getMySQL().getConnection().prepareStatement("UPDATE Duel_Kits SET DifKit = ? WHERE UUID = ?");
+			ps.setInt(1, getChoosenDifKit(p) | (getDif(p) ? 4 : 0));
+			ps.setString(2, p.getUniqueId().toString());
+			
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public static void uploadChoosenKit(Player p)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("UPDATE Duel_Kits SET ChoosenKit = ? WHERE UUID = ?");
+			ps.setString(1, getChoosenKit(p).toString());
+			ps.setString(2, p.getUniqueId().toString());
+			
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public static ChooseKit getChoosenKit(Player p)
+	{
+		if(p == null || choosenKit.get(p.getUniqueId()) == null)
+		{
+			return null;
+		}
+		
+		return choosenKit.get(p.getUniqueId());
+	}
+	
+	public static void setChoosenKit(Player p,Player otherP,int my,int other)
+	{
+		boolean here = choosenKit.get(p.getUniqueId()) != null;
+		choosenKit.put(p.getUniqueId(), new ChooseKit(p, otherP, my,other));
+		if(here)MyScoreboardManager.updateScoreboard(p);
+	}
+	
+	public static void setChoosenKit(Player p,OfflinePlayer otherP,int my,int other)
+	{
+		boolean here = choosenKit.get(p.getUniqueId()) != null;
+		choosenKit.put(p.getUniqueId(), new ChooseKit(p, otherP, my,other));
+		if(here)MyScoreboardManager.updateScoreboard(p);
+	}
+	
+	public static void setChoosenDifKit(Player p,int c)
+	{
+		boolean here = choosenDifKit.get(p.getUniqueId()) != null;
+		
+		choosenDifKit.put(p.getUniqueId(), c);
+		
+		if(here && getDif(p)) MyScoreboardManager.updateScoreboard(p);
+	}
+	
+	public static int getChoosenDifKit(Player p)
+	{
+		return choosenDifKit.get(p.getUniqueId());
+	}
+	
+	public static void updateChoosenKit(Player p,Player otherPlayer,int my,int other)
+	{
+		choosenKit.put(p.getUniqueId(),new ChooseKit(p, otherPlayer, my,other));
+		
+		int cKit = getChoosenKit(p).myNumber;
+		
+		/*if(!(cKit >= 5))
+		{
+			MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().deactivateChoosenKit();
+		}*/
+		if(!(cKit >= 0 && cKit < 5))
+		{
+			MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().deactivateChoosenKit();
+		}
+		if(!(cKit<0))
+		{
+			//MenuManager.getSettingMenu(p).getKitMainMenu().getKitPreMenu().deactivateChoosenKit();
+		}
+		
+		MyScoreboardManager.updateScoreboard(p);
+		
+		
+	}
+	
+	@SuppressWarnings("deprecation")
+	private static Kit decodeMySQLKit(Player p,String str,boolean dif)
+	{
+		if(str.equals("null"))
+		{
+			return null;
+		}
+		String[] kitStr = str.split("\n");
+		
+		Kit kit = new Kit(p,Integer.valueOf(kitStr[3]),dif);
+		
+		String Name = kitStr[0];
+		
+		int symbol = Integer.valueOf(kitStr[2]);
+		
+		kit.onlySetName(Name);
+		kit.addSymbol(symbol);
+		kit.setSettings(Integer.valueOf(kitStr[4]));
+		kit.setOwnerName(kitStr[1]);
+		
+		
+		
+		for(int i = 5;i<kitStr.length;i++)
+		{
+			if(kitStr[i].equals("null") || kitStr[i].length() == 0)
+				continue;
+			
+			
+			String type = "";
+			String amount = "";
+			String durability = "";
+			ArrayList<String> enchantments = new ArrayList<String>();
+			ArrayList<String> enchantmentsInt = new ArrayList<String>();
+			String name = "";
+			String slot = "";
+			boolean isEquip = false;
+			String leatherColor = "";
+			
+			int j = 0;
+			for(;kitStr[i].charAt(j) != '(';j++)
+			{
+				type += kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != '#';j++)
+			{
+				isEquip = true;
+			}
+			for(j++;kitStr[i].charAt(j) != '#';j++)
+			{
+				leatherColor += kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != ';';j++)
+			{
+				slot += kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != ';';j++)
+			{
+				amount+=kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != '#';j++)
+			{
+				durability+=kitStr[i].charAt(j);
+			}
+			for(j++;kitStr[i].charAt(j) != '#';j++)
+			{
+				String enchantments1 = "";
+				String enchantmentsInt1 = "";
+				for(;kitStr[i].charAt(j) != ';';j++)
+				{
+					enchantments1 += kitStr[i].charAt(j);
+				}
+				for(j++;kitStr[i].charAt(j) != '|';j++)
+				{
+					enchantmentsInt1 += kitStr[i].charAt(j);
+				}
+				
+				enchantments.add(enchantments1);
+				enchantmentsInt.add(enchantmentsInt1);
+			}
+			
+			for(j++;kitStr[i].charAt(j) != ')';j++)
+			{
+				name += kitStr[i].charAt(j);
+			}
+			
+			Material mat = Material.getMaterial(Integer.valueOf(type));
+			ItemStack is = new ItemStack(mat,Integer.valueOf(amount),Short.valueOf(durability));
+			if(!name.equals("null"))
+			{
+				ItemMeta im = is.getItemMeta();
+				im.setDisplayName(name);
+				is.setItemMeta(im);
+			}
+			if(!leatherColor.equals(""))
+			{
+				LeatherArmorMeta lam = (LeatherArmorMeta) is.getItemMeta();
+				lam.setColor(Color.fromRGB(Integer.valueOf(leatherColor)));
+				is.setItemMeta(lam);
+			}
+			
+			for(int u = 0;u<enchantments.size();u++)
+			{
+				Enchantment ench = Enchantment.getById(Integer.valueOf(enchantments.get(u)));
+				
+				try
+				{
+					if(is.getType().getId() != 403)
+					{
+						is.addUnsafeEnchantment(ench, Integer.valueOf(enchantmentsInt.get(u)));
+					}
+					else
+					{
+						EnchantmentStorageMeta esm = (EnchantmentStorageMeta) is.getItemMeta();
+						esm.addStoredEnchant(ench, Integer.valueOf(enchantmentsInt.get(u)), true);
+						is.setItemMeta(esm);
+					}
+					
+				}
+				catch(IllegalArgumentException e)
+				{
+					System.out.println("Enchantment " + ench.getName() + " not combatible with " + is.getType().toString());
+					continue;
+				}
+				
+			}
+			
+			if(isEquip)
+			{
+				kit.addEquipment(Integer.valueOf(slot), is);
+			}
+			else
+			{
+				kit.addItem(Integer.valueOf(slot), is);
+			}
+			
+			
+			
+		}
+		
+		return kit;
+	}
+	
+	public static ArrayList<Kit> getKits(Player p)
+	{	
+		return playerKits.get(p.getUniqueId());
+	}
+	
+	public static Kit getChoosenKitKit(Player p)
+	{
+		if(getDif(p))
+		{
+			return getDifKit(choosenDifKit.get(p.getUniqueId()));
+		}
+		else
+		{
+			ChooseKit kit = KitManager.getChoosenKit(p);
+			return kit == null ? null : KitManager.getChoosenKit(p).getKit();
+		}
+	}
+	
+	/*public static ArrayList<Kit> getSoupKits(Player p)
+	{
+		return soupKits.get(p.getUniqueId());
+	}*/
+	
+	public static Kit[] getKitsArray(Player p)
+	{
+		ArrayList<Kit> kits = playerKits.get(p.getUniqueId());
+		
+		Kit[] aKits = new Kit[kits.size()];
+		
+		for(int i = 0;i<aKits.length;i++)
+		{
+			aKits[i] = kits.get(i);
+		}
+		
+		return aKits;
+	}
+	
+	/*public static Kit[] getSoupKitsArray(Player p)
+	{
+		ArrayList<Kit> kits = soupKits.get(p.getUniqueId());
+		
+		Kit[] aKits = new Kit[kits.size()];
+		
+		for(int i = 0;i<aKits.length;i++)
+		{
+			aKits[i] = kits.get(i);
+		}
+		
+		return aKits;
+	}*/
+	
+	public static void addDifKitSetter(Player p,int number)
+	{
+		if(preKitSetter.get(p.getUniqueId()) != null)
+		{
+			preKitSetter.remove(p.getUniqueId());
+		}
+		
+		difKitSetter.put(p.getUniqueId(), number);
+	}
+	
+	public static void addPreKitSetter(Player p,int number)
+	{
+		if(difKitSetter.get(p.getUniqueId()) != null)
+		{
+			difKitSetter.remove(p.getUniqueId());
+		}
+		
+		preKitSetter.put(p.getUniqueId(), number);
+	}
+	
+	public static void setNormalMode(Player p)
+	{
+		if(normalPlayers.contains(p))
+		{
+			return;
+		}
+		
+		if(playerKits.get(p.getUniqueId()) == null)
+		{
+			playerKits.put(p.getUniqueId(), new ArrayList<>());
+		}
+		/*if(soupKits.get(p.getUniqueId()) == null)
+		{
+			soupKits.put(p.getUniqueId(), new ArrayList<>());
+		}*/
+		
+		if(playerKits.get(p.getUniqueId()).size() == 0)
+		{
+			playerKits.get(p.getUniqueId()).add(new Kit(p,1,false));
+		}
+		/*if(soupKits.get(p.getUniqueId()).size() == 0)
+		{
+			soupKits.get(p.getUniqueId()).add(new Kit(p,6,false));
+		}*/
+		
+		if(difKitSetter.get(p.getUniqueId()) != null)
+		{
+			int difKit = difKitSetter.get(p.getUniqueId());
+			KitManager.getDifKit(difKit).getItemsFromInventory(p);
+			
+			uploadDifKit(difKit);
+			
+			difKitSetter.remove(p.getUniqueId());
+			
+			ArrayList<SettingMenu> menus = MenuManager.getAllSettingsMenus();
+			
+			for(int i = 0;i<menus.size();i++)
+			{
+				menus.get(i).getKitMainMenu().getKitDifMenu().update();
+			}
+			
+		}
+		else if(preKitSetter.get(p.getUniqueId()) != null)
+		{
+			int preKit = preKitSetter.get(p.getUniqueId());
+			KitManager.getPreKit(preKit).getItemsFromInventory(p);
+			
+			uploadPreKit(preKit);
+			
+			preKitSetter.remove(p.getUniqueId());
+			ArrayList<SettingMenu> menus = MenuManager.getAllSettingsMenus();
+			
+			for(int i = 0;i<menus.size();i++)
+			{
+				menus.get(i).getKitMainMenu().getKitPreMenu().update();
+			}
+		}
+		else
+		{
+			int cKit = getChoosenKit(p).myNumber;
+			
+			/*if(cKit >= 5)
+			{
+				soupKits.get(p.getUniqueId()).get(cKit).getItemsFromInventory(p);
+			}
+			else */if(cKit >=0)
+			{
+				playerKits.get(p.getUniqueId()).get(cKit).getItemsFromInventory(p);
+			}
+			else
+			{
+				playerKits.get(p.getUniqueId()).get(0).getItemsFromInventory(p);
+			}
+		}
+		
+		
+		normalPlayers.add(p);
+		LobbyListener.setupSpawnItems(p, false);
+		p.sendMessage(Messages.kitPlaceLeave);
+		p.playSound(p.getLocation(), Sounds.kitPlaceLeave, Sounds.kitPlaceLeaveVolume, Sounds.DEFAULT_PITCH);
+		if(kitPlayers.contains(p))
+		{
+			kitPlayers.remove(p);
+		}
+		
+		
+		
+	}
+	
+	private static String getPreKitNameForMySQL(int number)
+	{
+		String str = "";
+		
+		if(number <= 5 )
+		{
+			str = "Kit" + number;
+		}
+		else if(number <= 7)
+		{
+			str = "SoupKit" + (number - 5);
+		}
+		else if(number <= 12)
+		{
+			str = "Kit" + (number-7);
+		}
+		else if(number <= 14)
+		{
+			str = "SoupKit" + (number-12);
+		}
+		else if(number <= 19)
+		{
+			str = "Kit" + (number-14);
+		}
+		else if(number <= 21)
+		{
+			str = "SoupKit" + (number-19);
+		}
+		else if(number <= 26)
+		{
+			str = "Kit" + (number-21);
+		}
+		else if(number <= 28)
+		{
+			str = "SoupKit" + (number-26);
+		}
+		
+		return str;
+	}
+	
+	private static int getPreKitNumberForMySQL(int number)
+	{
+		return number <= 7 ? 1 : number <= 14 ? 2 : number <= 21 ? 3 : 4;
+	}
+	
+	public static void uploadPreKit(int number)
+	{
+		Kit kit = getPreKit(number);
+		
+		try
+		{
+			System.out.println("Uploading PreKit: " + getPreKitNameForMySQL(number));
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("UPDATE Duel_Kits SET "+ getPreKitNameForMySQL(number) + " = ? WHERE UUID = ?");
+			ps.setString(1, kit.itemsToString());
+			ps.setString(2, "PreKits" + getPreKitNumberForMySQL(number));
+			
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public static void viewKit(Player p, Kit kit)
+	{
+		LobbyListener.kitViewer.add(p.getUniqueId());
+		
+		kit.kitItemsToInventory(p);
+		p.sendMessage(Messages.yourKit(kit.getName(true,!(kit.getOwnerName().equals("Server") || kit.getOwnerName().equals("Verschieden")),false), kit.getKitSettings()));
+	}
+	
+	public static ArrayList<Kit> getAllKits(Player p)
+	{
+		ArrayList<Kit> allKits = new ArrayList<>();
+		
+		allKits.addAll(playerKits.get(p.getUniqueId()));
+		//allKits.addAll(soupKits.get(p.getUniqueId()));
+		allKits.addAll(preKits);
+		allKits.addAll(difKits);
+		
+		return allKits;
+	}
+	
+	public static ArrayList<Kit> getKits(UUID u)
+	{
+		
+		ArrayList<Kit> kits = new ArrayList<>();
+		
+		Player p = null;
+		
+		for(Player p1 : Bukkit.getOnlinePlayers())
+		{
+			if(p1.getUniqueId().equals(u))
+			{
+				p = p1;
+				break;
+			}
+		}
+		
+		if(p!= null)
+		{
+			ArrayList<Kit> playerKitsOther = getKits(p);
+			
+			if(playerKitsOther != null)
+			{
+				kits.addAll(playerKitsOther);
+				//kits.addAll(getSoupKits(p));
+				return kits;
+			}
+		}
+		
+		
+		
+		
+		try
+		{
+			PreparedStatement ps = plugin.getMySQL().getConnection().prepareStatement("SELECT Kit1,Kit2,Kit3,Kit4,Kit5" + /*",SoupKit1,SoupKit2,SoupKit3,SoupKit4,SoupKit5" +*/" FROM Duel_Kits WHERE UUID = ?");
+			ps.setString(1, u.toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				for(int i = 1;i<=5;i++)
+				{
+					Kit kit = decodeMySQLKit(null,rs.getString(i),false);
+				
+					if(kit == null)
+					{
+						kit = new Kit(null,i,false);
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					if(kit.getItems().size() == 0)
+					{
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					kits.add(kit);
+				}
+				/*for(int i = 6;i<=10;i++)
+				{
+					Kit kit = decodeMySQLKit(null, rs.getString(i),false);
+					
+					if(kit == null)
+					{
+						kit = new Kit(null,i,false);
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					if(kit.getItems().size() == 0)
+					{
+						setupDefaultKit(kit);
+						kit.loadToMySQL(plugin.getMySQL());
+					}
+					kits.add(kit);
+				}*/
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		
+		return kits;
+	}
+	
+	public static boolean isPreKit(Kit kit)
+	{
+		if(kit == null)
+			return false;
+		
+		for(int i = 0;i<preKits.size();i++)
+		{
+			if(kit.getID() == preKits.get(i).getID())
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public static ArrayList<Kit> getPreKits()
+	{
+		return preKits;
+	}
+	
+	public static ArrayList<Kit> getDifKits()
+	{
+		return difKits;
+	}
+	
+}

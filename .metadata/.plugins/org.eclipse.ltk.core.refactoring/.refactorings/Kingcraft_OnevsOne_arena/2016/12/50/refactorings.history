@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 2 elements to &apos;Kingcraft_OnevsOne_setup/src/MySQL&apos;&#x0D;&#x0A;- Original project: &apos;Kingcraft_OnevsOne_arena&apos;&#x0D;&#x0A;- Destination element: &apos;Kingcraft_OnevsOne_setup/src/MySQL&apos;&#x0D;&#x0A;- Original elements:&#x0D;&#x0A;     MySQL.CheckConnectionRun.java&#x0D;&#x0A;     MySQL.MySQL.java" description="Copy compilation units" destination="=Kingcraft_OnevsOne_setup/src&lt;MySQL" element1="/src&lt;MySQL{CheckConnectionRun.java" element2="/src&lt;MySQL{MySQL.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1482073961734" units="2" version="1.0"/>
+</session>

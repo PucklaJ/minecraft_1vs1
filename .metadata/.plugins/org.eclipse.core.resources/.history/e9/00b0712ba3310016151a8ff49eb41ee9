@@ -1,0 +1,17 @@
+package at.kingcraft.OnevsOne_bridge;
+
+import net.md_5.bungee.api.plugin.Plugin;
+
+public class MainClass extends Plugin {
+
+	String name;
+	
+	@Override
+	public void onEnable() {
+		super.onEnable();
+		name = this.getDescription().getName();
+		
+		System.out.println("[" + name + "] enabled");
+	}
+
+}

@@ -1,0 +1,28 @@
+package at.kingcraft.OnevsOne_bridge;
+
+import at.kingcraft.OnevsOne_bridge.Commands.TestCommand;
+import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.protocol.packet.PluginMessage;
+
+public class MainClass extends Plugin {
+
+	String name;
+	
+	@Override
+	public void onEnable()
+	{
+		super.onEnable();
+		name = this.getDescription().getName();
+		
+		System.out.println("[" + name + "] enabled");
+		
+		this.getProxy().getPluginManager().registerCommand(this, new TestCommand("gtest",name));
+		for(String str : this.getProxy().getChannels())
+		{
+			System.out.println("Channel: " + str);
+		}
+		
+		PluginMessage m = new PluginMessage();
+	}
+
+}

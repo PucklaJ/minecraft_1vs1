@@ -1,0 +1,218 @@
+package at.Kingcraft.OnevsOne_lobby.utils;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.inventivetalent.bossbar.BossBarAPI;
+import org.inventivetalent.bossbar.BossBarAPI.Color;
+import org.inventivetalent.bossbar.BossBarAPI.Style;
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Commands.KitPlaceCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.OnevsOneCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.RefuseCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.TeamCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.TestCommand;
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Challenge;
+import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Team;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamEnquiryManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
+import at.Kingcraft.OnevsOne_lobby.Special.MapMenu;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
+
+public class MainClass extends JavaPlugin {
+
+	private MySQL mysql;
+	public String serverName = "null"; 
+	
+	private void setupCommands() {
+		getCommand("test").setExecutor(new TestCommand(this));
+		getCommand("1vs1").setExecutor(new OnevsOneCommand());
+		getCommand("refuse").setExecutor(new RefuseCommand());
+		getCommand("team").setExecutor(new TeamCommand());
+		getCommand("setminkit").setExecutor(new KitPlaceCommand(this));
+	}
+
+	private void setupListeners() {
+		getServer().getPluginManager().registerEvents(new LobbyListener(this), this);
+	}
+
+	private void setupConfig() {
+		this.getConfig().options().header("Einstellungen fuer OnevsOne plugin");
+
+		this.getConfig().addDefault("OnevsOne.Lobby.World.Name", "world");
+
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.x", 250.673);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.y", 66.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.z", -2.444);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.yaw", 0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.pitch", 0.0);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.World","pvp");
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.x1",0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.y1",0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.z1",0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.x2",0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.y2",0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.Kits.Place.z2",0.0);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Skulls.HotbarPosition", 8);
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Challenge.Material", "BONE");
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.HotbarPosition", 8);
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.Material", "REDSTONE_COMPARATOR");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.Text", ChatColor.YELLOW + "Einstellungen");
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.Maps.Slot", 11);
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.Maps.Material", "MAP");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.Maps.Durability", 1);
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Settings.Maps.Text", ChatColor.YELLOW + "Map-Einstellungen");
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Text", "Anfragen");
+		
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallIN.Material", "DIAMOND_SWORD");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallIN.Text", "Eingehende Herausforderungen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallIN.Slot", 0);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallOUT.Material", "GOLD_SWORD");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallOUT.Text", "Ausgehende Herausforderungen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallOUT.Slot", 2);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamIN.Material", "DIAMOND_CHESTPLATE");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamIN.Text", "Eingehende Teamanfragen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamIN.Slot", 4);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamOUT.Material", "GOLD_CHESTPLATE");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamOUT.Text", "Ausngehende Teamanfragen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamOUT.Slot", 6);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Tournaments.Material", "IRON_HELMET");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Tournaments.Text", "Startende Turniere");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Tournaments.Slot", 8);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Gap.Color", 1);
+		
+
+		this.getConfig().options().copyDefaults(true);
+		this.saveConfig();
+
+		System.out.println("[" + getName() +  "] Successfully setup config.yml");
+	}
+
+	@Override
+	public void onEnable() {
+		super.onEnable();
+
+		setupConfig();
+
+		setupCommands();
+		setupListeners();
+		
+		mysql = new MySQL(this);
+		System.out.println("[" + getName() +  "] MySQL enabled");
+		try
+		{
+			if(mysql.isConnected())
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_Challenges (ChallengerUUID VARCHAR(1000),ChallengedUUID VARCHAR(1000),ChallengerName VARCHAR(1000),ChallengedName VARCHAR(1000),ArenaName VARCHAR(100),ChallengeID INT(100),ServerName VARCHAR(100),ArenaServer VARCHAR(100))");
+				ps.executeUpdate();
+			}
+			
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		ChallangeManager.setup(this);
+		DuelManager.setup(mysql);
+		ArenaManager.setup(mysql);
+		TeamManager.setup(this);
+		TeamEnquiryManager.setup();
+		MenuManager.setup(this);
+		MapMenu.setup(mysql);
+		
+		// SEtup Messeging System
+		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new Messenger());
+		Messenger.setup(this);
+		
+		
+		// TODO startServer hinzufügen
+
+		Bukkit.getWorld(this.getConfig().getString("OnevsOne.Lobby.World.Name")).setSpawnLocation(456, 345, 348);
+
+		System.out.println("[" + getName() +  "] enabled");
+		
+		Messenger.sendMessage(null, "BungeeCord", "GetServers", null);
+		Messenger.sendMessage(null, "BungeeCord", "GetServer", null);
+		// automatically ask Servers every 5 minutes
+		Bukkit.getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				Messenger.sendMessage(null, "BungeeCord", "GetServers", null);
+				
+			}
+		}, 20*60*5, 20*60*5);
+		
+		for(Player p : getServer().getOnlinePlayers())
+		{
+			ChallangeManager.setNum(p, 0);
+			BossBarAPI.addBar(p, new TextComponent(ChatColor.YELLOW + "Keine Herausforderung"),
+					Color.BLUE,
+					Style.NOTCHED_12,
+					1.0f, 0,0);
+			LobbyListener.setupSpawnItems(p, true);
+		}
+		
+		Bukkit.getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				MenuManager.updateAllMapMenus();
+				
+			}
+		}, 20*60*10, 20*60*10);
+
+	}
+
+	@Override
+	public void onDisable()
+	{
+		
+		for(Player p : getServer().getOnlinePlayers())
+		{
+			for(Challenge c : ChallangeManager.getChallenges(p))
+			{
+				ChallangeManager.deleteChallenge(null,null,c.ID, false,false);
+			}
+			TeamEnquiryManager.deleteEnquiries(p,false);
+			
+			Team t = TeamManager.getTeam(p);
+			if(t != null)
+			{
+				TeamManager.deleteTeam(t,false);
+			}
+			
+			ChallangeManager.deleteNum(p);
+			BossBarAPI.removeAllBars(p);
+			MenuManager.getSettingMenu(p).getMapMenu().writeMapsToMySQL();
+		}
+		
+		mysql.disconnect();
+	}
+}

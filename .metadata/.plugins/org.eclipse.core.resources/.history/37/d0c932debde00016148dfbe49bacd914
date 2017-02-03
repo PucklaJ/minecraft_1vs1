@@ -1,0 +1,373 @@
+package at.Kingcraft.OnevsOne_lobby.Commands;
+
+import java.util.ArrayList;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
+import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class KitViewerComand implements CommandExecutor {
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args)
+	{
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		
+		Player p = (Player) sender;
+		
+		if(KitManager.isKitPlayer(p))
+		{
+			p.sendMessage(Messages.noKitCommandInKitPlace);
+			return true;
+		}
+		
+		if(args.length == 0)
+		{
+			if(LobbyListener.kitViewer.contains(p.getUniqueId()))
+			{
+				return true;
+			}
+			
+			Kit kit = KitManager.getChoosenKitKit(p);
+			
+			KitManager.viewKit(p, kit);
+			
+			
+			return true;
+		}
+		else if(args.length > 0)
+		{
+			if(LobbyListener.kitViewer.contains(p.getUniqueId()))
+			{
+				return true;
+			}
+			
+			if(!args[0].contains(":"))
+			{
+				ArrayList<Kit> allKits = KitManager.getAllKits(p);
+				
+				for(int i = 1;i<args.length;i++)
+				{
+					args[0] += " " + args[i];
+				}
+				
+				Player p1 = null;
+				OfflinePlayer op1 = null;
+				
+				for(Player p2 : Bukkit.getOnlinePlayers())
+				{
+					if(p2.getDisplayName().equals(args[0]))
+					{
+						p1 = p2;
+						break;
+					}
+				}
+				
+				if(p1 == null)
+				{
+					op1 = Bukkit.getOfflinePlayer(args[0]);
+				}
+				
+				Kit kit = null;
+				
+				int number = -1;
+				
+				try
+				{
+					number = Integer.valueOf(args[0]);
+				}
+				catch(IllegalArgumentException e)
+				{
+					
+				}
+				
+				for(int i = 0;i<allKits.size();i++)
+				{
+					if(allKits.get(i).getName(false,false,false) != null && allKits.get(i).getName(false,false,false).equalsIgnoreCase(args[0]) || (number >= 0 && !allKits.get(i).isDif() && !KitManager.isPreKit(allKits.get(i)) && allKits.get(i).getNumber() == number))
+					{
+						kit = allKits.get(i);
+						break;
+					}
+				}
+				
+				if(kit == null)
+				{
+					UUID playerName = null;
+					
+					if(p1 != null)
+					{
+						playerName = p1.getUniqueId();
+					}
+					else if(op1 != null)
+					{
+						playerName = op1.getUniqueId();
+					}
+					
+					if(playerName != null && !KitManager.getKits(playerName).isEmpty()) 
+					{
+						MenuManager.getKitViewerMenu(p).setPlayer(playerName);
+						MenuManager.getKitViewerMenu(p).open();
+						return true;
+					}
+				}
+				else
+				{
+					KitManager.viewKit(p, kit);
+					
+					// Choose Kit
+					if(!kit.isDif())
+					{
+						int choosenKit = 0;
+						
+						if(KitManager.isPreKit(kit))
+						{
+							choosenKit = -kit.getNumber();
+						}
+						else
+						{
+							choosenKit = kit.getNumber()-1;
+						}
+						
+						KitManager.setDif(p, false);
+						KitManager.setChoosenKit(p,null,choosenKit,Integer.MAX_VALUE);
+					}
+					else
+					{
+						KitManager.setDif(p, true);
+						KitManager.setChoosenDifKit(p, kit.getNumber());
+					}
+					
+					MenuManager.getSettingMenu(p).getKitMainMenu().getKitPreMenu().update();
+					MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().update();
+					//MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().update();
+					MenuManager.getSettingMenu(p).getKitMainMenu().getKitDifMenu().update();
+					
+					return true;
+				}
+				
+				p.sendMessage(Messages.noPlayerFoundWithName(args[0]));
+				
+				return true;
+				
+			}
+			else
+			{
+				
+				String playerName = "";
+				String[] complete = args[0].split(":");
+				Player player = null;
+
+				playerName = complete[0];
+				
+				for(int i = 2;i<complete.length;i++)
+				{
+					complete[1] += complete[i];
+				}
+				
+				for(int i = 1;i<args.length;i++)
+				{
+					complete[1] += " " + args[i];
+				}
+				
+				if(playerName.equalsIgnoreCase(p.getName()) || playerName.equalsIgnoreCase(p.getDisplayName()))
+				{
+					return p.performCommand("kit " + complete[1]);
+				}
+				
+				if(playerName.equalsIgnoreCase("Server") || playerName.equalsIgnoreCase("Verschieden"))
+				{
+					int kitNum = 0;
+					
+					try
+					{
+						kitNum = Integer.valueOf(complete[1]);
+					}
+					catch(IllegalArgumentException e)
+					{
+						
+					}
+					
+					if(playerName.equalsIgnoreCase("Server"))
+					{
+						if(kitNum > 0 && !KitManager.getPreKits().isEmpty())
+						{
+							if(kitNum <= KitManager.getPreKits().size())
+							{
+								complete[1] = KitManager.getPreKits().get(kitNum-1).getName(false,false,false);
+							}
+						}
+					}
+					else if(playerName.equalsIgnoreCase("Verschieden"))
+					{
+						if(kitNum > 0 && !KitManager.getPreKits().isEmpty())
+						{
+							if(kitNum <= KitManager.getPreKits().size())
+							{
+								complete[1] = KitManager.getPreKits().get(kitNum-1).getName(false,false,false);
+							}
+						}
+					}
+					
+					
+					if(playerName.equalsIgnoreCase("Server"))
+					{
+						for(int i = 0;i<KitManager.getPreKits().size();i++)
+						{
+							if(KitManager.getPreKits().get(i).getName(false,false,false).equalsIgnoreCase(complete[1]))
+							{
+								p.sendMessage(Messages.kitOfPlayer(KitManager.getPreKits().get(i).getOwnerName()));
+								KitManager.viewKit(p, KitManager.getPreKits().get(i));
+								KitManager.setChoosenKit(p, player, KitManager.getChoosenKit(p).myNumber, -KitManager.getPreKits().get(i).getNumber());
+								return true;
+							}
+						}
+					}
+					else if(playerName.equalsIgnoreCase("Verschieden"))
+					{
+						for(int i = 0;i<KitManager.getDifKits().size();i++)
+						{
+							if(KitManager.getDifKits().get(i).getName(false, false,false).equalsIgnoreCase(complete[1]))
+							{
+								p.sendMessage(Messages.kitOfPlayer(KitManager.getDifKits().get(i).getOwnerName()));
+								KitManager.viewKit(p, KitManager.getDifKits().get(i));
+								KitManager.setChoosenDifKit(p, i+1);
+								KitManager.setDif(p, true);
+								return true;
+							}
+						}
+					}
+					
+					p.sendMessage(Messages.playerHasNoKitsWithName(playerName, complete[1]));
+					return true;
+					
+				}
+				
+				for(Player p1 : Bukkit.getServer().getOnlinePlayers())
+				{
+					if(p1.getDisplayName().equals(playerName))
+					{
+						player = p1.getPlayer();
+						break;
+					}
+				}
+				
+				if(player != null)
+				{
+					ArrayList<Kit> pKits = KitManager.getKits(player.getUniqueId());
+					
+					// Check if kitname is a number
+					
+					int kitNum = 0;
+					
+					try
+					{
+						kitNum = Integer.valueOf(complete[1]);
+					}
+					catch(IllegalArgumentException e)
+					{
+						
+					}
+					
+					if(kitNum > 0 && !pKits.isEmpty())
+					{
+						if(kitNum <= pKits.size())
+						{
+							complete[1] = pKits.get(kitNum-1).getName(false,false,false);
+						}
+					}
+					
+					for(int i = 0;i<pKits.size();i++)
+					{
+						if(pKits.get(i).getName(false,false,false).equalsIgnoreCase(complete[1]))
+						{
+							p.sendMessage(Messages.kitOfPlayer(pKits.get(i).getOwnerName()));
+							KitManager.viewKit(p, pKits.get(i));
+							KitManager.setChoosenKit(p, player, KitManager.getChoosenKit(p).myNumber, pKits.get(i).getNumber()-1);
+							return true;
+						}
+					}
+					
+					if(!pKits.isEmpty())
+					{
+						p.sendMessage(Messages.playerHasNoKitsWithName(playerName, complete[1]));
+						return true;
+					}
+				}
+				
+				
+				OfflinePlayer op = Bukkit.getOfflinePlayer(playerName);
+				
+				if(op == null)
+				{
+						p.sendMessage(Messages.playerDoesntExists(playerName));
+						return true;
+				}
+				
+				
+				ArrayList<Kit> kits = KitManager.getKits(op.getUniqueId());
+				
+				if(kits.isEmpty())
+				{
+					p.sendMessage(Messages.playerDoesntHaveKits(playerName));
+					return true;
+				}
+				
+				
+				int kitNum = 0;
+				
+				try
+				{
+					kitNum = Integer.valueOf(complete[1]);
+				}
+				catch(IllegalArgumentException e)
+				{
+					
+				}
+				
+				if(kitNum != 0)
+				{
+					if(kitNum <= kits.size())
+					{
+						complete[1] = kits.get(kitNum-1).getName(false,false,false);
+					}
+				}
+				
+				for(int i = 0;i<kits.size();i++)
+				{
+					if(kits.get(i).getName(false,false,false).equalsIgnoreCase(complete[1]))
+					{
+						p.sendMessage(Messages.kitOfPlayer(kits.get(i).getOwnerName()));
+						KitManager.viewKit(p, kits.get(i));
+						KitManager.setChoosenKit(p,op,KitManager.getChoosenKit(p).myNumber, kits.get(i).getNumber()-1);
+						return true;
+					}
+				}
+				
+				p.sendMessage(Messages.playerHasNoKitsWithName(playerName, complete[1]));
+			}
+			
+			
+			
+			return true;
+		}
+		
+		return false;
+	}
+
+}

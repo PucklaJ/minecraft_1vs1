@@ -1,0 +1,33 @@
+# Einstellungen fuer das Ram-Plugin
+
+# if is true, the plugin won't stop the server, if it uses too
+# much ram
+
+ramstop: true
+
+# The amount of ram a server has without a player in Megabytes
+
+ramserver: 64.0
+
+# The amount of ram a player needs in Megabytes
+
+ramplayer: 128.0
+
+# The difference in ram from the used and max ram it needs to
+# make the server stop
+
+ramtrigger: 0.0
+
+# The time the ram gets checked in ticks (20 ticks = 1 sec)
+
+ramchecktime: 5
+
+# The time it takes until the server shuts down after detecting
+# too much ram usage in ticks (20 ticks = 1 sec)
+
+ramshutdowntime: 60
+
+# The amounts the plugin checks again if the too much ram is used
+# until the server starts too shutdown
+
+ramcheckamount: 5

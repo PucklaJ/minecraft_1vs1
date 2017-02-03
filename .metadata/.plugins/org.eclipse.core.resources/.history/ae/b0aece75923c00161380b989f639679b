@@ -1,0 +1,167 @@
+package at.Kingcraft.OnevsOne_lobby.Commands;
+
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.inventivetalent.bossbar.BossBarAPI;
+
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Challenge;
+import at.Kingcraft.OnevsOne_lobby.Duels.Team;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class RefuseCommand implements CommandExecutor {
+	
+	@SuppressWarnings("deprecation")
+	public static void setBossBar(Player me, Player other)
+	{
+		Challenge c = ChallangeManager.getChallenge(other);
+		
+		if(c != null && other != null)
+		{
+			if(ChallangeManager.getRole(other, c.ID) == Challenge.IS_CHALLANGER)
+			{
+				BossBarAPI.setMessage(other,ChatColor.GREEN + c.getChallenged().get(0).getDisplayName() + ChatColor.YELLOW + " Anfrage gesendet");
+			}
+			else
+			{
+				BossBarAPI.setMessage(other,ChatColor.GREEN + c.getChallengers().get(0).getDisplayName() + ChatColor.YELLOW + " Anfrage bekommen");
+			}
+			
+		}
+		else if(other != null)
+		{
+			BossBarAPI.setMessage(other,ChatColor.YELLOW +  "Keine Herausforderung");
+		}
+		
+		c = ChallangeManager.getChallenge(me);
+		
+		if(c != null && me != null)
+		{
+			if(ChallangeManager.getRole(me, c.ID) == Challenge.IS_CHALLANGER)
+			{
+				BossBarAPI.setMessage(me,ChatColor.GREEN + c.getChallenged().get(0).getDisplayName() + ChatColor.YELLOW + " Anfrage gesendet");
+			}
+			else
+			{
+				BossBarAPI.setMessage(me,ChatColor.GREEN + c.getChallengers().get(0).getDisplayName() + ChatColor.YELLOW + " Anfrage bekommen");
+			}
+			
+		}
+		else if(me != null)
+		{
+			BossBarAPI.setMessage(me,ChatColor.YELLOW +  "Keine Herausforderung");
+		}
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		
+		Player me = null;
+		if(sender instanceof Player)
+		{
+			me = (Player)sender;
+		}
+		else
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		
+		Team t = TeamManager.getTeam(me);
+		if(t != null)
+		{
+			if(!t.getLeader().getUniqueId().equals(me.getUniqueId()))
+			{
+				me.sendMessage(ChatColor.RED + "Nur der Leiter kann Herausforderungen ablehnen");
+				return true;
+			}
+		}
+		
+		ArrayList<Player> other = null;
+		
+		if(args.length > 1)
+		{
+			return false;
+		}
+		else if(args.length == 0) // Zuletzt geschickte bzw. bekomene Challenge refusen
+		{
+			Challenge c = ChallangeManager.getChallenge(me);
+			c.removePlayer(me);
+		}
+		else if(args.length == 1) // Challenge mit Spieler refusen
+		{
+			other = new ArrayList<Player>();
+			if(!refusePlayer(me, other, args))
+			{
+				return true;
+			}
+		}
+		
+		
+		for(int i = 0;i<other.size();i++)
+		{
+			setBossBar(me, other.get(i));
+		}
+		
+			
+		
+		
+		return true;
+	}
+
+	
+	public static void refuseEverything(Player me)
+	{
+		if(me == null)
+		{
+			return;
+		}
+		ChallangeManager.deleteChallenges(me,null,true);
+		
+	}
+	
+	public static boolean refusePlayer(Player me, ArrayList<Player> other,String[] args)
+	{
+		// Anderen Spieler holen
+							
+		for(Player p : Bukkit.getOnlinePlayers())
+		{
+			if(p.getDisplayName().equals(args[0]))
+			{
+				other.add(p);
+			}
+		}
+		
+		// Überprüfen ob Spieler online ist
+		if(other.size() == 0)
+		{
+			me.sendMessage(ChatColor.GREEN + args[0] + ChatColor.RED + " ist nicht online");
+			return false;
+		}
+		else // Wenn Spieler online
+		{
+			Challenge c = ChallangeManager.getChallenge(me, other.get(0));
+			if(c == null)
+			{
+				c = ChallangeManager.getChallenge(other.get(0), me);
+				if(c == null)
+				{
+					me.sendMessage(ChatColor.RED + "Du bist in keiner Herausforderung mit " + ChatColor.GREEN + other.get(0).getDisplayName());
+					return true;
+				}
+			}
+			
+			c.removePlayer(me);
+			
+			
+		}
+		
+		return true;
+	}
+}

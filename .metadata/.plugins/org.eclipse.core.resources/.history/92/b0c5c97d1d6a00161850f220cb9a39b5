@@ -1,0 +1,894 @@
+package at.Kingcraft.OnevsOne_lobby.Lobby;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.inventivetalent.bossbar.BossBarAPI;
+import org.inventivetalent.bossbar.BossBarAPI.Color;
+import org.inventivetalent.bossbar.BossBarAPI.Style;
+
+import at.Kingcraft.OnevsOne_lobby.utils.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Commands.RefuseCommand;
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Team;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamEnquiryManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
+import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
+import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
+import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
+import at.Kingcraft.OnevsOne_lobby.Tournaments.Tournament;
+import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.Settings;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
+
+public class LobbyListener implements Listener {
+	
+	private static MainClass plugin;
+	private Location spawn;
+	private boolean firstSpawn = false;
+	public static ArrayList<UUID> leftByDuel;
+	public static ArrayList<UUID> leftByWS;
+	public static ArrayList<UUID> leftByTour;
+	private static Location minKitPlace;
+	private static Location maxKitPlace;
+	private static Location minNormalPlace;
+	private static Location maxNormalPlace;
+	private ArrayList<Player> onKitTriggerPlayers;
+	private ArrayList<Player> onNormalTriggerPlayers;
+	public static HashMap<UUID,Integer> tournamentRoundSkipper;
+	public static ArrayList<UUID> ovoCmdBlock;
+	
+	private boolean checkLobby(Player p)
+	{
+		return true;
+	}
+	
+	public LobbyListener(MainClass mainClass) {
+		plugin = mainClass;
+		spawn = new Location(Bukkit.getWorld(plugin.getConfig().getString("OnevsOne.Lobby.World.Name")),
+				plugin.getConfig().getDouble("OnevsOne.Lobby.World.spawn.x"),
+				plugin.getConfig().getDouble("OnevsOne.Lobby.World.spawn.y"),
+				plugin.getConfig().getDouble("OnevsOne.Lobby.World.spawn.z"),
+				(float)plugin.getConfig().getDouble("OnevsOne.Lobby.World.spawn.yaw"),
+				(float)plugin.getConfig().getDouble("OnevsOne.Lobby.World.spawn.pitch"));
+		
+		leftByDuel = new ArrayList<UUID>();
+		leftByWS = new ArrayList<UUID>();
+		leftByTour = new ArrayList<UUID>();
+		onKitTriggerPlayers = new ArrayList<>();
+		onNormalTriggerPlayers = new ArrayList<>();
+		tournamentRoundSkipper = new HashMap<>();
+		ovoCmdBlock = new ArrayList<>();
+		
+		setKitPlace();
+		setNormalPlace();
+	}
+	
+	private boolean isInKitPlace(Player p)
+	{
+		Location loc = p.getLocation();
+		
+		if(!loc.getWorld().equals(minKitPlace.getWorld()))
+			return false;
+		
+		// AABB
+				if(loc.getX() >= minKitPlace.getX() && loc.getX() <= maxKitPlace.getX() &&
+				   loc.getY() >= minKitPlace.getY() && loc.getY() <= maxKitPlace.getY() &&
+				   loc.getZ() >= minKitPlace.getZ() && loc.getZ() <= maxKitPlace.getZ() )
+				{
+					return true;
+				}
+				
+				
+				return false;
+	}
+	
+	private boolean isInNormalPlace(Player p)
+	{
+		Location loc = p.getLocation();
+		
+		if(!loc.getWorld().equals(minNormalPlace.getWorld()))
+			return false;
+		
+		// AABB
+				if(loc.getX() >= minNormalPlace.getX() && loc.getX() <= maxNormalPlace.getX() &&
+				   loc.getY() >= minNormalPlace.getY() && loc.getY() <= maxNormalPlace.getY() &&
+				   loc.getZ() >= minNormalPlace.getZ() && loc.getZ() <= maxNormalPlace.getZ() )
+				{
+					return true;
+				}
+				
+				
+				return false;
+	}
+	
+	public static void setKitPlace()
+	{
+		double x1,y1,z1,x2,y2,z2;
+		
+		x1 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.x1");
+		y1 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.y1");
+		z1 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.z1");
+		x2 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.x2");
+		y2 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.y2");
+		z2 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.z2");
+		
+		minKitPlace = new Location(Bukkit.getWorld(plugin.getConfig().getString("OnevsOne.Lobby.Kits.Place.World")),
+								   Math.min(x1, x2),
+							       Math.min(y1, y2),
+							       Math.min(z1, z2));
+		
+		maxKitPlace = new Location(Bukkit.getWorld(plugin.getConfig().getString("OnevsOne.Lobby.Kits.Place.World")),
+								   Math.max(x1, x2),
+							       Math.max(y1, y2),
+							       Math.max(z1, z2));
+	}
+	
+	public static void setNormalPlace()
+	{
+		double x1,y1,z1,x2,y2,z2;
+		
+		x1 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.Normal.x1");
+		y1 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.Normal.y1");
+		z1 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.Normal.z1");
+		x2 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.Normal.x2");
+		y2 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.Normal.y2");
+		z2 = plugin.getConfig().getDouble("OnevsOne.Lobby.Kits.Place.Normal.z2");
+		
+		minNormalPlace = new Location(Bukkit.getWorld(plugin.getConfig().getString("OnevsOne.Lobby.Kits.Place.Normal.World")),
+								   Math.min(x1, x2),
+							       Math.min(y1, y2),
+							       Math.min(z1, z2));
+		
+		maxNormalPlace = new Location(Bukkit.getWorld(plugin.getConfig().getString("OnevsOne.Lobby.Kits.Place.Normal.World")),
+								   Math.max(x1, x2),
+							       Math.max(y1, y2),
+							       Math.max(z1, z2));
+	}
+	
+ 	public static void setupSpawnItems(Player p,boolean first)
+	{
+		
+		p.getInventory().clear();
+		
+		// Sword
+		// For challenging other players 
+		Material challengeItem = Material.getMaterial(plugin.getConfig().getString("OnevsOne.Lobby.Items.Challenge.Material"));
+		
+		if(challengeItem == null)
+		{
+			System.out.println("[" + plugin.getName() + "] Fehler bei ChallengeItem! (Vielleicht falsches Material!)" );
+			return;
+		}
+		
+		ItemStack item = new ItemStack(challengeItem);
+		ItemMeta meta = item.getItemMeta();
+		
+		meta.setDisplayName(ChatColor.RED + "Gegner Herausfordern");
+		
+		ArrayList<String> lore = new ArrayList<String>();
+		lore.add(ChatColor.YELLOW + "LINKS" + ChatColor.WHITE + "-Klick auf SPIELER: Herausfordern");
+		meta.setLore(lore);
+		item.setItemMeta(meta);
+		
+		p.getInventory().setItem(0, item);
+		
+		//Equipment
+		p.getEquipment().setHelmet(new ItemStack(Material.AIR));
+		p.getEquipment().setChestplate(new ItemStack(Material.AIR));
+		p.getEquipment().setLeggings(new ItemStack(Material.AIR));
+		p.getEquipment().setBoots(new ItemStack(Material.AIR));
+		
+		//Head
+		// For showing challenges
+		ChallangeManager.setupSkull(p, p,first);
+		
+		
+		//SettingItem
+		MenuManager.giveSettingItem(p);
+		MenuManager.addSettingMenu(p);
+	}
+
+	private void setupJoinChallenges(Player p)
+	{
+		ChallangeManager.setNum(p, 0);
+	}
+	
+	private void setupBossBar(Player p)
+	{
+		BossBarAPI.addBar(p, new TextComponent(ChatColor.YELLOW + "Keine Herausforderung"),
+				Color.BLUE,
+				Style.NOTCHED_12,
+				1.0f, 0,0);
+	}
+	@EventHandler
+	public void onJoin(PlayerJoinEvent e)
+	{
+		if(!firstSpawn)
+		{
+			firstSpawn = true;
+			Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+				
+				@Override
+				public void run()
+				{
+					// Add Server to ArenaManager
+					boolean getServersWorked = Messenger.sendMessage(null, "BungeeCord", "GetServers", new String[0]);
+					if(!getServersWorked)
+					{
+						firstSpawn = false;
+					}
+					
+					boolean getServerName = Messenger.sendMessage(null, "BungeeCord", "GetServer", new String[0]);
+					if(!getServerName)
+					{
+						firstSpawn = false;
+					}
+					Bukkit.getScheduler().runTask(plugin, new Runnable() {
+						
+						@Override
+						public void run()
+						{
+							plugin.getWaitingEntity().reload();
+						}
+					});
+					
+					
+				}
+			}, 20*2);
+		}
+		Player p = e.getPlayer();
+		
+		KitManager.setChoosenKit(p,0);
+		KitManager.setChoosenDifKit(p, 1);
+		KitManager.setDif(p, false);
+		KitManager.addToNormal(p);
+		KitManager.loadKits(p);
+		
+		Settings.loadSettings(p);
+		
+		e.setJoinMessage(ChatColor.GREEN + p.getDisplayName() + ChatColor.YELLOW + " joined the game");
+		
+		setupJoinChallenges(p);
+		
+		setupSpawnItems(p,true); // Adds Challenge Sword ++
+				
+		// setup Position
+		p.teleport(spawn);
+		
+		// Setup FoodLevel
+		p.setFoodLevel(20);
+		
+		// Setup XP
+		p.setLevel(0);
+		p.setExp(0);
+		
+		setupBossBar(p);
+		
+		TeamManager.checkTeam(p,TeamManager.getTeam(p));
+		
+		
+		// TODO startServer hinzufügen
+		
+		if(plugin.getServer().getOnlinePlayers().size() == 1 || plugin.getServer().getOnlinePlayers().size() == 0)
+		{
+			plugin.getWaitingEntity().reloadChunk();
+		}
+		
+		if(Settings.getSettings(p).addToWSOnJoin())
+		{
+			Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+				
+				@Override
+				public void run() {
+					if(Settings.getSettings(p).addToWSOnJoin())
+						plugin.getWaitingSnake().addPlayer(p,true);
+				}
+			}, 20*2);
+			
+		}
+		
+		if(leftByTour.contains(p.getUniqueId()))
+		{
+			leftByTour.remove(p.getUniqueId());
+		}
+				
+		
+	}
+	
+	
+	@SuppressWarnings("deprecation")
+	@EventHandler
+	public void onLeave(PlayerQuitEvent e)
+	{		
+		Player p = e.getPlayer();
+		
+		boolean leftBy1vs1 = leftByDuel.contains(p.getUniqueId());
+		boolean leftByWS_b =  leftByWS.contains(p.getUniqueId()) || (plugin.getWaitingSnake().isIn(p) && !plugin.getWaitingSnake().isInMySQL(p));
+		boolean leftByTour_b = leftByTour.contains(p.getUniqueId());
+		boolean leftByFight = leftBy1vs1 || leftByWS_b || leftByTour_b;
+		
+	
+		
+		
+		// Refuse every TeamEnquiry
+		TeamEnquiryManager.deleteEnquiries(p,true);
+		
+		
+		
+		if(!leftByFight)
+		{
+			Team t = TeamManager.getTeam(p);
+			if(t != null)
+			{
+				if(!t.removePlayer(p,true,false))
+				{
+					TeamManager.deleteTeam(t, false);
+				}
+			}
+			
+			
+			plugin.getWaitingSnake().removePlayer(p,true,false);
+			
+			e.setQuitMessage(ChatColor.GREEN + p.getDisplayName() + ChatColor.YELLOW +  " left the game");
+			
+		}
+		else
+		{
+			plugin.getWaitingSnake().removePlayer(p,false,false);
+			
+			e.setQuitMessage("");
+		}
+		
+		if(leftBy1vs1)
+		{
+			leftByDuel.remove(p.getUniqueId());
+		}
+		
+		if(leftByWS_b)
+		{
+			leftByWS.remove(p.getUniqueId());
+		}
+		else
+		{
+			if(Settings.getSettings(p).addToWSOnJoin())
+			{
+				Settings.getSettings(p).addToWSOnJoin(false);
+			}
+		}
+		
+		if(!leftByTour_b)
+		{
+			Tournament t = null;
+			
+			do
+			{
+				t = TournamentManager.getTournament(p);
+				if(t != null)
+				{
+					t.removePlayer(p, true,true,true);
+				}
+			}while(t != null);
+			
+			if(tournamentRoundSkipper.get(p.getUniqueId()) != null)
+			{
+				int tourID = tournamentRoundSkipper.get(p.getUniqueId());
+				
+				TournamentManager.removeRoundSkipper(p,tourID);
+				
+				tournamentRoundSkipper.remove(p.getUniqueId());
+			}
+		}
+		else
+		{
+			leftByTour.remove(p.getUniqueId());
+		}
+		
+		ovoCmdBlock.remove(p.getUniqueId());
+		
+		
+		// Jede Challenge Refusen
+		
+		RefuseCommand.refuseEverything(p);
+		
+		ChallangeManager.deleteNum(p);
+		BossBarAPI.removeBar(p);
+		MenuManager.getSettingMenu(p).getMapMenu().writeMapsToMySQL();
+		
+		if(onKitTriggerPlayers.contains(p))
+		{
+			onKitTriggerPlayers.remove(p);
+		}
+		if(onNormalTriggerPlayers.contains(p))
+		{
+			onNormalTriggerPlayers.remove(p);
+		}
+		
+		KitManager.removeFromKit(p);
+		KitManager.removeFromNormal(p);
+		
+		ArrayList<Kit> kits = KitManager.getKits(p);
+		
+		if(kits != null)
+		{
+			for(int i = 0;i<kits.size();i++)
+			{
+				kits.get(i).loadToMySQL(plugin.getMySQL());
+			}
+		}
+		
+		kits = KitManager.getSoupKits(p);
+		
+		if(kits != null)
+		{
+			for(int i = 0;i<kits.size();i++)
+			{
+				kits.get(i).loadToMySQL(plugin.getMySQL());
+			}
+		}
+		
+		KitManager.uploadDifKit(p);
+		
+		KitManager.deleteKits(p);
+		
+		
+		Settings.getSettings(p).loadToMySQL();
+		Settings.removeSettings(p);
+		
+		MenuManager.getSettingMenu(p).getTourSettingMenu().loadToMySQL();
+		MenuManager.deleteSettingMenu(p);
+		
+	}
+	
+	@EventHandler
+	(priority = EventPriority.HIGHEST)
+	public void onInventory(InventoryClickEvent e)
+	{
+		if(!checkLobby((Player)e.getWhoClicked()))
+		{
+			return;
+		}
+		if(e.getWhoClicked() instanceof Player)
+		{
+			
+			if(e.getClickedInventory() == null)
+			{
+				return;
+			}
+			
+			Player p = (Player)e.getWhoClicked();
+			
+			
+			String settingText = plugin.getConfig().getString("OnevsOne.Lobby.Items.Settings.Text");
+			
+			Inventory inv = e.getClickedInventory();
+			
+			if(inv.getName().equalsIgnoreCase(plugin.getConfig().getString("OnevsOne.Lobby.Items.Enquiries.Text")))
+			{
+				ChallangeManager.getEnquiryMenu(p).onClick(e.getSlot(), e.getClick());
+				// Cancel if its in the Enquire Menu
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Maps"))
+			{
+				MenuManager.getSettingMenu(p).getMapMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Team-Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).getTeamMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Kit-Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).getKitMainMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Eigene Kits"))
+			{
+				MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Kit1-Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().getKitSettingMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Soup Kits"))
+			{
+				MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Soup-Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().getKitSettingMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Verschiedene Kits"))
+			{
+				MenuManager.getSettingMenu(p).getKitMainMenu().getKitDifMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Warteschlange-Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).getWSMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Turnier-Einstellungen"))
+			{
+				MenuManager.getSettingMenu(p).getTourSettingMenu().onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Verschiedene Kit Einstellungen"))
+			{
+				KitManager.getDifKitSettingsMenu(p).onClick(e.getSlot(),e.getClick());
+				e.setCancelled(true);
+			}
+			else if(e.getCurrentItem().getType() != Material.AIR &&
+					e.getCurrentItem().getItemMeta() != null &&
+					e.getCurrentItem().getItemMeta().getDisplayName() != null &&
+					(e.getCurrentItem().getItemMeta().getDisplayName().equals(ChatColor.RED + "Gegner Herausfordern") ||
+					 e.getCurrentItem().getItemMeta().getDisplayName().equals(ChatColor.RED + "Herausforderungen") ||
+					 e.getCurrentItem().getItemMeta().getDisplayName().equals(settingText)))
+			{
+				e.setCancelled(true);
+			}
+			
+		}
+		
+	}
+	
+	
+	private boolean isEquipment(Material mat)
+	{
+		return mat.equals(Material.CHAINMAIL_CHESTPLATE) || mat.equals(Material.DIAMOND_CHESTPLATE) ||
+			   mat.equals(Material.GOLD_CHESTPLATE) || mat.equals(Material.IRON_CHESTPLATE) ||
+			   mat.equals(Material.LEATHER_CHESTPLATE) || mat.equals(Material.CHAINMAIL_HELMET) ||
+			   mat.equals(Material.CHAINMAIL_LEGGINGS) || mat.equals(Material.CHAINMAIL_BOOTS) ||
+			   mat.equals(Material.DIAMOND_HELMET) || mat.equals(Material.DIAMOND_LEGGINGS) ||
+			   mat.equals(Material.DIAMOND_BOOTS) || mat.equals(Material.GOLD_HELMET) ||
+			   mat.equals(Material.GOLD_LEGGINGS) || mat.equals(Material.GOLD_BOOTS) ||
+			   mat.equals(Material.IRON_HELMET) || mat.equals(Material.IRON_LEGGINGS) ||
+			   mat.equals(Material.IRON_BOOTS) || mat.equals(Material.LEATHER_HELMET) ||
+			   mat.equals(Material.LEATHER_LEGGINGS) || mat.equals(Material.LEATHER_BOOTS);
+	}
+	
+	@EventHandler
+	(priority = EventPriority.HIGHEST)
+	public void onInteract(PlayerInteractEvent e)
+	{
+		if(!checkLobby(e.getPlayer()))
+		{
+			return;
+		}
+		
+		Action a = e.getAction();
+		
+		if(KitManager.isKitPlayer(e.getPlayer()))
+		{
+			e.setCancelled(true);
+			
+			if(a == Action.RIGHT_CLICK_BLOCK)
+			{
+				Block b = e.getClickedBlock();
+				
+				Material mat = b.getType();
+				
+				if(!(mat.equals(Material.WORKBENCH) || mat.equals(Material.FURNACE) ||
+					 mat.equals(Material.BURNING_FURNACE) || mat.equals(Material.ENCHANTMENT_TABLE) ||
+					 mat.equals(Material.ANVIL)) || e.getPlayer().isSneaking())
+				{
+					e.setCancelled(true);
+				}
+				else
+				{
+					e.setCancelled(false);
+				}
+			}
+			if((a == Action.RIGHT_CLICK_AIR || a == Action.RIGHT_CLICK_BLOCK) && e.getPlayer().isSneaking() && isEquipment(e.getPlayer().getItemInHand().getType()))
+			{
+				e.setCancelled(false);
+			}
+			
+			
+			return;
+		}
+		
+		if(a == Action.RIGHT_CLICK_BLOCK || a == Action.RIGHT_CLICK_AIR)
+		{
+			ItemStack item = e.getPlayer().getItemInHand();
+			
+			if(item.getType() != null && item.getItemMeta() != null && item.getItemMeta().getDisplayName() != null)
+			{
+				if(item.getItemMeta().getDisplayName().equals(ChatColor.RED + "Herausforderungen"))
+				{
+					e.setCancelled(true);
+					ChallangeManager.getEnquiryMenu(e.getPlayer()).open();
+					
+					if(item.getAmount() == 0)
+					{
+						item.setAmount(1);
+					}
+				}
+				else if(item.getItemMeta().getDisplayName().equals(plugin.getConfig().getString("OnevsOne.Lobby.Items.Settings.Text")))
+				{
+					MenuManager.getSettingMenu(e.getPlayer()).open();
+					e.setCancelled(true);
+				}
+				
+			}
+			
+		}
+	}
+
+	@EventHandler
+	public void onInventoryClose(InventoryCloseEvent e)
+	{
+		Inventory inv = e.getInventory();
+		
+		if(inv != null && inv.getName().equals("Verschiedene Kit Einstellungen"))
+		{
+			Kit kit = KitManager.getDifKitSettingsMenu((Player) e.getPlayer()).getOpenedKit();
+			
+			KitManager.uploadDifKit(kit.getNumber());
+		}
+	}
+	
+	@EventHandler
+	public void onBlockDestroy(BlockBreakEvent e)
+	{
+		if(!checkLobby(e.getPlayer()))
+		{
+			return;
+		}
+		e.setCancelled(!e.getPlayer().hasPermission("world.destroy")); // Cancel Break when hasn't permission
+	}
+	
+	@EventHandler
+	public void onBlockPlace(BlockPlaceEvent e)
+	{
+		e.setCancelled(!e.getPlayer().hasPermission("world.place"));
+	}
+	
+	@EventHandler
+	public void onEntitySpawn(EntitySpawnEvent e)
+	{
+		if(e.getEntity() instanceof Player)
+		{
+			return;
+		}
+		else if(e.getEntity().getLocation().equals(plugin.getWaitingEntity().getBukkitEntity().getLocation()))
+		{
+			return;
+		}
+		
+		e.setCancelled(true);
+	}
+	
+	@EventHandler
+	public void onSwordRightClickPlayer(PlayerInteractEntityEvent e)
+	{
+		if(e.getRightClicked() instanceof Player)
+		{
+			Player me = e.getPlayer();
+			Player other = (Player)e.getRightClicked();
+			
+			ItemStack is = me.getItemInHand();
+			if(is != null && is.getType() != null && is.getType().equals(Material.getMaterial(plugin.getConfig().getString("OnevsOne.Lobby.Items.Challenge.Material"))) &&
+			   is.getItemMeta() != null && is.getItemMeta().getDisplayName() != null && is.getItemMeta().getDisplayName().equals(ChatColor.RED + "Gegner Herausfordern"))
+			{
+				me.performCommand("team " + other.getDisplayName());
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onInteractWithWaiting(EntityDamageByEntityEvent e)
+	{
+		if(e.getDamager() instanceof Player)
+		{
+			Player me = (Player)e.getDamager();
+			
+			if(e.getEntity().getLocation().equals(plugin.getWaitingEntity().getBukkitEntity().getLocation()))
+			{
+				ItemStack hand = me.getItemInHand();
+			
+				if(hand != null && hand.getItemMeta() != null && hand.getItemMeta().getDisplayName() != null && hand.getItemMeta().getDisplayName().equals(ChatColor.RED + "Gegner Herausfordern"))
+				{
+					me.performCommand("warteschlange");
+				}
+				
+				e.setCancelled(true);
+			}
+		}
+	}
+	
+	@EventHandler
+	(priority = EventPriority.HIGHEST)
+	public void onInteractWithPlayer(EntityDamageByEntityEvent e)
+	{
+		
+		Player me = null;
+		if(e.getDamager() instanceof Player)
+		{
+			
+			me = (Player)e.getDamager();
+			
+			if(!checkLobby(me))
+			{
+				return;
+			}
+			
+			ItemStack hand = me.getItemInHand();
+			if(hand == null)
+			{
+				e.setCancelled(true);
+				return;
+			}
+			ItemMeta meta = hand.getItemMeta();
+			if(meta == null)
+			{
+				e.setCancelled(true);
+				return;
+			}
+			String name = meta.getDisplayName();
+			if(name.equalsIgnoreCase(ChatColor.RED + "Gegner Herausfordern"))
+			{
+				if(e.getEntity() instanceof Player)
+				{
+					
+					Player other = (Player)e.getEntity();
+					
+					me.performCommand("1vs1 " + other.getDisplayName());
+					
+					
+				}
+			}
+			e.setCancelled(true);
+			
+		}
+		
+		
+	}
+	
+	@EventHandler
+	public void onFoodLose(FoodLevelChangeEvent e)
+	{
+		if(e.getEntity() instanceof Player)
+		{
+			e.setCancelled(true);
+		}
+		
+	}
+	
+	 @EventHandler
+	 public void onDrop(PlayerDropItemEvent e)
+	 {
+		 Player p = e.getPlayer();
+		 if(!checkLobby(p))
+		 {
+			return;
+		 }
+		 ItemStack item = e.getItemDrop().getItemStack();
+		 if(item != null && item.getType() != null && item.getItemMeta() != null && item.getItemMeta().getDisplayName() != null)
+		 {
+			 if(item.getItemMeta().getDisplayName().equals(ChatColor.RED + "Gegner Herausfordern"))
+			 {
+					ChallangeManager.getEnquiryMenu(p).open();
+			 }
+			 else if(item.getItemMeta().getDisplayName().equals(ChatColor.RED + "Herausforderungen"))
+			 {
+				 ChallangeManager.getEnquiryMenu(p).open();
+				 if(item.getAmount() == 0)
+				 {
+					 item.setAmount(1);
+				 }
+			 }
+		 }
+		 
+		 e.setCancelled(true);
+	 }
+	 
+	 @EventHandler
+	 public void onPlayerDeath(PlayerDeathEvent e)
+	 {
+		 if(!checkLobby(e.getEntity()))
+		 {
+			 return;
+		 }
+		 
+		 e.setKeepInventory(true);
+		 
+		 Player p = e.getEntity();
+		 
+		 p.setHealth(p.getMaxHealth());
+		 p.teleport(spawn);
+		 
+	 }
+
+	 @EventHandler
+	 public void onPlayerMove(PlayerMoveEvent e)
+	 {
+		 Player p = e.getPlayer();
+		 
+		 if(isInKitPlace(p) && !onKitTriggerPlayers.contains(p))
+		 {
+			 onKitTriggerPlayers.add(p);
+			 KitManager.setKitMode(p);
+		 }
+		 else if(!isInKitPlace(p) && onKitTriggerPlayers.contains(p))
+		 {
+			 onKitTriggerPlayers.remove(p);
+		 }
+		 
+		 if(isInNormalPlace(p) && !onNormalTriggerPlayers.contains(p))
+		 {
+			onNormalTriggerPlayers.add(p);
+			KitManager.setNormalMode(p);
+		 }
+		 else if(!isInNormalPlace(p) && onNormalTriggerPlayers.contains(p))
+		 {
+			 onNormalTriggerPlayers.remove(p);
+		 }
+		 
+	 }
+	 
+	 @EventHandler
+	 public void onPlayerDamage(EntityDamageEvent e)
+	 {
+		 if(!(e.getCause().equals(DamageCause.ENTITY_ATTACK) && e.getEntity() instanceof Player))
+			 e.setCancelled(true);
+	 }
+	 
+	 @EventHandler
+	 public void onSneak(PlayerToggleSneakEvent e)
+	 {
+		 Player p = e.getPlayer();
+		 
+		 if(p.isSneaking() && Settings.getSettings(p).addToWSOnJoin() && plugin.getWaitingSnake().isIn(p))
+		 {
+			 p.sendMessage(Messages.quickJoinCancelled);
+			 plugin.getWaitingSnake().removePlayer(p, true,true);
+			 Settings.getSettings(p).addToWSOnJoin(false);
+		 }
+	 }
+
+}

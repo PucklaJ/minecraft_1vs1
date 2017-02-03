@@ -1,0 +1,53 @@
+package at.Kingcraft.OnevsOne_lobby.Duels;
+
+import java.util.ArrayList;
+
+import org.bukkit.entity.Player;
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.Arenas.Arena;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
+
+
+public class DuelManager {
+	
+	private static MySQL mysql;
+	
+	public static void setup(MySQL mysql)
+	{
+		DuelManager.mysql = mysql;
+	}
+	
+	public static boolean sendDuelToSQL(Challenge c,Arena a)
+	{
+		// Example: pvparena-1 Send challenger1 challenger2 ; challenged1 challenged2 ; arenaName
+		
+		ArrayList<Player> challengers = c.getChallengers();
+		ArrayList<Player> challenged = c.getChallenged();
+		
+		String uuid1="",uuid2="",arenaName="",names1="",names2="";
+		int cID = c.ID;
+		
+		for(int i = 0;i<challengers.size();i++)
+		{
+			uuid1 += challengers.get(i).getUniqueId().toString() + "|";
+			names1 += challengers.get(i).getDisplayName() + "|";
+		}
+		
+		for(int i = 0;i<challenged.size();i++)
+		{
+			uuid2 += challenged.get(i).getUniqueId().toString() + "|";
+			names2 += challenged.get(i).getDisplayName() + "|";
+		}
+		
+		arenaName = a.getArena();
+		
+		if(mysql.isConnected())
+		{
+			mysql.getConnection().prepareStatement("INSERT INTO Duel_Challenges")
+		}
+		
+		return false;
+		
+	}
+}

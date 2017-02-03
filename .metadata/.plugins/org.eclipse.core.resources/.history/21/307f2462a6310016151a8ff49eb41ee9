@@ -1,0 +1,7 @@
+package at.kingcraft.OnevsOne_bridge.Messaging;
+
+import net.md_5.bungee.protocol.packet.PluginMessage;
+
+public class Messenger extends PluginMessage {
+
+}

@@ -1,0 +1,201 @@
+package at.kingcraft.OnevsOne_arena.Duels;
+
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
+
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+import at.kingcraft.OnevsOne_setup.Map;
+import at.kingcraft.OnevsOne_setup.MapManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class Duel {
+	
+	public static final int P1 = 0;
+	public static final int P2 = 1;
+	public static final int NO = 2;
+	private ArrayList<Player> p1;
+	private ArrayList<Player> p2;
+	private BukkitTask waitCD;
+	private BukkitTask startCD;
+	private int waitTime = 200;
+	private int cdTime = 5;
+	private int maxP1Size;
+	private int maxP2Size;
+	public final int id;
+	private boolean started = false;
+	private Map map; 
+	
+	private void waitingCountdown(JavaPlugin plugin)
+	{
+		waitCD = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				
+				for(int i = 0;i<p1.size();i++)
+				{
+					p1.get(i).sendMessage(ChatColor.GRAY + "Waiting for other Players " + ChatColor.YELLOW + waitTime);
+				}
+				
+				for(int i = 0;i<p2.size();i++)
+				{
+					p2.get(i).sendMessage(ChatColor.GRAY + "Waiting for other Players " + ChatColor.YELLOW + waitTime);
+				}
+				
+				if(p1.size() > 0 || p2.size() > 0)
+					waitTime--;
+				
+				if(p1.size() == maxP1Size && p2.size() == maxP2Size)
+				{
+					startCountdown(plugin);
+					Bukkit.getScheduler().cancelTask(waitCD.getTaskId());
+				}
+				
+			}
+		}, 0, 20*1);
+	}
+
+	private void startCountdown(JavaPlugin plugin)
+	{
+		startCD = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,new Runnable() {
+			
+			@Override
+			public void run() {
+				for(int i = 0;i<p1.size();i++)
+				{
+					p1.get(i).sendMessage(ChatColor.YELLOW + "Duell startet in " + ChatColor.GREEN + cdTime + ChatColor.YELLOW + " Sekunden");
+				}
+				
+				for(int i = 0;i<p2.size();i++)
+				{
+					p2.get(i).sendMessage(ChatColor.YELLOW + "Duell startet in " + ChatColor.GREEN + cdTime + ChatColor.YELLOW + " Sekunden");
+				}
+				cdTime--;
+				
+				if(cdTime <= 0)
+				{
+					for(int i = 0;i<p1.size();i++)
+					{
+						p1.get(i).sendMessage(ChatColor.YELLOW + "Duell startet!");
+					}
+					
+					for(int i = 0;i<p2.size();i++)
+					{
+						p2.get(i).sendMessage(ChatColor.YELLOW + "Duell startet!");
+					}
+					started = true;
+					Bukkit.getScheduler().cancelTask(startCD.getTaskId());
+				}
+			}
+		} ,0,20*1);
+	}
+	
+	public Duel(Challenge c,JavaPlugin plugin)
+	{
+		p1 = new ArrayList<Player>();
+		p2 = new ArrayList<Player>();
+		this.id = c.ID;
+		map = MapManager.getMap(c.arenaName);
+		
+		maxP1Size = c.getChallengersUUID().size();
+		maxP2Size = c.getChallengedUUID().size();
+		
+		waitingCountdown(plugin);
+		
+	}
+
+	
+	public void endDuel(Player p)
+	{
+		if(getRole(p) == P1)
+		{
+			for(int i = 0;i<p2.size();i++)
+			{
+				p2.get(i).sendMessage(ChatColor.YELLOW + "Du hast gewonnen!");
+			}
+			for(int i = 0;i<p1.size();i++)
+			{
+				p1.get(i).sendMessage(ChatColor.YELLOW + "Du hast verloren!");
+			}
+		}
+		else if(getRole(p) == P2)
+		{
+			for(int i = 0;i<p1.size();i++)
+			{
+				p1.get(i).sendMessage(ChatColor.YELLOW + "Du hast gewonnen!");
+			}
+			for(int i = 0;i<p2.size();i++)
+			{
+				p2.get(i).sendMessage(ChatColor.YELLOW + "Du hast verloren!");
+			}
+		}
+	}
+	
+	public Map getMap()
+	{
+		return map;
+	}
+	
+	public int getRole(Player p)
+	{
+		for(int i = 0;i<p1.size();i++)
+		{
+			if(p1.get(i).getUniqueId().equals(p.getUniqueId()))
+			{
+				return P1;
+			}
+		}
+		for(int i = 0;i<p2.size();i++)
+		{
+			if(p2.get(i).getUniqueId().equals(p.getUniqueId()))
+			{
+				return P2;
+			}
+		}
+		
+		return NO;
+	}
+	
+	public boolean isStarted()
+	{
+		return started;
+	}
+
+	public boolean isPartOf(Player p)
+	{
+		for(int i = 0;i<p1.size();i++)
+		{
+			if(p1.get(i).getUniqueId().equals(p.getUniqueId()))
+			{
+				return true;
+			}
+		}
+		
+		for(int i = 0;i<p2.size();i++)
+		{
+			if(p2.get(i).getUniqueId().equals(p.getUniqueId()))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public void addPlayer(Player p,int i)
+	{
+		if(i == 1)
+		{
+			p1.add(p);
+		}
+		else if(i == 2)
+		{
+			p2.add(p);
+		}
+	}
+}

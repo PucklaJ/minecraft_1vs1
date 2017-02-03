@@ -1,0 +1,138 @@
+package at.Kingcraft.OnevsOne_lobby.utils;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import MySQL.MySQL;
+import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Commands.OnevsOneCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.RefuseCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.TestCommand;
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
+import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
+
+public class MainClass extends JavaPlugin {
+
+	private MySQL mysql;
+	
+	private void setupCommands() {
+		getCommand("test").setExecutor(new TestCommand(this));
+		getCommand("1vs1").setExecutor(new OnevsOneCommand());
+		getCommand("refuse").setExecutor(new RefuseCommand());
+	}
+
+	private void setupListeners() {
+		getServer().getPluginManager().registerEvents(new LobbyListener(this), this);
+	}
+
+	private void setupConfig() {
+		this.getConfig().options().header("Einstellungen fuer OnevsOne plugin");
+
+		this.getConfig().addDefault("OnevsOne.Lobby.World.Name", "world");
+
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.x", 250.673);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.y", 66.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.z", -2.444);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.yaw", 0.0);
+		this.getConfig().addDefault("OnevsOne.Lobby.World.spawn.pitch", 0.0);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Skulls.HotbarPosition", 8);
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Challenge.Material", "BONE");
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Text", "Anfragen");
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallIN.Material", "DIAMOND_SWORD");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallIN.Text", "Eingehende Herausforderungen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallIN.Slot", 0);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallOUT.Material", "GOLD_SWORD");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallOUT.Text", "Ausgehende Herausforderungen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.ChallOUT.Slot", 2);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamIN.Material", "DIAMOND_CHESTPLATE");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamIN.Text", "Eingehende Teamanfragen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamIN.Slot", 4);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamOUT.Material", "GOLD_CHESTPLATE");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamOUT.Text", "Ausngehende Teamanfragen");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.TeamOUT.Slot", 6);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Tournaments.Material", "IRON_HELMET");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Tournaments.Text", "Startende Turniere");
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Tournaments.Slot", 8);
+		
+		this.getConfig().addDefault("OnevsOne.Lobby.Items.Enquiries.Gap.Color", 1);
+		
+
+		this.getConfig().options().copyDefaults(true);
+		this.saveConfig();
+
+		System.out.println("[" + getName() +  "] Successfully setup config.yml");
+	}
+
+	@Override
+	public void onEnable() {
+		super.onEnable();
+
+		setupConfig();
+
+		setupCommands();
+		setupListeners();
+		
+		mysql = new MySQL(this);
+		System.out.println("[" + getName() +  "] MySQL enabled");
+		
+		try{
+			if(mysql.isConnected())
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_Challenges (ChallengerUUID VARCHAR(100),ChallengedUUID VARCHAR(100),ChallengerName VARCHAR(100),ChallengedName VARCHAR(100),ServerName VARCHAR(100),ArenaName VARCHAR(100))");
+				ps.executeUpdate();
+			}
+			
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		ChallangeManager.setup(this);
+		ArenaManager.setup(this);
+		
+		// SEtup Messeging System
+		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", new Messenger());
+		Messenger.setup(this);
+		
+		
+		// TODO startServer hinzufügen
+
+		Bukkit.getWorld(this.getConfig().getString("OnevsOne.Lobby.World.Name")).setSpawnLocation(456, 345, 348);
+
+		System.out.println("[" + getName() +  "] enabled");
+
+		Bukkit.getScheduler().runTaskTimerAsynchronously(this, new Runnable() {
+
+			@Override
+			public void run() {
+				List<World> worlds = Bukkit.getWorlds();
+				for (World w : worlds) {
+					w.setTime(0);
+				}
+
+			}
+		}, 10 * 20, 100 * 20);
+
+	}
+
+	@Override
+	public void onDisable()
+	{
+		mysql.disconnect();
+	}
+}

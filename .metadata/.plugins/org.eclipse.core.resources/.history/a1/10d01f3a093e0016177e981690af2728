@@ -1,0 +1,395 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+
+import MySQL.MySQL;
+import net.md_5.bungee.api.ChatColor;
+
+public class MapMenu {
+
+	private Player owner;
+	private Inventory inventory;
+	private ArrayList<MapSymbol> myMaps;
+	private ArrayList<MapSymbol> otherMaps;
+	private static MySQL mysql;
+	private static ArrayList<MapSymbol> allMaps;
+	private SettingMenu parentSetting;
+	private boolean needsSQLUpdate = false;
+	
+	public static void setup(MySQL mysql)
+	{
+		MapMenu.mysql = mysql;
+		allMaps = new ArrayList<>();
+		if(mysql.isConnected())
+		{
+			try
+			{
+				PreparedStatement ps = mysql.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_Maps_Players (UUID VARCHAR(100),Choosen_Maps VARCHAR(1000))");
+				ps.executeUpdate();
+				ps.close();
+				
+				ps = mysql.getConnection().prepareStatement("SELECT * FROM Duel_Maps");
+				ResultSet rs = ps.executeQuery();
+				
+				while(rs.next())
+				{
+					allMaps.add(new MapSymbol(rs.getString(1),rs.getString(2)));
+				}
+				ps.close();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		
+		
+		
+	}
+	
+	public MapMenu(Player owner,SettingMenu sm)
+	{
+		this.owner = owner;
+		inventory = Bukkit.createInventory(owner,54,"Maps");
+		myMaps = new ArrayList<>();
+		otherMaps = new ArrayList<>();
+		parentSetting = sm;
+		
+		setContents();
+	}
+	
+	private void setContents()
+	{
+		ItemStack[] contents = new ItemStack[inventory.getSize()];
+		
+		ItemStack myMaps = new ItemStack(Material.STAINED_GLASS_PANE,1,(byte)5);
+		{
+			ItemMeta im = myMaps.getItemMeta();
+			im.setDisplayName(ChatColor.GREEN + "Ausgewählte Maps");
+			myMaps.setItemMeta(im);
+		}
+		ItemStack otherMaps = new ItemStack(Material.STAINED_GLASS_PANE,1,(byte)14);
+		{
+			ItemMeta im = otherMaps.getItemMeta();
+			im.setDisplayName(ChatColor.RED + "Nicht Ausgewählte Maps");
+			otherMaps.setItemMeta(im);
+		}
+		ItemStack middle = new ItemStack(Material.STAINED_GLASS_PANE,1,(byte)0);
+		{
+			ItemMeta im = middle.getItemMeta();
+			im.setDisplayName(" ");
+			middle.setItemMeta(im);
+		}
+		ItemStack back = new ItemStack(Material.SPRUCE_DOOR_ITEM);
+		{
+			ItemMeta im = back.getItemMeta();
+			im.setDisplayName("Zurück");
+			back.setItemMeta(im);
+		}
+		
+		for(int i = 0;i<4;i++)
+		{
+			contents[i] = myMaps.clone();
+		}
+		
+		for(int i = 5;i<9;i++)
+		{
+			contents[i] = otherMaps.clone();
+		}
+		
+		for(int i = 4;i<49;i+=9)
+		{
+			contents[i] = middle.clone();
+		}
+		
+		contents[49] = back.clone();
+		
+		inventory.setContents(contents);
+		
+		setMyMaps();
+		setOtherMaps();
+	}
+	
+	public void onClick(int slot,ClickType ct)
+	{
+		if(slot == 49 && ct.isLeftClick())
+		{
+			parentSetting.open();
+		}
+		else if(isMyMapsClick(slot))
+		{
+			
+		}
+		else if(isOtherMapsClick(slot))
+		{
+			
+		}
+	}
+	
+	public void setMyMaps()
+	{
+		
+		// Get My Maps from MySQL
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT * FROM Duel_Maps_Players WHERE UUID = ?");
+			ps.setString(1, owner.getUniqueId().toString());
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				String[] maps = decodeDataFromMySQL(rs.getString(2));
+				for(int i = 0;i<maps.length;i++)
+				{
+					myMaps.add(getMapSymbol(maps[i]));
+				}
+				
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		// Import into inventory
+		setMyMapsItems();
+		
+	}
+	
+	public void setMyMapsItems()
+	{
+		int x = 9;
+		int y = 1;
+		for(int i = 0;i<myMaps.size();i++)
+		{
+			ItemStack is = new ItemStack(myMaps.get(i).getSymbol());
+			ItemMeta im = is.getItemMeta();
+			im.setDisplayName(myMaps.get(i).getName());
+			is.setItemMeta(im);
+			inventory.setItem(x, is);
+			
+			x++;
+			if(x > 12+(y-1)*9)
+			{
+				y++;
+				x = y*9;
+			}
+		}
+	}
+
+	public void setOtherMapsItems()
+	{
+		int x = 14;
+		int y = 1;
+		for(int i = 0;i<otherMaps.size();i++)
+		{
+			ItemStack is = new ItemStack(otherMaps.get(i).getSymbol());
+			ItemMeta im = is.getItemMeta();
+			im.setDisplayName(otherMaps.get(i).getName());
+			is.setItemMeta(im);
+			inventory.setItem(x, is);
+			
+			x++;
+			if(x > 17+(y-1)*9)
+			{
+				y++;
+				x = y*9+5;
+			}
+		}
+	}
+	
+	private boolean isInMyMaps(String name)
+	{
+		for(int i = 0;i<myMaps.size();i++)
+		{
+			if(myMaps.get(i).getName().equals(name))
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	
+	private static MapSymbol getMapSymbol(String name)
+	{
+		for(int i = 0;i<allMaps.size();i++)
+		{
+			if(allMaps.get(i).getName().equals(name))
+			{
+				return allMaps.get(i);
+			}
+		}
+		
+		return new MapSymbol("null","null");
+	}
+	
+	private static String[] decodeDataFromMySQL(String str)
+	{
+			ArrayList<String> uuis =  new ArrayList<String>();
+		
+			int i = -1;
+			String uuid = "";
+			while(i < str.length())
+			{
+				uuid = "";
+				for(i++;i<str.length() && str.charAt(i)!= '|';i++)
+				{
+					uuid+=str.charAt(i);
+				}
+				
+				if(uuid.length() != 0)
+				{
+					uuis.add(uuid);
+				}
+				
+			}
+			
+			String[] strings = new String[uuis.size()];
+			
+			for(int u = 0;u<strings.length;u++)
+			{
+				strings[u] = uuis.get(u);
+			}
+			
+			uuis.clear();
+		
+		
+		return strings;
+	}
+	
+	public void setOtherMaps()
+	{
+		for(int i = 0;i<allMaps.size();i++)
+		{
+			if(!isInMyMaps(allMaps.get(i).getName()))
+			{
+				otherMaps.add(allMaps.get(i));
+			}
+		}
+		
+		setOtherMapsItems();
+	}
+	
+	public void writeMapsToMySQL()
+	{
+		if(!mysql.isConnected())
+		{
+			return;
+		}
+		
+		String myMapsSQL = "";
+		
+		for(int i = 0;i<myMaps.size();i++)
+		{
+			myMapsSQL += myMaps.get(i).getName() + "|";
+		}
+	
+		try
+		{
+			PreparedStatement ps = mysql.getConnection().prepareStatement("SELECT Choosen_Maps FROM Duel_Maps_Players WHERE UUID = ?");
+			ps.setString(1, owner.getUniqueId().toString());
+			ResultSet rs = ps.executeQuery();
+			ps.close();
+			if(!rs.first())
+			{
+				ps = mysql.getConnection().prepareStatement("INSERT INTO Duel_Maps_Players (UUID,Choosen_Maps) VALUES (?,?)");
+				ps.setString(1, owner.getUniqueId().toString());
+				ps.setString(2, myMapsSQL);
+				ps.executeUpdate();
+			}
+			else
+			{
+				ps.close();
+				ps = mysql.getConnection().prepareStatement("UPDATE Duel_Maps_Players SET Choosen_Maps = ? WHERE UUID = ?");
+				ps.setString(1, myMapsSQL);
+				ps.setString(2, owner.getUniqueId().toString());
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void open()
+	{
+		owner.openInventory(inventory);
+	}
+	
+	private boolean isOtherMapsClick(int slot)
+	{
+		if(inventory.getItem(slot).getType().equals(Material.AIR))
+		{
+			return false;
+		}
+		
+		int min = 13;
+		int max = 18;
+		for(int i = 0;i<5;i++)
+		{
+			if(slot > min + (i*9) && slot < max + (i*9))
+			{
+				return true;
+			}
+		}
+	
+		return false;
+	}
+	
+	private boolean isMyMapsClick(int slot)
+	{
+		int min = 8;
+		int max = 13;
+		for(int i = 0;i<5;i++)
+		{
+			if(slot > min + (i*9) && slot < max + (i*9))
+			{
+				return true;
+			}
+		}
+	
+		return false;
+	}
+	
+	private void moveToMyMaps(String name)
+	{
+		for(int i = 0;i<otherMaps.size();i++)
+		{
+			if(otherMaps.get(i).getName().equals(name))
+			{
+				myMaps.add(otherMaps.get(i));
+				otherMaps.remove(i);
+				return;
+			}
+		}
+	}
+	
+	private void moveToOtherMaps(String name)
+	{
+		for(int i = 0;i<myMaps.size();i++)
+		{
+			if(myMaps.get(i).getName().equals(name))
+			{
+				otherMaps.add(myMaps.get(i));
+				myMaps.remove(i);
+				return;
+			}
+		}
+	}
+}

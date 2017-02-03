@@ -1,0 +1,18 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import org.bukkit.Material;
+
+public class MapSymbol {
+	private String name;
+	private Material mat;
+	
+	public MapSymbol(String name,String symbol)
+	{
+		this.name = name;
+		mat = Material.getMaterial(symbol);
+		if(mat == null)
+		{
+			mat = Material.PAPER;
+		}
+	}
+}

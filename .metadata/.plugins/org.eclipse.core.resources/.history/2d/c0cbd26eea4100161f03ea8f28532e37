@@ -1,0 +1,76 @@
+package at.kingcraft.OnevsOne_setup;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import MySQL.MySQL;
+import at.kingcraft.OnevsOne_setup.Commands.MapCommand;
+import at.kingcraft.OnevsOne_setup.Commands.SetSpawnCommand;
+import at.kingcraft.OnevsOne_setup.Listeners.MapListener;
+import at.kingcraft.OnevsOne_setup.Maps.MapManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class MainClass extends JavaPlugin {
+
+	private MySQL mysql;
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+		
+		Player me = (Player)sender;
+		
+		if(command.getName().equalsIgnoreCase("spawn"))
+		{
+			if(args.length != 0)
+			{
+				return false;
+			}
+			
+			me.teleport(me.getWorld().getSpawnLocation());
+			
+			
+		}
+		
+		
+		
+		
+		return true;
+	}
+
+	@Override
+	public void onDisable() {
+		super.onDisable();
+		System.out.println("["+ getName() +"] Successfully disabled");
+	}
+
+	private void setupCommands()
+	{
+		getCommand("map").setExecutor(new MapCommand(this));
+		getCommand("setspawn").setExecutor(new SetSpawnCommand());
+	}
+	
+	
+	@Override
+	public void onEnable() {
+		super.onEnable();
+		
+		setupCommands();
+		getServer().getPluginManager().registerEvents(new MapListener(), this);
+		
+		mysql = new MySQL(this);
+		
+		MapManager.setup(this,mysql);
+		
+		System.out.println("["+ getName() +"] Successfully enabled");
+	}
+
+	
+
+}

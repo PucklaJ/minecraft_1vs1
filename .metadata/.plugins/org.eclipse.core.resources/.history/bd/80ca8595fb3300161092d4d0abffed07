@@ -1,0 +1,92 @@
+package at.kingcraft.OnevsOne_arena.Duels;
+
+import java.util.ArrayList;
+
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import at.kingcraft.OnevsOne_arena.Messenger;
+import at.kingcraft.OnevsOne_arena.Challenges.ChallangeManager;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+
+public class DuelManager {
+
+	private static JavaPlugin plugin;
+	
+	private static ArrayList<Duel> duels = new ArrayList<Duel>();
+	
+	public static Duel newDuel(Challenge c)
+	{
+		Duel d = getDuel(c.ID);
+		if(d == null)
+		{
+			duels.add(new Duel(c, plugin));
+			return duels.get(duels.size()-1);
+		}
+		
+		return d;
+		
+		
+	}
+	
+	public static Duel getDuel(Player p)
+	{
+		for(int i = 0;i<duels.size();i++)
+		{
+			if(duels.get(i).isPartOf(p))
+			{
+				return duels.get(i);
+			}
+		}
+		
+		return null;
+	}
+	
+	public static Duel getDuel(int id)
+	{
+		for(int i = 0;i<duels.size();i++)
+		{
+			if(duels.get(i).id == id)
+			{
+				return duels.get(i);
+			}
+		}
+		
+		return null;
+	}
+	
+	public static ArrayList<Player> deleteDuel(Player p)
+	{
+		Duel d = getDuel(p);
+		if(d != null)
+		{
+			d.endDuel(p);
+			
+			Challenge c = d.getChallenge();
+			
+			ArrayList<Player> challengers = c.getChallengers();
+			ArrayList<Player> challenged = c.getChallenged();
+			
+			int u = 0;
+			for(int i = 0;i<challengers.size();i++)
+			{
+				if(challengers.get(i).getUniqueId().equals(p.getUniqueId()))
+				{
+					/*String[] args = new String[1];
+					args[0] = c.getPreviousServer(u);
+					Messenger.sendMessage(challengers.get(i), "BungeeCord", "Connect",args);*/
+				}
+				u++;
+			}
+			
+		}
+		
+		duels.remove(d);
+	}
+	
+	public static void setup(JavaPlugin mainClass) {
+		plugin = mainClass;
+		
+	}
+	
+}

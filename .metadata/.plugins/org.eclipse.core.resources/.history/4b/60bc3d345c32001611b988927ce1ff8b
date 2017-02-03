@@ -1,0 +1,63 @@
+package at.kingcraft.OnevsOne_arena;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.messaging.PluginMessageListener;
+
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteStreams;
+
+public class MainClass extends JavaPlugin implements PluginMessageListener{
+
+	String serverName;
+	
+	@Override
+	public void onDisable() {
+		super.onDisable();
+		System.out.println("[OnevsOne_arena] Successfully disabled");
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public void onEnable() {
+		super.onEnable();
+		
+		// Setup Messaging System
+		this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+		Messenger.sendMessage(Bukkit.getOfflinePlayer("PucklaMUGLA03"), "BungeeCord", "GetServer", new String[0]);
+		
+		System.out.println("[OnevsOne_arena] Successfully enabled");
+	}
+
+	@Override
+	public void onPluginMessageReceived(String channel, Player p, byte[] msg)
+	{
+		ByteArrayDataInput in = ByteStreams.newDataInput(msg);
+		if(channel.equals(serverName))
+		{
+			
+			String subChannel = in.readUTF();
+			
+			if(subChannel.equals("Send"))
+			{
+				System.out.println("Got Message");
+				String args = in.readUTF();
+				
+				System.out.println("\"" + args + "\"");
+			}
+		}
+		else if(channel.equals("BungeeCord"))
+		{
+			String subChannel = in.readUTF();
+			
+			if(subChannel.equals("GetServer"))
+			{
+				serverName = in.readUTF();
+				this.getServer().getMessenger().registerIncomingPluginChannel(this, serverName, this);
+			}
+		}
+		
+	}
+
+}

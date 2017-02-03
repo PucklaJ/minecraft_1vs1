@@ -1,0 +1,54 @@
+name: OnevsOne_arena
+version: 0.0.1
+main: at.kingcraft.OnevsOne_arena.MainClass
+author: PucklaMUGLA03
+
+commands:
+  giveup:
+    usage: /<command>
+    description: Man gibt auf
+    aliases: gu
+    permission: command_arena.giveup
+  setwaitinghouse:
+    usage: /<command>
+    description: Setzt Position des Warte Hauses
+    permission: command_arena.setwaitinghouse
+    aliases: swh
+  fix:
+    usage: /<command>
+    description: Fixt den WackelBug
+    permission: command_arena.fix
+  endmatch:
+    usage: /<command>
+    description: Aktiviert Countdown
+    permission: command_arena.endmatch
+    aliases: em
+  stats:
+    usage: /<command> 
+
+permissions:
+  command_arena.*:
+    description: Permission fuer alle Commands
+    children:
+      command_arena.setwaitinghouse: true
+      command_arena.giveup: true
+      command_arena.fix: true
+      command_arena.endmatch: true
+  command_arena.setwaitinghouse: 
+    description: Erlaubt den Warte Haus Command aus zu fuehren
+    default: op
+  command_arena.giveup: 
+    description: Permission fuer giveup-Command
+    default: true
+  command_arena.fix: 
+    description: Permission fuer fix-Command
+    default: true
+  command_arena.endmatch: 
+    description: Permission fuer endmatch-Command
+    default: true
+  no_push_back:
+    description: Permission, die bestimmt, dass man nicht zurueckgedraengt wird
+    default: op
+  command_arena.stats:
+    description: Permission fuer stats-Command
+    default: true

@@ -1,0 +1,14 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import org.bukkit.entity.Player;
+
+public class RankedMenu extends Menu
+{
+
+	public RankedMenu(Player owner)
+	{
+		super(owner, 27, "Ranked", null);
+		// TODO Auto-generated constructor stub
+	}
+
+}

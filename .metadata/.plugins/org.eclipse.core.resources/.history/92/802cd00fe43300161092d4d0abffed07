@@ -1,0 +1,26 @@
+package at.kingcraft.OnevsOne_arena.Duels;
+
+import java.util.ArrayList;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
+import at.kingcraft.OnevsOne_arena.MainClass;
+import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
+
+public class DuelManager {
+
+	private static JavaPlugin plugin;
+	
+	private static ArrayList<Duel> duels = new ArrayList<Duel>();
+	
+	public static void newDuel(Challenge c)
+	{
+		
+	}
+
+	public static void setup(JavaPlugin mainClass) {
+		plugin = mainclass;
+		
+	}
+	
+}

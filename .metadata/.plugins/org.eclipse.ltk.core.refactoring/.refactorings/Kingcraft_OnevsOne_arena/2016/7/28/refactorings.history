@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy element &apos;Kit.java&apos; to &apos;Kingcraft_OnevsOne_lobby/src/at.Kingcraft.OnevsOne_lobby.Kits&apos;&#x0D;&#x0A;- Original project: &apos;Kingcraft_OnevsOne_arena&apos;&#x0D;&#x0A;- Destination element: &apos;Kingcraft_OnevsOne_lobby/src/at.Kingcraft.OnevsOne_lobby.Kits&apos;&#x0D;&#x0A;- Original element: &apos;at.kingcraft.OnevsOne_arena.Kits.Kit.java&apos;" description="Copy compilation unit" destination="=Kingcraft_OnevsOne_lobby/src&lt;at.Kingcraft.OnevsOne_lobby.Kits" element1="/src&lt;at.kingcraft.OnevsOne_arena.Kits{Kit.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1468347809572" units="1" version="1.0"/>
+</session>

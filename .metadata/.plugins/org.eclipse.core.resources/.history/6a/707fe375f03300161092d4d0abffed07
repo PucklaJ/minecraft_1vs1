@@ -1,0 +1,130 @@
+package at.Kingcraft.OnevsOne_lobby.Commands;
+
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import at.Kingcraft.OnevsOne_lobby.Arenas.Arena;
+import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
+import at.Kingcraft.OnevsOne_lobby.Duels.Challenge;
+import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
+import net.md_5.bungee.api.ChatColor;
+
+public class OnevsOneCommand implements CommandExecutor {
+
+
+	public OnevsOneCommand() {
+	}
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+
+		Player me = null;
+
+		if (sender instanceof Player) {
+			me = (Player) sender;
+		} else {
+			sender.sendMessage(ChatColor.RED + "Only for Players");
+			return true;
+		}
+
+		if(args.length == 0)
+		{
+			// Öffnet Herausforderungs GUI
+			me.openInventory(ChallangeManager.getInventory(me));
+		}
+		else if (args.length == 1)
+		{
+			Player other = null;
+			for (Player ps : Bukkit.getServer().getOnlinePlayers()) {
+				if (ps.getDisplayName().equals(args[0]))
+					other = ps;
+			}
+
+			if (other == null) {
+				me.sendMessage(ChatColor.GREEN + args[0] + ChatColor.YELLOW + " ist nicht online");
+				return true;
+			}
+
+			// Spieler ist online
+			
+			// Überprüfen ob Challenge existend
+			if (ChallangeManager.getChallenge(me, other) != null)
+			{
+				me.sendMessage(ChatColor.RED + "Challenge existiert bereits");
+			}
+			else
+			{
+				sendChallenge(me, other);
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+	
+	private void sendChallenge(Player me,Player other)
+	{
+		Challenge chall = ChallangeManager.sendChallenge(me, other);
+
+		
+		// Überprüfen welche Rolle ich habe
+		int role = ChallangeManager.getRole(me, chall);
+
+		// Bei Challenged: Challenge annehmen
+		if (role == Challenge.IS_CHALLANGED)
+		{
+			takeChallenge(me, other, chall);
+		}
+		else
+		{
+			ChallangeManager.tellChallenge(me, other);
+		}
+	}
+	
+	private void takeChallenge(Player me,Player other,Challenge chall)
+	{
+		other.sendMessage(ChatColor.GREEN + me.getDisplayName() + ChatColor.YELLOW + " hat angenommen");
+		me.sendMessage(ChatColor.GREEN + other.getDisplayName() + ChatColor.YELLOW + " angenommen");
+
+		
+			// Zur Arena
+			 Arena a = ArenaManager.giveArena();
+			// Test TODO entfernen nach CloudSystem
+			 Arena b =new Arena("Test",60);
+			 b.setArena("hell");
+			 int error = DuelManager.sendDuelToSQL(chall,b);
+			 if(error != 1)
+			 {
+				 me.sendMessage(ChatColor.RED + "Übertragungsfehler [MySQL] Fehler: " + error);
+				 other.sendMessage(ChatColor.RED + "Übertragungsfehler [MySQL] Fehler: " + error);
+				 return;
+			 }
+			 
+			 if(a != null)
+			 { 
+				 	a.setArena("hell"); // TODO Mapauswahl
+				 	
+			 		if(!DuelManager.sendDuelToSQL(chall,a))
+			 		{
+			 			 me.sendMessage(ChatColor.RED + "Übertragungsfehler [MySQL]");
+						 other.sendMessage(ChatColor.RED + "Übertragungsfehler [MySQL]");
+						 return;
+			 		}
+			  		ArenaManager.teleportToArena(other, a);
+			  		ArenaManager.teleportToArena(me, a);
+			 }
+			 else
+			 {
+			  		other.sendMessage(ChatColor.RED + "Es ist keine Arena frei");
+			  		me.sendMessage(ChatColor.RED + "Es ist keine Arena frei");
+			 }
+			  
+			 
+
+	}
+
+}

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename local variable &apos;player&apos; in &apos;at.Kingcraft.OnevsOne_lobby.WaitingSnake.WaitingSnake.addPlayer(...)&apos; to &apos;players&apos;&#x0D;&#x0A;- Original project: &apos;Kingcraft_OnevsOne_lobby&apos;&#x0D;&#x0A;- Original element: &apos;at.Kingcraft.OnevsOne_lobby.WaitingSnake.WaitingSnake.addPlayer(Player, boolean).player&apos;&#x0D;&#x0A;- Renamed element: &apos;player&apos;&#x0D;&#x0A;- Update references to refactored element" description="Rename local variable &apos;player&apos;" id="org.eclipse.jdt.ui.rename.local.variable" input="/src&lt;at.Kingcraft.OnevsOne_lobby.WaitingSnake{WaitingSnake.java[WaitingSnake~addPlayer~QPlayer;~Z@player!3049!3073!3067!3072!QArrayList\&lt;QPlayer;&gt;;!0!false" name="players" references="true" stamp="1484401205848" version="1.0"/>
+</session>

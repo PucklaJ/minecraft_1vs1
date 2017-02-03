@@ -1,0 +1,30 @@
+package at.Kingcraft.OnevsOne_lobby.Special;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+public class SettingMenu {
+
+	private Inventory inventory;
+	private Player owner;
+	
+	public SettingMenu(Player owner)
+	{
+		this.owner = owner;
+		inventory = Bukkit.createInventory(owner, 27);
+		setInventoryContents();
+	}
+	
+	private void setInventoryContents()
+	{
+		ItemStack[] contents = new ItemStack[inventory.getSize()];
+		
+		for(int i = 0;i<inventory.getSize();i++)
+		{
+			contents[i] = new ItemStack(Material.STAINED_GLASS_PANE,1,(byte)15);
+		}
+	}
+}
