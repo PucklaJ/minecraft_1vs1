@@ -18,6 +18,7 @@ import at.Kingcraft.OnevsOne_lobby.Scoreboard.MyScoreboardManager;
 import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.Tournament;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.RankedQueue;
 import net.md_5.bungee.api.ChatColor;
 
 public class Team
@@ -135,6 +136,12 @@ public class Team
 		players.add(p);
 		playersUUID.add(p.getUniqueId());
 		plugin.getWaitingSnake().removePlayer(p, false, true);
+		if(RankedQueue.isInUpload(p) || RankedQueue.isInMySQL(p))
+		{
+			RankedQueue.removePlayer(p);
+			MenuManager.getRankedMenu(p).toogleLeaveItem();
+		}
+		
 		
 		if(leaderTour != null)
 		{

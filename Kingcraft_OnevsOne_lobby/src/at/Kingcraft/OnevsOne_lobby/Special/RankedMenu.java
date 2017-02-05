@@ -6,6 +6,8 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import at.Kingcraft.OnevsOne_lobby.Duels.Team;
+import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
 import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
 import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
 import at.Kingcraft.OnevsOne_lobby.WaitingSnake.RankedQueue;
@@ -31,7 +33,7 @@ public class RankedMenu extends Menu
 		toogleLeaveItem();
 	}
 	
-	private void toogleLeaveItem()
+	public void toogleLeaveItem()
 	{
 		inRanked = !inRanked;
 		
@@ -88,9 +90,13 @@ public class RankedMenu extends Menu
 				
 				if(kit != -1)
 				{
-					RankedQueue.addPlayer(owner, kit);
-					toogleLeaveItem();
-					close();
+					Team t = TeamManager.getTeam(owner);
+					if(t == null)
+					{
+						RankedQueue.addPlayer(owner, kit);
+						toogleLeaveItem();
+						close();
+					}
 					return;
 				}
 			}

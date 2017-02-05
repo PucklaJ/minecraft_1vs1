@@ -66,6 +66,7 @@ import com.google.common.io.ByteStreams;
 
 import MySQL.MySQL;
 import at.kingcraft.OnevsOne_arena.MainClass;
+import at.kingcraft.OnevsOne_arena.Sounds;
 import at.kingcraft.OnevsOne_arena.Challenges.ChallangeManager;
 import at.kingcraft.OnevsOne_arena.Challenges.Challenge;
 import at.kingcraft.OnevsOne_arena.Commands.GiveUpCommand;
@@ -1453,7 +1454,7 @@ public class DuelListener implements Listener {
 				
 				if(e.getDamager() instanceof Arrow)
 				{
-					p1.playSound(p1.getLocation(), Sound.SUCCESSFUL_HIT, 10.0f,1.0f);
+					p1.playSound(p1.getLocation(), Sound.SUCCESSFUL_HIT, 10.0f,Sounds.DEFAULT_PITCH);
 					e.getDamager().remove();
 				}
 				

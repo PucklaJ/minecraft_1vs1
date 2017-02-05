@@ -12,7 +12,7 @@ public class Sounds
 	private static FileConfiguration config;
 	private static File file;
 	private static final float DEFAULT_VOL = 0.2f;
-	public static final float DEFAULT_PITCH = 0.2f;
+	public static final float DEFAULT_PITCH = 1.0f;
 	
 	public static Sound gotChallenge;
 	public static float gotChallengeVolume;
@@ -36,6 +36,10 @@ public class Sounds
 	public static float	tournamentJoinVolume;
 	public static Sound tournamentCreate;
 	public static float	tournamentCreateVolume;
+	public static Sound rankedJoin;
+	public static float rankedJoinVolume;
+	public static Sound rankedLeave;
+	public static float rankedLeaveVolume;
 	
 	
 	private static void addDefaults()
@@ -62,6 +66,10 @@ public class Sounds
 		tournamentJoinVolume = DEFAULT_VOL;
 		tournamentCreate = Sound.ENDERDRAGON_GROWL;
 		tournamentCreateVolume = DEFAULT_VOL;
+		rankedJoin = Sound.FUSE;
+		rankedJoinVolume = DEFAULT_VOL;
+		rankedLeave = Sound.NOTE_BASS_GUITAR;
+		rankedLeaveVolume = DEFAULT_VOL;
 		
 		config.addDefault("got-challenge.sound", gotChallenge.toString());
 		config.addDefault("got-challenge.volume", gotChallengeVolume);
@@ -85,6 +93,10 @@ public class Sounds
 		config.addDefault("tournament-join.volume", tournamentJoinVolume);
 		config.addDefault("tournament-create.sound", tournamentCreate.toString());
 		config.addDefault("tournament-create.volume", tournamentCreateVolume);
+		config.addDefault("ranked-join.sound", rankedJoin.toString());
+		config.addDefault("ranked-join.volume", rankedJoinVolume);
+		config.addDefault("ranked-leave.sound", rankedLeave.toString());
+		config.addDefault("ranked-leave.volume", rankedLeaveVolume);
 		
 		config.options().copyDefaults(true);
 		
@@ -122,6 +134,10 @@ public class Sounds
 		tournamentJoinVolume = (float) config.getDouble("tournament-join.volume");
 		tournamentCreate = Sound.valueOf(config.getString("tournament-create.sound"));
 		tournamentCreateVolume = (float) config.getDouble("tournament-create.volume");
+		rankedJoin = Sound.valueOf(config.getString("ranked-join.sound"));
+		rankedJoinVolume = (float)config.getDouble("ranked-join.volume");
+		rankedLeave = Sound.valueOf(config.getString("ranked-leave.sound"));
+		rankedLeaveVolume = (float)config.getDouble("ranked-leave.volume");
 	}
 	
 	public static void setup()

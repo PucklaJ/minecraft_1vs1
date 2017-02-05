@@ -170,13 +170,13 @@ public class OnevsOneCommand implements CommandExecutor {
 		for(int i = 0;i<other.size();i++)
 		{
 			other.get(i).sendMessage(Messages.otherTookChall(me.get(0).getDisplayName()));
-			other.get(i).playSound(other.get(i).getLocation(), Sounds.otherTookChallenge, Sounds.otherTookChallengeVolume, 0.2f);
+			other.get(i).playSound(other.get(i).getLocation(), Sounds.otherTookChallenge, Sounds.otherTookChallengeVolume, Sounds.DEFAULT_PITCH);
 		}
 		
 		for(int i = 0;i<me.size();i++)
 		{
 			me.get(i).sendMessage(Messages.tookChall);
-			me.get(i).playSound(me.get(i).getLocation(), Sounds.tookChallenge, Sounds.tookChallengeVolume, 0.2f);
+			me.get(i).playSound(me.get(i).getLocation(), Sounds.tookChallenge, Sounds.tookChallengeVolume, Sounds.DEFAULT_PITCH);
 		}
 
 		

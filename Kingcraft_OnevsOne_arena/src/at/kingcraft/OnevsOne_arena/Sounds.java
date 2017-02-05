@@ -12,7 +12,7 @@ public class Sounds
 	private static FileConfiguration config;
 	private static File file;
 	private static final float DEFAULT_VOL = 0.2f;
-	public static final float DEFAULT_PITCH = 0.2f;
+	public static final float DEFAULT_PITCH = 1.0f;
 	
 	public static Sound duelStart;
 	public static float duelStartVolume;

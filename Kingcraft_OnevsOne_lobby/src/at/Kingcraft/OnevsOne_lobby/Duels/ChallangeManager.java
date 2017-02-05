@@ -112,12 +112,12 @@ public class ChallangeManager {
 		for(int i = 0;i<challenger1.size();i++)
 		{
 			challenger1.get(i).sendMessage(Messages.sendChallenge(challenged1.get(0).getDisplayName(),kit.getName(true,!(kit.getOwnerName().equals("Server") || kit.getOwnerName().equals("Verschieden")),false)));
-			challenger1.get(i).playSound(challenger1.get(i).getLocation(), Sounds.sendChallenge, Sounds.sendChallengeVolume, 0.2f);
+			challenger1.get(i).playSound(challenger1.get(i).getLocation(), Sounds.sendChallenge, Sounds.sendChallengeVolume, Sounds.DEFAULT_PITCH);
 		}
 		for(int i = 0;i<challenged1.size();i++)
 		{
 			challenged1.get(i).sendMessage(Messages.gotChallenge(challenger1.get(0).getDisplayName(),kit.getName(true,!(kit.getOwnerName().equals("Server") || kit.getOwnerName().equals("Verschieden")),false)));
-			challenged1.get(i).playSound(challenged1.get(i).getLocation(), Sounds.gotChallenge, Sounds.gotChallengeVolume, 0.2f);
+			challenged1.get(i).playSound(challenged1.get(i).getLocation(), Sounds.gotChallenge, Sounds.gotChallengeVolume, Sounds.DEFAULT_PITCH);
 		}
 	}
 	

@@ -12,6 +12,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import at.Kingcraft.OnevsOne_lobby.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Sounds;
 import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
 import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
 import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
@@ -309,6 +310,7 @@ public class RankedQueue
 		playersToUpload.add(ru);
 		
 		p.sendMessage(Messages.addToRankedQueue);
+		p.playSound(p.getLocation(), Sounds.rankedJoin, Sounds.rankedJoinVolume, Sounds.DEFAULT_PITCH);
 	}
 	
 	public static void removePlayer(Player p)
@@ -325,5 +327,6 @@ public class RankedQueue
 		removePlayerFromMySQL(p.getUniqueId());
 		
 		p.sendMessage(Messages.removeFromRankedQueue);
+		p.playSound(p.getLocation(), Sounds.rankedLeave, Sounds.rankedLeaveVolume, Sounds.DEFAULT_PITCH);
 	}
 }

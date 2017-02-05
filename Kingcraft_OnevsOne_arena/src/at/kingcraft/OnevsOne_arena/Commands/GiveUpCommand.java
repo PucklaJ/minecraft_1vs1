@@ -260,7 +260,7 @@ public class GiveUpCommand implements CommandExecutor {
 		for(int i = 0;i<winner.size();i++)
 		{
 			winner.get(i).sendMessage(Messages.tournamentWin);
-			winner.get(i).playSound(winner.get(i).getLocation(), Sounds.tournamentWin, Sounds.tournamentWinVolume, 0.2f);
+			winner.get(i).playSound(winner.get(i).getLocation(), Sounds.tournamentWin, Sounds.tournamentWinVolume, Sounds.DEFAULT_PITCH);
 			d.updateStatistics(winner.get(i), 0, 0, 0, 0, 0, 1);
 		}
 		

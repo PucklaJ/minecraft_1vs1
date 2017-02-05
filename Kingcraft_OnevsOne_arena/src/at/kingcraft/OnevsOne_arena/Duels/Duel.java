@@ -1051,13 +1051,13 @@ public class Duel {
 					for(int i = 0;i<p1.size();i++)
 					{
 						p1.get(i).sendMessage(Messages.duelStarts);
-						p1.get(i).playSound(p1.get(i).getLocation(), Sounds.duelStart, Sounds.duelStartVolume, 0.2f);
+						p1.get(i).playSound(p1.get(i).getLocation(), Sounds.duelStart, Sounds.duelStartVolume, Sounds.DEFAULT_PITCH);
 					}
 					
 					for(int i = 0;i<p2.size();i++)
 					{
 						p2.get(i).sendMessage(Messages.duelStarts);
-						p2.get(i).playSound(p2.get(i).getLocation(), Sounds.duelStart, Sounds.duelStartVolume, 0.2f);
+						p2.get(i).playSound(p2.get(i).getLocation(), Sounds.duelStart, Sounds.duelStartVolume, Sounds.DEFAULT_PITCH);
 					}
 					
 					if(c.getTime() != -1)
@@ -1289,7 +1289,7 @@ public class Duel {
 					{
 						Bukkit.getScheduler().runTask(plugin,new ResetSpecDuelRun(p1.get(i), instance));
 					}
-					p1.get(i).playSound(p1.get(i).getLocation(), Sounds.duelTimer, Sounds.duelTimerVolume, 0.2f);
+					p1.get(i).playSound(p1.get(i).getLocation(), Sounds.duelTimer, Sounds.duelTimerVolume, Sounds.DEFAULT_PITCH);
 				}
 				
 				for(int i = 0;i<p2.size();i++)
@@ -1299,7 +1299,7 @@ public class Duel {
 					{
 						Bukkit.getScheduler().runTask(plugin,new ResetSpecDuelRun(p2.get(i), instance));
 					}
-					p2.get(i).playSound(p2.get(i).getLocation(), Sounds.duelTimer, Sounds.duelTimerVolume, 0.2f);
+					p2.get(i).playSound(p2.get(i).getLocation(), Sounds.duelTimer, Sounds.duelTimerVolume, Sounds.DEFAULT_PITCH);
 				}
 				
 				cdTime--;
@@ -1344,7 +1344,7 @@ public class Duel {
 	private void handleWinner(Player p)
 	{
 		p.sendMessage(Messages.youHaveWon);
-		p.playSound(p.getLocation(), Sounds.duelWin, Sounds.duelWinVolume, 0.2f);
+		p.playSound(p.getLocation(), Sounds.duelWin, Sounds.duelWinVolume, Sounds.DEFAULT_PITCH);
 		DuelListener.removeFromOnSpawn(p.getUniqueId());
 		updateStatistics(p, 0, 0, 1, 0,1,0);
 	}
@@ -1352,7 +1352,7 @@ public class Duel {
 	private void handleLoser(Player p)
 	{
 		p.sendMessage(Messages.youHaveLost);
-		p.playSound(p.getLocation(), Sounds.duelLose, Sounds.duelLoseVolume, 0.2f);
+		p.playSound(p.getLocation(), Sounds.duelLose, Sounds.duelLoseVolume, Sounds.DEFAULT_PITCH);
 		DuelListener.removeFromOnSpawn(p.getUniqueId());
 		updateStatistics(p, 0, 0, 0, 1,1,0);
 	}
