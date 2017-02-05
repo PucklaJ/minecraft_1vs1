@@ -394,6 +394,8 @@ public class Duel {
 						MyScoreboardManager.updateScoreboard();
 						if(p1Wins == 0 && p2Wins == 0)
 						{
+							sendEnemyAndKitMessages();
+							
 							Bukkit.getScheduler().runTaskLater(MainClass.getInstance(), new Runnable() {
 								
 								@Override
@@ -960,11 +962,6 @@ public class Duel {
 					
 				}
 			});
-		}
-	
-		if(p1Wins == 0 && p2Wins == 0)
-		{
-			sendEnemyAndKitMessages();
 		}
 		
 		if(!isTournament())
@@ -1667,19 +1664,34 @@ public class Duel {
 		
 		leftPlayers.clear();
 		
-		if(playerOnline && getTournamentID() == RANKED)
-		{
-			int elo1 = getELO(getWinner().get(0));
-			int elo2 = getELO(getLoser().get(0));
-			
-			int difElo = calculateELO(elo1, elo2);
-			
-			addELO(getWinner().get(0), difElo);
-			addELO(getLoser().get(0),-difElo);
-		}
-		
 		if(!playerOnline || p1Wins >= maxWins || p2Wins >= maxWins)
 		{
+			if(playerOnline && getTournamentID() == RANKED)
+			{
+				int elo1 = 0;
+				int elo2 = 0;
+				
+				for(int i = 0;i<getWinner().size();i++)
+					elo1 += getELO(getWinner().get(i));
+				
+				for(int i = 0;i<getLoser().size();i++)
+					elo2 += getELO(getLoser().get(i));
+				
+				int difElo = calculateELO(elo1, elo2);
+				
+				for(int i = 0;i<getWinner().size();i++)
+				{
+					addELO(getWinner().get(i), difElo);
+					getWinner().get(i).sendMessage(Messages.gotELO(difElo));
+				}
+				
+				for(int i = 0;i<getLoser().size();i++)
+				{
+					addELO(getLoser().get(i),-difElo);
+					getLoser().get(i).sendMessage(Messages.lostELO(difElo));
+				}
+			}
+			
 			SpectateManager.deleteFromMySQL(c.ID);
 			hasFinished = true;
 		}

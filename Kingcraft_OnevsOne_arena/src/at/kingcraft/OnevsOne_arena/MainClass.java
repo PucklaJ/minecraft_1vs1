@@ -28,7 +28,6 @@ import at.kingcraft.OnevsOne_arena.WaitingSnake.Settings;
 import net.md_5.bungee.api.ChatColor;
 
 public class MainClass extends JavaPlugin{
-
 	private MySQL mysql;
 	private String prefix;
 	public String serverName = "";

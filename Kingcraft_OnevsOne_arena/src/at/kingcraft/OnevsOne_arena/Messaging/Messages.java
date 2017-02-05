@@ -58,6 +58,8 @@ public class Messages
 	public static String yourStatistics;
 	private static String statisticsOf;
 	private static String playerDoesntExists;
+	private static String gotELO;
+	private static String lostELO;
 	
 	private static void addDefaults()
 	{
@@ -105,6 +107,8 @@ public class Messages
 		yourStatistics = ChatColor.YELLOW + "--- " + ChatColor.GREEN +  "Deine Statistiken" + ChatColor.YELLOW + " ---";
 		statisticsOf = ChatColor.YELLOW + "Statistiken von " + ChatColor.GREEN + "%player%";
 		playerDoesntExists = ChatColor.RED + "Der Spieler " + ChatColor.BLUE + "%player%" + ChatColor.RED + " existiert nicht";
+		gotELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + " bekommen";
+		lostELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + " verloren";
 		
 		config.addDefault("tournament-win", tournamentWin);
 		config.addDefault("tournament-lose", tournamentLose);
@@ -150,6 +154,8 @@ public class Messages
 		config.addDefault("your-statistics", yourStatistics);
 		config.addDefault("statistics-of", statisticsOf);
 		config.addDefault("player-doesnt-exists", playerDoesntExists);
+		config.addDefault("got-elo", gotELO);
+		config.addDefault("lost-elo", lostELO);
 		
 		config.options().copyDefaults(true);
 		
@@ -249,6 +255,16 @@ public class Messages
 		return soupsLeftTeam.replaceAll("%team%", team).replaceAll("%soups%",soups+"").replaceAll("%recrafts%",recrafts+"");
 	}
 	
+	public static String gotELO(int elo)
+	{
+		return gotELO.replaceAll("%elo%",elo+"");
+	}
+	
+	public static String lostELO(int elo)
+	{
+		return lostELO.replaceAll("%elo%",elo+"");
+	}
+	
 	private static void setValues()
 	{
 		tournamentWin = config.getString("tournament-win");
@@ -295,6 +311,8 @@ public class Messages
 		playerInHasLifeLeft = config.getString("player-in-has-life-left");
 		seperatorInHasLifeLfeft = config.getString("seperator-in-has-life-left");
 		hasLifeLeftTeam = config.getString("has-life-left-team");
+		gotELO = config.getString("got-elo");
+		lostELO = config.getString("lost-elo");
 	}
 	
 	public static void setup()
