@@ -449,15 +449,65 @@ public class Duel {
 					
 					Bukkit.getScheduler().cancelTask(waitCD.getTaskId());
 					
-					endDuel(null,false);
-					stopCountdown();
-					Challenge c = getChallenge();
-					ChallangeManager.deleteChallenge(c.ID);
-					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
+					if(!allOnline())
+					{
+						endDuel(null,false);
+						stopCountdown();
+						Challenge c = getChallenge();
+						ChallangeManager.deleteChallenge(c.ID);
+						GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
+					}
+					else
+					{
+						Player p = getRandomPlayer();
+						GiveUpCommand.giveUp(p,null);
+					}
+					
 				}
 				
 			}
 		}, 0, 20*1);
+	}
+	
+	private boolean allOnline()
+	{
+		for(int i = 0;i<c.getChallengersUUID().size();i++)
+		{
+			boolean found = false;
+			for(Player p : Bukkit.getOnlinePlayers())
+			{
+				if(p.getUniqueId().equals(c.getChallengersUUID().get(i)))
+				{
+					found = true;
+					break;
+				}	
+			}
+			
+			if(!found)
+			{
+				return false;
+			}
+		}
+		
+		for(int i = 0;i<c.getChallengedUUID().size();i++)
+		{
+			boolean found = false;
+			for(Player p : Bukkit.getOnlinePlayers())
+			{
+				if(p.getUniqueId().equals(c.getChallengedUUID().get(i)))
+				{
+					found = true;
+					break;
+				}
+			}
+			
+			if(!found)
+			{
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	public boolean hasEnded()
@@ -470,7 +520,7 @@ public class Duel {
 		return hasFinished;
 	}
 	
-	/*private Player getRandomPlayer()
+	private Player getRandomPlayer()
 	{
 		ArrayList<Player> players = new ArrayList<>();
 		players.addAll(p1);
@@ -487,7 +537,7 @@ public class Duel {
 		Random rand = new Random();
 		int index = rand.nextInt(players.size());
 		return players.get(index);
-	}*/
+	}
 	
 	private static String getPreKitUUID(int number)
 	{
@@ -1195,7 +1245,7 @@ public class Duel {
 					countdown = 1;
 					Bukkit.getScheduler().cancelTask(startCD.getTaskId());
 					
-					canJumpID = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+					canJumpID = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
 						
 						@Override
 						public void run()
@@ -1316,8 +1366,7 @@ public class Duel {
 		}
 		
 		Bukkit.getScheduler().cancelTask(canJumpID);
-		if(timer)
-			Bukkit.getScheduler().cancelTask(timeCountdownID);
+		Bukkit.getScheduler().cancelTask(timeCountdownID);
 	}
 	
 
@@ -1707,11 +1756,13 @@ public class Duel {
 	
 	public void restart()
 	{
-		
 		ended = false;
 		waitTime = 10;
 		cdTime = START_TIMER;
 		started = false;
+		timer = false;
+		timeMin = c.getTime();
+		timeSec = 0;
 		
 		
 		for(int i = 0;i<p1.size();i++)
@@ -1767,6 +1818,7 @@ public class Duel {
 			p2.get(i).teleport(map.getSpawn2());
 		}
 		
+		timeCountdown();
 		waitingCountdown(MainClass.getInstance());
 		
 		isRestarting = false;

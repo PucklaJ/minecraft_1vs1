@@ -183,7 +183,7 @@ public class GiveUpCommand implements CommandExecutor {
 						d.getMap().reload(null);
 						Bukkit.getScheduler().runTaskLaterAsynchronously(plugin,new RestartDuelRun(d), 20*3);
 					}
-				}, 10);
+				}, 20*2);
 			}
 			else
 			{
