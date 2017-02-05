@@ -446,19 +446,14 @@ public class Duel {
 							e.remove();
 					}
 					
-					Player p = getRandomPlayer();
-					GiveUpCommand.giveUp(p, null);
 					
 					Bukkit.getScheduler().cancelTask(waitCD.getTaskId());
 					
-					if(!P1isOnline() && !P2isOnline())
-					{
-						endDuel(null,false);
-						stopCountdown();
-						Challenge c = getChallenge();
-						ChallangeManager.deleteChallenge(c.ID);
-						GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
-					}
+					endDuel(null,false);
+					stopCountdown();
+					Challenge c = getChallenge();
+					ChallangeManager.deleteChallenge(c.ID);
+					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
 				}
 				
 			}
@@ -475,7 +470,7 @@ public class Duel {
 		return hasFinished;
 	}
 	
-	private Player getRandomPlayer()
+	/*private Player getRandomPlayer()
 	{
 		ArrayList<Player> players = new ArrayList<>();
 		players.addAll(p1);
@@ -492,7 +487,7 @@ public class Duel {
 		Random rand = new Random();
 		int index = rand.nextInt(players.size());
 		return players.get(index);
-	}
+	}*/
 	
 	private static String getPreKitUUID(int number)
 	{
