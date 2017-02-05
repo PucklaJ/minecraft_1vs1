@@ -31,6 +31,7 @@ public class Messages
 	public static String thereAreNoMaps;
 	private static String youAreFightingAgainst;
 	private static String youAreFightingAgainstFFA;
+	private static String youAreFightingAgainstRanked;
 	private static String hasLifeLeft;
 	private static String playerInHasLifeLeft;
 	public static String seperatorInHasLifeLfeft;
@@ -80,6 +81,7 @@ public class Messages
 		thereAreNoMaps = ChatColor.RED + "Hier sind keine Maps";
 		youAreFightingAgainst = ChatColor.YELLOW + "Du kämpfst gegen " + ChatColor.GREEN + "%player%";
 		youAreFightingAgainstFFA = ChatColor.YELLOW + "Du kämpfst in einem FFA gegen " + ChatColor.GREEN + "%player%";
+		youAreFightingAgainstRanked = ChatColor.YELLOW + "Du kämpfst gegen " + ChatColor.GREEN + "%player% " + ChatColor.YELLOW + "(ELO: " + ChatColor.BLUE + "%elo%" + ChatColor.YELLOW + ")";
 		hasLifeLeft = ChatColor.GREEN + "%player% " + ChatColor.YELLOW + "hat noch " + ChatColor.RED + "%health%♥ " + ChatColor.YELLOW + "Leben übrig";
 		playerInHasLifeLeft = ChatColor.GREEN + "%player%";
 		seperatorInHasLifeLfeft = ChatColor.YELLOW + " ,";
@@ -107,8 +109,8 @@ public class Messages
 		yourStatistics = ChatColor.YELLOW + "--- " + ChatColor.GREEN +  "Deine Statistiken" + ChatColor.YELLOW + " ---";
 		statisticsOf = ChatColor.YELLOW + "Statistiken von " + ChatColor.GREEN + "%player%";
 		playerDoesntExists = ChatColor.RED + "Der Spieler " + ChatColor.BLUE + "%player%" + ChatColor.RED + " existiert nicht";
-		gotELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + " bekommen";
-		lostELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + " verloren";
+		gotELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + "ELO bekommen";
+		lostELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + "ELO verloren";
 		
 		config.addDefault("tournament-win", tournamentWin);
 		config.addDefault("tournament-lose", tournamentLose);
@@ -127,6 +129,7 @@ public class Messages
 		config.addDefault("ther-are-no-maps", thereAreNoMaps);
 		config.addDefault("you-are-fighting-against", youAreFightingAgainst);
 		config.addDefault("you-are-fighting-against-ffa", youAreFightingAgainstFFA);
+		config.addDefault("you-are-fighting-against-ranked", youAreFightingAgainstRanked);
 		config.addDefault("has-life-left", hasLifeLeft);
 		config.addDefault("player-in-has-life-left", playerInHasLifeLeft);
 		config.addDefault("seperator-in-has-life-left", seperatorInHasLifeLfeft);
@@ -188,6 +191,11 @@ public class Messages
 	public static String youAreFightingAgainstFFA(String player)
 	{
 		return youAreFightingAgainstFFA.replaceAll("%player%", player);
+	}
+	
+	public static String youAreFightingAgainstRanked(String player,int elo)
+	{
+		return youAreFightingAgainstRanked.replaceAll("%player%", player).replaceAll("%elo%",elo+"");
 	}
 	
 	public static String hasLifeLeft(String player,String health)
@@ -284,6 +292,7 @@ public class Messages
 		thereAreNoMaps = config.getString("there-are-no-maps");
 		youAreFightingAgainst = config.getString("you-are-fighting-against");
 		youAreFightingAgainstFFA = config.getString("you-are-fighting-against-ffa");
+		youAreFightingAgainstRanked = config.getString("you-are-fighting-against-ranked");
 		hasLifeLeft = config.getString("has-life-left");
 		yourKit = config.getString("your-kit");
 		thisIsntAllowedInTournament = config.getString("this-isnt-allowed-in-tournament");

@@ -24,7 +24,7 @@ public class RankedQueue
 {
 	private static ArrayList<RankedUpload> playersToUpload;
 	private static ArrayList<RankedUpload> playersInQueue;
-	private static final int MAX_ELO_DIF = 15;
+	private static final int MAX_ELO_DIF = 1000;
 	
 	public static void setup()
 	{

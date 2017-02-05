@@ -36,6 +36,7 @@ permissions:
       command_arena.giveup: true
       command_arena.fix: true
       command_arena.endmatch: true
+      command_arena.stats: true
   command_arena.setwaitinghouse: 
     description: Erlaubt den Warte Haus Command aus zu fuehren
     default: op

@@ -880,14 +880,18 @@ public class Duel {
 			ArrayList<Player> enimies = getEnimies(p1.get(i));
 			
 			String against = "";
+			int elo = 0;
 			
 			for(int u = 0;u<enimies.size();u++)
 			{
 				against += enimies.get(u).getDisplayName() + (u==enimies.size()-1 ? "" : "; ");
+				elo += getELO(enimies.get(u));
 			}
 			
 			if(ffa)
 				p1.get(i).sendMessage(Messages.youAreFightingAgainstFFA(against));
+			else if(getTournamentID() == RANKED)
+				p1.get(i).sendMessage(Messages.youAreFightingAgainstRanked(against, elo));
 			else
 				p1.get(i).sendMessage(Messages.youAreFightingAgainst(against));
 			
@@ -913,14 +917,18 @@ public class Duel {
 			ArrayList<Player> enimies = getEnimies(p2.get(i));
 			
 			String against = "";
+			int elo = 0;
 			
 			for(int u = 0;u<enimies.size();u++)
 			{
 				against += enimies.get(u).getDisplayName() + (u==enimies.size()-1 ? "" : "; ");
+				elo += getELO(enimies.get(u));
 			}
 			
 			if(ffa)
 				p2.get(i).sendMessage(Messages.youAreFightingAgainstFFA(against));
+			else if(getTournamentID() == RANKED)
+				p2.get(i).sendMessage(Messages.youAreFightingAgainstRanked(against, elo));
 			else
 				p2.get(i).sendMessage(Messages.youAreFightingAgainst(against));
 			
@@ -1276,7 +1284,7 @@ public class Duel {
 				
 				for(int i = 0;i<p1.size();i++)
 				{
-					p1.get(i).sendMessage(Messages.duelStartsTimer(String.valueOf(cdTime)));
+					//p1.get(i).sendMessage(Messages.duelStartsTimer(String.valueOf(cdTime)));
 					if(p1.get(i).getGameMode().equals(GameMode.CREATIVE))
 					{
 						Bukkit.getScheduler().runTask(plugin,new ResetSpecDuelRun(p1.get(i), instance));
@@ -1286,7 +1294,7 @@ public class Duel {
 				
 				for(int i = 0;i<p2.size();i++)
 				{
-					p2.get(i).sendMessage(Messages.duelStartsTimer(String.valueOf(cdTime)));
+					//p2.get(i).sendMessage(Messages.duelStartsTimer(String.valueOf(cdTime)));
 					if(p2.get(i).getGameMode().equals(GameMode.CREATIVE))
 					{
 						Bukkit.getScheduler().runTask(plugin,new ResetSpecDuelRun(p2.get(i), instance));
