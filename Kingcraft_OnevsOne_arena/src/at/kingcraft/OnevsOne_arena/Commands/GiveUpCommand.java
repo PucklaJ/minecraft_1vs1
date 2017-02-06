@@ -360,7 +360,9 @@ public class GiveUpCommand implements CommandExecutor {
 							}
 							else
 							{
-								if(loser.get(i).getHealth()!= 0.0)
+								System.out.println("Loser Health: " + loser.get(i).getHealth());
+								
+								if(loser.get(i).getHealth() != 0.0)
 								{
 									TournamentManager.addSpectator(new Spectator(loser.get(i), tourn.getID(), getHomeServer(d,loser.get(i))),true,false);
 								}

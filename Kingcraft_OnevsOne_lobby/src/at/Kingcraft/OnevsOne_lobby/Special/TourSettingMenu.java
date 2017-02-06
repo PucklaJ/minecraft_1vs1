@@ -77,7 +77,7 @@ public class TourSettingMenu extends Menu
 		lore.add(ChatColor.YELLOW + "Kit: " + ChatColor.BLUE + (this.kit == ENEMY_KITS ? "Kit der Gegner" : kitName));
 		lore.add(ChatColor.YELLOW + "Spieler bis zum Start: " + ChatColor.BLUE + players);
 		lore.add(ChatColor.YELLOW + "Maximale Runden: " + ChatColor.BLUE + rounds);
-		lore.add(ChatColor.YELLOW + "Rundenzeit: " + ChatColor.BLUE + time);
+		lore.add(ChatColor.YELLOW + "Rundenzeit: " + ChatColor.BLUE + time + ChatColor.YELLOW + " Minuten");
 		im.setLore(lore);
 		is.setItemMeta(im);
 		

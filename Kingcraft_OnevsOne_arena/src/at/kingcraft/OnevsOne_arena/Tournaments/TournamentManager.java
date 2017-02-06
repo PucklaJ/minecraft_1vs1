@@ -657,7 +657,7 @@ public class TournamentManager
 					
 					Spectator s = isSpectatorMySQL(p);
 					
-					if(s != null)
+					if(s != null && p.getHealth() != 0.0)
 					{
 						addSpectator(s,true,false);
 						continue;
