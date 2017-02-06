@@ -77,6 +77,7 @@ public class TourSettingMenu extends Menu
 		lore.add(ChatColor.YELLOW + "Kit: " + ChatColor.BLUE + (this.kit == ENEMY_KITS ? "Kit der Gegner" : kitName));
 		lore.add(ChatColor.YELLOW + "Spieler bis zum Start: " + ChatColor.BLUE + players);
 		lore.add(ChatColor.YELLOW + "Maximale Runden: " + ChatColor.BLUE + rounds);
+		lore.add(ChatColor.YELLOW + "Rundenzeit: " + ChatColor.BLUE + time);
 		im.setLore(lore);
 		is.setItemMeta(im);
 		
@@ -96,7 +97,7 @@ public class TourSettingMenu extends Menu
 		}
 		ItemStack is = new ItemStack(Material.WATCH,this.time);
 		ItemMeta im = is.getItemMeta();
-		im.setDisplayName(ChatColor.YELLOW + "Zeit pro Runde");
+		im.setDisplayName(ChatColor.YELLOW + "Zeit pro Runde (Min)");
 		is.setItemMeta(im);
 		
 		inventory.setItem(TIME_POS, is);
