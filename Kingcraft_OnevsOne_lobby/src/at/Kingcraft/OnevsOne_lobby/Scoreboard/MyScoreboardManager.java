@@ -18,6 +18,7 @@ import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
 import at.Kingcraft.OnevsOne_lobby.Lobby.OnlinePlayers;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.Tournament;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.RankedQueue;
 
 public class MyScoreboardManager
 {
@@ -99,6 +100,10 @@ public class MyScoreboardManager
 			return;
 		
 		addLine(lines,obj,(kit.isDif() ? config.getString("Scoreboard.Kit.Prefix.Different") : (config.getString("Scoreboard.Kit.Prefix.Normal"))) + kit.getName(true,!(kit.getOwnerName().equals("Server") || kit.getOwnerName().equals("Verschieden")),false) + (kit.isDif() ? config.getString("Scoreboard.Kit.Suffix.Different") : config.getString("Scoreboard.Kit.Suffix.Normal")));
+		addLine(lines,obj,lineBreak);
+		// ELO
+		addLine(lines,obj,config.getString("Scoreboard.ELO.Prefix") + RankedQueue.getELO(p) + config.getString("Scoreboard.ELO.Suffix"));
+		
 		
 		Team t = TeamManager.getTeam(p);
 		

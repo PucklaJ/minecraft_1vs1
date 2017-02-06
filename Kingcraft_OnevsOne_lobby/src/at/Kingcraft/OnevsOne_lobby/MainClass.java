@@ -170,6 +170,8 @@ public class MainClass extends JavaPlugin {
 		this.getConfig().addDefault("Scoreboard.Linebreak.String","-");
 		this.getConfig().addDefault("Scoreboard.Kit.Prefix.Normal", ChatColor.YELLOW + "Kit: " + ChatColor.BLUE);
 		this.getConfig().addDefault("Scoreboard.Kit.Prefix.Different", ChatColor.YELLOW + "Kit: " + ChatColor.GOLD);
+		this.getConfig().addDefault("Scoreboard.ELO.Prefix", ChatColor.YELLOW + "ELO: " + ChatColor.BLUE);
+		this.getConfig().addDefault("Scoreboard.ELO.Suffix", "");
 		this.getConfig().addDefault("Scoreboard.Team.Prefix.Leader", ChatColor.GOLD + "");
 		this.getConfig().addDefault("Scoreboard.Team.Prefix.Normal", ChatColor.GREEN + "");
 		this.getConfig().addDefault("Scoreboard.Tournament.Text", ChatColor.GREEN + "%leader% [%size%vs%size%] (%players%)");
