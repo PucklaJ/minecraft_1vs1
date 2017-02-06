@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 
 import MySQL.MySQL;
 import at.Kingcraft.OnevsOne_lobby.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Sounds;
 import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
 import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
 import at.Kingcraft.OnevsOne_lobby.Duels.SpectateManager;
@@ -141,6 +142,7 @@ public class WaitingSnake
 		
 		if(message)
 		p.sendMessage(Messages.waitingSnakeJoin);
+		p.playSound(p.getLocation(), Sounds.waitingSnakeEnter, Sounds.waitingSnakeEnterVolume, Sounds.DEFAULT_PITCH);
 		
 		
 		
@@ -180,6 +182,7 @@ public class WaitingSnake
 		
 		if(message)
 			p.sendMessage(Messages.waitingSnakeLeave);
+		p.playSound(p.getLocation(), Sounds.waitingSnakeLeave, Sounds.waitingSnakeLeaveVolume, Sounds.DEFAULT_PITCH);
 		
 		
 		if(!teamMembers)

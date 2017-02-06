@@ -39,7 +39,7 @@ commands:
   warteschlange:
     usage: /<command>
     description: Fuegt Spieler zu Warteschalnge hinzu bzw. entfernt ihn
-    aliases: ws
+    aliases: [ws,queue,q]
     permission: command.warteschlange
   turnier:
     usage: /<command> <create|start|join [player]|spectate <id>>

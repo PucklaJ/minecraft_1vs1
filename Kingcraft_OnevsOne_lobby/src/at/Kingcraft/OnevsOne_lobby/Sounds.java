@@ -40,6 +40,10 @@ public class Sounds
 	public static float rankedJoinVolume;
 	public static Sound rankedLeave;
 	public static float rankedLeaveVolume;
+	public static Sound waitingSnakeEnter;
+	public static float waitingSnakeEnterVolume;
+	public static Sound waitingSnakeLeave;
+	public static float waitingSnakeLeaveVolume;
 	
 	
 	private static void addDefaults()
@@ -70,6 +74,10 @@ public class Sounds
 		rankedJoinVolume = DEFAULT_VOL;
 		rankedLeave = Sound.NOTE_BASS_GUITAR;
 		rankedLeaveVolume = DEFAULT_VOL;
+		waitingSnakeEnter = Sound.PORTAL_TRAVEL;
+		waitingSnakeEnterVolume = DEFAULT_VOL;
+		waitingSnakeLeave = Sound.PORTAL_TRIGGER;
+		waitingSnakeLeaveVolume = DEFAULT_VOL;
 		
 		config.addDefault("got-challenge.sound", gotChallenge.toString());
 		config.addDefault("got-challenge.volume", gotChallengeVolume);
@@ -97,6 +105,10 @@ public class Sounds
 		config.addDefault("ranked-join.volume", rankedJoinVolume);
 		config.addDefault("ranked-leave.sound", rankedLeave.toString());
 		config.addDefault("ranked-leave.volume", rankedLeaveVolume);
+		config.addDefault("waiting-snake-enter.sound", waitingSnakeEnter.toString());
+		config.addDefault("waiting-snake-enter.volume", waitingSnakeEnterVolume);
+		config.addDefault("waiting-snake-leave.sound", waitingSnakeLeave.toString());
+		config.addDefault("waiting-snake-leave.volume", waitingSnakeLeaveVolume);
 		
 		config.options().copyDefaults(true);
 		
@@ -138,6 +150,10 @@ public class Sounds
 		rankedJoinVolume = (float)config.getDouble("ranked-join.volume");
 		rankedLeave = Sound.valueOf(config.getString("ranked-leave.sound"));
 		rankedLeaveVolume = (float)config.getDouble("ranked-leave.volume");
+		waitingSnakeEnter = Sound.valueOf(config.getString("waiting-snake-enter.sound"));
+		waitingSnakeEnterVolume = (float)config.getDouble("waiting-snake-enter.volume");
+		waitingSnakeLeave = Sound.valueOf(config.getString("waiting-snake-leave.sound"));
+		waitingSnakeLeaveVolume = (float)config.getDouble("waiting-snake-leave.volume");
 	}
 	
 	public static void setup()
