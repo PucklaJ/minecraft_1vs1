@@ -78,6 +78,11 @@ public class Kit
 	{
 		String str = "";
 		
+		if(ownerName.equals("Server"))
+		{
+			withOwner = false;
+		}
+		
 		if(withOwner)
 		{
 			str += getOwnerName() + ":";

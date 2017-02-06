@@ -173,6 +173,11 @@ public class Kit
 	{
 		String str = "";
 		
+		if(ownerName.equals("Server"))
+		{
+			withOwner = false;
+		}
+		
 		if(white)
 		{
 			str += ChatColor.WHITE + "";
