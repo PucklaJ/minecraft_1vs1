@@ -26,6 +26,8 @@ command.*: Permssions für alle Commands
     command.reset: Permission seine Statistiken zurückzusetzen
     command.resetother: Permission Statsitiken eines anderen Spielers
     zurückzusetzen
+  command.queueinfo: ...
+  command.forcequeue: ...
 
 
 ******** Arena *******
