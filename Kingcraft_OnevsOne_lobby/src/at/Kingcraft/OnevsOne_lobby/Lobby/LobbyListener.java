@@ -658,7 +658,7 @@ public class LobbyListener implements Listener {
 				MenuManager.getTournamentViewMenu(p, false).onClick(e.getSlot(), e.getClick());
 				e.setCancelled(true);
 			}
-			else if(inv.getName().equals("Ranked"))
+			else if(inv.getName().startsWith("Ranked"))
 			{
 				MenuManager.getRankedMenu(p).onClick(e.getSlot(), e.getClick());
 				e.setCancelled(true);

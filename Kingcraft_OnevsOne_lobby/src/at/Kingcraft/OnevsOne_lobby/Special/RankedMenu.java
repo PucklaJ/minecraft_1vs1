@@ -22,7 +22,7 @@ public class RankedMenu extends Menu
 	
 	public RankedMenu(Player owner)
 	{
-		super(owner, 27, "Ranked", null);
+		super(owner, 27, "Ranked (ELO:" + RankedQueue.getELO(owner) + ")", null);
 	}
 	
 	@Override
