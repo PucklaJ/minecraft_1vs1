@@ -838,18 +838,20 @@ public class DuelListener implements Listener {
 		}
 		else if(d == null)
 		{
-			TournamentManager.removeSpectator(e.getPlayer());
+			
 			if(lastTournamentID != -1)
 			{
 				Tournament t = TournamentManager.getTournamentFromMySQL(e.getPlayer(), lastTournamentID, "pvp-1", null, 3, 15);
 				if(t!=null)
 				{
-					if(t.isPartOf(e.getPlayer()) && t.getRound(e.getPlayer()) == null)
+					if(t.isPartOf(e.getPlayer()) && (TournamentManager.isSpectator(e.getPlayer(), false) || t.getRound(e.getPlayer()) == null))
 					{
 						TournamentManager.playerLeaves(e.getPlayer(), t.getID());
 					}
 				}
 			}
+			
+			TournamentManager.removeSpectator(e.getPlayer());
 		}
 		
 		if(d != null)

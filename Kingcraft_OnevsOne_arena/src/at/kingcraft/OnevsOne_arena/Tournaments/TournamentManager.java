@@ -563,6 +563,7 @@ public class TournamentManager
 		if(t != null)
 		{
 			t.removePlayer(new TourPlayer(p.getName(), p.getUniqueId()));
+			
 			ArrayList<TourPlayer> rS = t.getRoundSkipper(t.isQualiRound() ? t.getCurentQualiRound() : t.getRoundLevel(),t.isQualiRound());
 			if(rS != null)
 			{
@@ -575,11 +576,10 @@ public class TournamentManager
 							rS = null;
 						
 						t.setRoundSkipper(rS,t.isQualiRound() ? t.getCurentQualiRound() : t.getRoundLevel(),t.isQualiRound());
+						break;
 					}
 				}
 			}
-			
-			
 			
 			TournamentManager.updateTournament(t, false);
 		}
