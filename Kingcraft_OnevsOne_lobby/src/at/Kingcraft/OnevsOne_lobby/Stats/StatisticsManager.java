@@ -100,15 +100,13 @@ public class StatisticsManager
 			ps.setString(1, new Statistics(0, 0, 0, 0, 0, 0, 0).toString());
 			ps.setString(2, p.toString());
 			ps.executeUpdate();
-			
-			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("UPDATE Duel_RankedELO SET ELO = 0 WHERE UUID = ?");
-			ps.setString(1, p.toString());
-			ps.executeUpdate();
 		}
 		catch (SQLException e)
 		{
 			e.printStackTrace();
 		}
+		
+		deleteStatistics(p);
 		
 		Player p1 = null;
 		for(Player p2 : Bukkit.getOnlinePlayers())
