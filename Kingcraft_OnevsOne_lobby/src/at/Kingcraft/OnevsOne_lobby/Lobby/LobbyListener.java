@@ -1034,12 +1034,12 @@ public class LobbyListener implements Listener {
 			 onNormalTriggerPlayers.remove(p);
 		 }
 		 
-		 Location from = e.getFrom();
-		 Location to = e.getTo();
+		 Location from = e.getFrom().clone();
+		 Location to = e.getTo().clone();
 		 
 		 boolean xyzMove = false;
 		 
-		 if(from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ())
+		 if(to.subtract(from).length() > 0.1)
 		 {
 			 xyzMove = true;
 		 }
