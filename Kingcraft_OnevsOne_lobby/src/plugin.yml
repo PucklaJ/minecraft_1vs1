@@ -69,6 +69,16 @@ commands:
   stats:
     usage: /<command> [<reset [player]>|<player>]
     description: Zeigt Statstiken von dir oder einem anderen Spieler
+  queueinfo:
+    usage: /<command>
+    aliases: qinfo
+    description: Zeigt Spieler, die in der Warteschlange sind
+    permission: command.queueinfo
+  rankedqueueinfo:
+    usage: /<command>
+    aliases: rqinfo
+    description: Zeigt Spieler, die in der Ranked Warteschlange sind
+    permission: command.rankedqueueinfo
     
 permissions:
   world.*:
@@ -94,6 +104,8 @@ permissions:
       command.kit: true
       command.spectate: true
       command.stats.*: true
+      command.queueinfo: true
+      command.rankedqueueinfo: true
   command.1vs1:
     description: Permission fuer 1vs1-Command
     default: true
@@ -165,4 +177,10 @@ permissions:
     default: true
   command.stats.resetother:
     description: Permission die Stats von jemand anderem zu resetten
+    default: op
+  command.queueinfo:
+    description: Permission fuer queueinfo-Command
+    default: op
+  command.rankedqueueinfo:
+    description: Permission fuer rankedqueueinfo-Command
     default: op

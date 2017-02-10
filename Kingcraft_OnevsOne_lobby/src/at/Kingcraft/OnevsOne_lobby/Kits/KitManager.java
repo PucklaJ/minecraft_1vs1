@@ -694,7 +694,7 @@ public class KitManager {
 	}
 	
 	@SuppressWarnings("deprecation")
-	private static Kit decodeMySQLKit(Player p,String str,boolean dif)
+	public static Kit decodeMySQLKit(Player p,String str,boolean dif)
 	{
 		if(str.equals("null"))
 		{

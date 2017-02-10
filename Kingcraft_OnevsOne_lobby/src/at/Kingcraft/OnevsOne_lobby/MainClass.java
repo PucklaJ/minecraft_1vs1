@@ -20,6 +20,7 @@ import at.Kingcraft.OnevsOne_lobby.Commands.FFACommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.KitPlaceCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.KitViewerComand;
 import at.Kingcraft.OnevsOne_lobby.Commands.OnevsOneCommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.QueueInfoCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.RefuseCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.SetDifKitCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.SetPreKitCommand;
@@ -85,6 +86,9 @@ public class MainClass extends JavaPlugin {
 		getCommand("kit").setExecutor(new KitViewerComand());
 		getCommand("spectate").setExecutor(new SpectateCommand());
 		getCommand("stats").setExecutor(new StatsCommand());
+	 	QueueInfoCommand qinfo = new QueueInfoCommand();
+		getCommand("queueinfo").setExecutor(qinfo);
+		getCommand("rankedqueueinfo").setExecutor(qinfo);
 	}
 
 	private void setupListeners()
