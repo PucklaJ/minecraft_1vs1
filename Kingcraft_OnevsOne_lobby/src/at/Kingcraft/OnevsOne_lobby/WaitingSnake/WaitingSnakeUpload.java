@@ -29,4 +29,9 @@ public class WaitingSnakeUpload
 		
 		op = Bukkit.getOfflinePlayer(uuid);
 	}
+	
+	public WaitingSnakeUpload clone()
+	{
+		return new WaitingSnakeUpload(uuid, set, serverName, kit, arena, team, name);
+	}
 }

@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import MySQL.MySQL;
 import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
 import at.Kingcraft.OnevsOne_lobby.Commands.FFACommand;
+import at.Kingcraft.OnevsOne_lobby.Commands.ForceQueueCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.KitPlaceCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.KitViewerComand;
 import at.Kingcraft.OnevsOne_lobby.Commands.OnevsOneCommand;
@@ -94,6 +95,7 @@ public class MainClass extends JavaPlugin {
 	 	QueueInfoCommand qinfo = new QueueInfoCommand();
 		getCommand("queueinfo").setExecutor(qinfo);
 		getCommand("rankedqueueinfo").setExecutor(qinfo);
+		getCommand("forcequeue").setExecutor(new ForceQueueCommand());
 	}
 
 	private void setupListeners()

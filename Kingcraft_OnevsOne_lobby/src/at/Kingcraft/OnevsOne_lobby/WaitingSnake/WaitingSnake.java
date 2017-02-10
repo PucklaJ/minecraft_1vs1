@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import MySQL.MySQL;
 import at.Kingcraft.OnevsOne_lobby.MainClass;
 import at.Kingcraft.OnevsOne_lobby.Sounds;
 import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Commands.ForceQueueCommand;
 import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
 import at.Kingcraft.OnevsOne_lobby.Duels.SpectateManager;
 import at.Kingcraft.OnevsOne_lobby.Duels.Team;
@@ -289,6 +291,7 @@ public class WaitingSnake
 		}
 	}
 	
+	
 
 	private void makeDuels()
 	{
@@ -322,6 +325,43 @@ public class WaitingSnake
 		{
 			return;
 		}
+		
+		// ForceQueue
+		HashMap<UUID,UUID> forceQueue = ForceQueueCommand.getForceQueued();
+		for(int i = 0;i<uploadedPlayers.size();i++)
+		{
+			UUID force = forceQueue.get(uploadedPlayers.get(i).uuid);
+			if(force != null)
+			{
+				WaitingSnakeUpload forceUpload = uploadedPlayers.get(i).clone();
+				forceUpload.uuid = force;
+				forceUpload.op = Bukkit.getOfflinePlayer(force);
+				forceUpload.name = forceUpload.op.getName();
+				
+				Settings[] settings = new Settings[2];
+				settings[0] = uploadedPlayers.get(i).set;
+				settings[1] = forceUpload.set;
+				
+				String[] kits = new String[2];
+				kits[0] = uploadedPlayers.get(i).kit;
+				kits[1] = forceUpload.kit;
+				
+				String[] maps = new String[2];
+				maps[0] = uploadedPlayers.get(i).arena;
+				maps[1] = forceUpload.arena;
+				
+				if(!makeNewDuel(uploadedPlayers.get(i),forceUpload,settings,uploadedPlayers.get(i).serverName,forceUpload.serverName,kits,maps))
+				{
+					System.out.println("New Duel didn't work");
+					continue;
+				}
+				
+				forceQueue.remove(uploadedPlayers.get(i).uuid);
+				uploadedPlayers.remove(i);
+				ForceQueueCommand.remove(force);
+			}
+		}
+		
 		
 		for(int i = 0;i<uploadedPlayers.size();i++)
 		{

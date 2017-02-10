@@ -93,6 +93,11 @@ commands:
     aliases: rqinfo
     description: Zeigt Spieler, die in der Ranked Warteschlange sind
     permission: command.rankedqueueinfo
+  forcequeue:
+    usage: /<command> <player>
+    description: Zwingt einen Spieler mit dir zu kaempfen
+    aliases: [fqueue,forceq,fq]
+    permission: command.forcequeue
     
 permissions:
   world.*:
@@ -120,6 +125,7 @@ permissions:
       command.stats.*: true
       command.queueinfo: true
       command.rankedqueueinfo: true
+      command.forcequeue: true
   command.1vs1:
     description: Permission fuer 1vs1-Command
     default: true
@@ -197,4 +203,7 @@ permissions:
     default: op
   command.rankedqueueinfo:
     description: Permission fuer rankedqueueinfo-Command
+    default: op
+  command.forcequeue:
+    description: Permission fuer forcequeue-Command
     default: op

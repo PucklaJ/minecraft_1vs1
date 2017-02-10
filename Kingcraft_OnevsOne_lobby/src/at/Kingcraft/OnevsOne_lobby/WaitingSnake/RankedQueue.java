@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import org.bukkit.entity.Player;
 import at.Kingcraft.OnevsOne_lobby.MainClass;
 import at.Kingcraft.OnevsOne_lobby.Sounds;
 import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Commands.ForceQueueCommand;
 import at.Kingcraft.OnevsOne_lobby.Duels.DuelManager;
 import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
 import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
@@ -42,6 +44,16 @@ public class RankedQueue
 		catch (SQLException e)
 		{
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_ForceQueue (UUID VARCHAR(100), Player VARCHAR(100))");
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
 			e.printStackTrace();
 		}
 		
@@ -79,8 +91,25 @@ public class RankedQueue
 	{
 		loadPlayers();
 		
+		HashMap<UUID, UUID> forceQueue = ForceQueueCommand.getForceQueued();
+		
 		for(int i = 0;i<playersInQueue.size() && !ArenaManager.getServers(1).isEmpty();i++)
 		{
+			UUID force = forceQueue.get(playersInQueue.get(i).uuid);
+			
+			if(force != null)
+			{
+				RankedUpload forceUpload = new RankedUpload(force,getELO(force),playersInQueue.get(i).kit,playersInQueue.get(i).map,playersInQueue.get(i).homeServer);
+				
+				makeDuel(playersInQueue.get(i), forceUpload);
+				
+				forceQueue.remove(playersInQueue.get(i).uuid);
+				playersInQueue.remove(i);
+				ForceQueueCommand.remove(force);
+				
+				continue;
+			}
+			
 			int min = getLowestDifference(playersInQueue.get(i));
 			
 			if(min != -1)
