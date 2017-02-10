@@ -15,11 +15,16 @@ public class DuelManager {
 	private static ArrayList<Duel> duels = new ArrayList<Duel>();
 	
 	public static Duel getFirstDuel()
-	{
+	{	
 		if(duels.size() == 0)
 			return null;
 		
 		return duels.get(0);
+	}
+	
+	public static ArrayList<Duel> getDuels()
+	{
+		return duels;
 	}
 	
 	public static Duel newDuel(Challenge c)
@@ -94,6 +99,14 @@ public class DuelManager {
 		return null;
 		
 		
+	}
+	
+	public static void deleteDuel()
+	{
+		if(!duels.isEmpty())
+		{
+			duels.remove(0);
+		}
 	}
 	
 	public static void pushSpectatorsBack()

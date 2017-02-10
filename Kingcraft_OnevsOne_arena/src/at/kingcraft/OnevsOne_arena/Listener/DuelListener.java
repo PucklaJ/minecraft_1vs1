@@ -869,8 +869,7 @@ public class DuelListener implements Listener {
 			}
 		}
 		
-		
-		
+		MenuManager.deleteDuelsMenu(e.getPlayer());
 		
 		onSpawnCalled.remove(e.getPlayer().getUniqueId());
 		for(int i = 0;i<specOnRespawn.size();i++)

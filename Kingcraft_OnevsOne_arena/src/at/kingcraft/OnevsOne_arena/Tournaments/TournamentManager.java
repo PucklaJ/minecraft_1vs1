@@ -306,7 +306,7 @@ public class TournamentManager
 	{
 		updateSpectateInvs(p);
 		// Menus
-		MenuManager.setDuelsMenu(p, new DuelsMenu(p,id));
+		MenuManager.setDuelsMenu(p, new DuelsMenu(p,id,true));
 		
 	}
 	

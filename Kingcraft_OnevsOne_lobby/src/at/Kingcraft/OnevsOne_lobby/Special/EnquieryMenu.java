@@ -239,7 +239,7 @@ public class EnquieryMenu extends Menu {
 			{
 				if(ct.isLeftClick())
 				{
-					owner.performCommand("turnier join " + ((SkullMeta)is.getItemMeta()).getOwner());
+					owner.performCommand("join " + ((SkullMeta)is.getItemMeta()).getOwner());
 				}
 				else if(ct.isRightClick() && ct.isShiftClick())
 				{

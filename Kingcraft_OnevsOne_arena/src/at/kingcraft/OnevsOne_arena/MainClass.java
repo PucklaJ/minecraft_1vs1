@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import MySQL.MySQL;
@@ -13,6 +14,7 @@ import at.kingcraft.OnevsOne_arena.Commands.EndmatchCommand;
 import at.kingcraft.OnevsOne_arena.Commands.FixCommand;
 import at.kingcraft.OnevsOne_arena.Commands.GiveUpCommand;
 import at.kingcraft.OnevsOne_arena.Commands.StatsCommand;
+import at.kingcraft.OnevsOne_arena.Commands.TurnierCommand;
 import at.kingcraft.OnevsOne_arena.Commands.WaitingHouseCommand;
 import at.kingcraft.OnevsOne_arena.Duels.DuelManager;
 import at.kingcraft.OnevsOne_arena.Duels.StatisticsManager;
@@ -44,6 +46,11 @@ public class MainClass extends JavaPlugin{
 		OnlinePlayers.deleteFromMySQL();
 		
 		deleteFromMySQL();
+		
+		for(Player p : Bukkit.getOnlinePlayers())
+		{
+			MenuManager.deleteDuelsMenu(p);
+		}
 		
 		System.out.println(prefix + " Successfully disabled");
 	}
@@ -78,6 +85,7 @@ public class MainClass extends JavaPlugin{
 		getCommand("fix").setExecutor(new FixCommand());
 		getCommand("endmatch").setExecutor(new EndmatchCommand());
 		getCommand("stats").setExecutor(new StatsCommand());
+		getCommand("turnier").setExecutor(new TurnierCommand());
 	}
 	
 	private void sendServerToMySQL(String server,int free)

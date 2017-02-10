@@ -79,7 +79,7 @@ public class GiveUpCommand implements CommandExecutor {
 	{
 		if(d.isTournament())
 		{
-			tourn = TournamentManager.getTournamentFromMySQL(p, d.getTournamentID(),d.getHomeServer(p),d.getKit(),d.getMode(),d.getMaxTime());
+			tourn = TournamentManager.getTournamentFromMySQL(p, d.getTournamentID(),d.getHomeServer(p),d.getKit(),d.getMaxRounds(),d.getMaxTime());
 			
 			if(tourn == null)
 			{
@@ -113,7 +113,7 @@ public class GiveUpCommand implements CommandExecutor {
 					@Override
 					public void run()
 					{
-						DuelManager.deleteDuel(p);
+						DuelManager.deleteDuel();
 					}
 				}, 20*4);
 									
@@ -399,7 +399,7 @@ public class GiveUpCommand implements CommandExecutor {
 	private static void handleNextRounds(Duel d,Player p)
 	{
 		
-		tourn = TournamentManager.getTournamentFromMySQL(null, tourn.getID(), p!=null ? d.getHomeServer(p) : "Server", d.getKit(), d.getMode(), d.getMaxTime());
+		tourn = TournamentManager.getTournamentFromMySQL(null, tourn.getID(), p!=null ? d.getHomeServer(p) : "Server", d.getKit(), d.getMaxRounds(), d.getMaxTime());
 		
 		tourn.removeRound(p != null ? tourn.getRound(p) : tourn.getRound(MainClass.getInstance().serverName));
 		

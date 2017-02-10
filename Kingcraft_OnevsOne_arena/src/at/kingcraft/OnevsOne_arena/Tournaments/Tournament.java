@@ -68,6 +68,16 @@ public class Tournament
 		qualiPoints = new HashMap<>();
 	}
 	
+	public int getMaxRounds()
+	{
+		return mode;
+	}
+	
+	public int getTime()
+	{
+		return time;
+	}
+	
 	public int getKitMode()
 	{
 		return kitMode;

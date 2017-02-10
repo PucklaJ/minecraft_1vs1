@@ -408,7 +408,7 @@ public class Tournament
 			{
 				cancelStartcountdown();
 			}
-			leader.performCommand("turnier start 0");
+			leader.performCommand("start 0");
 		}
 		else
 		{

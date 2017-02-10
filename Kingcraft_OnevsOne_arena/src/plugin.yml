@@ -27,6 +27,11 @@ commands:
     usage: /<command> [player]
     description: Zeigt Statistiken an
     permission: command_arena.stats
+  turnier:
+    usage: /<command>
+    description: Zeigt Turnierinformationen
+    permission: command_arena.turnier
+    aliases: t
 
 permissions:
   command_arena.*:
@@ -37,6 +42,7 @@ permissions:
       command_arena.fix: true
       command_arena.endmatch: true
       command_arena.stats: true
+      command_arena.turnier: true
   command_arena.setwaitinghouse: 
     description: Erlaubt den Warte Haus Command aus zu fuehren
     default: op
@@ -54,4 +60,7 @@ permissions:
     default: op
   command_arena.stats:
     description: Permission fuer stats-Command
+    default: true
+  command_arena.turnier:
+    description: Permission fuer turnier-Command
     default: true

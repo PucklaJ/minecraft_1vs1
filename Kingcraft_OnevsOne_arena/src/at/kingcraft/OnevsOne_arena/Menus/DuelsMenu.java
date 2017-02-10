@@ -9,6 +9,9 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import at.kingcraft.OnevsOne_arena.Duels.Duel;
+import at.kingcraft.OnevsOne_arena.Duels.DuelManager;
+import at.kingcraft.OnevsOne_arena.Kits.Kit;
 import at.kingcraft.OnevsOne_arena.Tournaments.Round;
 import at.kingcraft.OnevsOne_arena.Tournaments.TourPlayer;
 import at.kingcraft.OnevsOne_arena.Tournaments.Tournament;
@@ -26,6 +29,7 @@ public class DuelsMenu extends Menu
 	private static final int KO_MINUS_POS2 = 18;
 	private static final int KO_PLUS_POS1 = 17;
 	private static final int KO_PLUS_POS2 = 26;
+	private static final int CONFIG_POS = 27;
 	
 	private int tourID;
 	private ArrayList<Round> rounds;
@@ -38,25 +42,23 @@ public class DuelsMenu extends Menu
 	private TeleportMenu teleMenu;
 	private int highestRound = 0;
 	private boolean highestRoundIsQuali = true;
+	private boolean spectator;
+	private Tournament tournament;
+	private Kit kit;
 	
-	public DuelsMenu(Player owner,int id)
+	public DuelsMenu(Player owner,int id,boolean spectator)
 	{
-		super(owner,27,"Runden",null);
+		super(owner,36,"Runden",null);
 		tourID = id;
-		
+		this.spectator = spectator;
 		rounds = new ArrayList<>();
 		qualiItems = new ArrayList<>();
 		koItems = new ArrayList<>();
 		
-		teleMenu = new TeleportMenu(owner, this);
-	}
-	
-	public DuelsMenu(Player owner,Tournament t)
-	{
-		super(owner,27,"Runden",null);
-		tourID = t.getID();
+		if(spectator)
+			teleMenu = new TeleportMenu(owner, this);
 		
-		rounds = new ArrayList<>();
+		setupConfig();
 	}
 	
 	public TeleportMenu getTeleMenu()
@@ -64,9 +66,65 @@ public class DuelsMenu extends Menu
 		return teleMenu;
 	}
 	
+	private void setupConfig()
+	{
+		ItemStack config = new ItemStack(Material.REDSTONE_COMPARATOR);
+		{
+			Duel d = DuelManager.getFirstDuel();
+			tournament = TournamentManager.getTournamentFromMySQL(null, tourID, "pvp-1", d == null ? null : d.getKit(), d == null ? 0 : d.getMaxRounds(), d == null ? 0 : d.getMaxTime());
+			if(d!=null)
+				kit = d.getKit();
+			
+			ItemMeta im = config.getItemMeta();
+			im.setDisplayName(ChatColor.YELLOW + "Konfigurationen");
+			
+			String kitName,time,rounds;
+			if(tournament == null)
+			{
+				System.out.println("Tournament is null");
+				kitName = "null";
+				time = "0";
+				rounds = "0";
+			}
+			else
+			{
+				time = tournament.getTime() + "";
+				rounds = tournament.getMaxRounds()+"";
+				
+				if(tournament.getKitMode() == Duel.ENEMY_KITS)
+				{
+					kitName = "Kit der Gegner";
+				}
+				else
+				{
+					if(kit != null)
+					{
+						kitName = kit.getName(true, !kit.getOwnerName().equals("Server"));
+					}
+					else
+					{
+						System.out.println("Kit is null");
+						kitName = "null";
+					}
+				}
+			}
+			
+			ArrayList<String> lore = new ArrayList<>();
+			lore.add(ChatColor.YELLOW + "Kit: " + ChatColor.BLUE + kitName);
+			lore.add(ChatColor.YELLOW + "Zeit: " + ChatColor.BLUE + time  + ChatColor.YELLOW + " Minuten");
+			lore.add(ChatColor.YELLOW + "Runden: " + ChatColor.BLUE + rounds);
+			
+			im.setLore(lore);
+			config.setItemMeta(im);
+		}
+		
+		inventory.setItem(CONFIG_POS, config);
+	}
+	
 	@Override
 	protected void setInventoryContents()
 	{
+		
 		ItemStack prev = new ItemStack(Material.WOOD_BUTTON);
 		{
 			ItemMeta im = prev.getItemMeta();
@@ -79,6 +137,7 @@ public class DuelsMenu extends Menu
 			im.setDisplayName("+");
 			next.setItemMeta(im);
 		}
+		
 		
 		inventory.setItem(QUALI_MINUS_POS, prev);
 		inventory.setItem(QUALI_PLUS_POS, next);
@@ -178,7 +237,7 @@ public class DuelsMenu extends Menu
 			}
 			else if(isQualiClick(slot))
 			{
-				if(highestRoundIsQuali && getRoundLevelFromItemStack(inventory.getItem(slot), true) == highestRound)
+				if(spectator && highestRoundIsQuali && getRoundLevelFromItemStack(inventory.getItem(slot), true) == highestRound)
 				{
 					teleMenu.setRounds(getQualiRounds(rounds, highestRound));
 					teleMenu.open();
@@ -186,7 +245,7 @@ public class DuelsMenu extends Menu
 			}
 			else if(isKoClick(slot))
 			{
-				if(!highestRoundIsQuali && getRoundLevelFromItemStack(inventory.getItem(slot), false) == highestRound)
+				if(spectator && !highestRoundIsQuali && getRoundLevelFromItemStack(inventory.getItem(slot), false) == highestRound)
 				{
 					teleMenu.setRounds(getKoRounds(rounds, highestRound));
 					teleMenu.open();

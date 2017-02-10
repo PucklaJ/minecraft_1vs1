@@ -61,6 +61,8 @@ public class Messages
 	private static String playerDoesntExists;
 	private static String gotELO;
 	private static String lostELO;
+	public static String thereIsNoDuel;
+	public static String thereIsNoTournament;
 	
 	private static void addDefaults()
 	{
@@ -111,6 +113,8 @@ public class Messages
 		playerDoesntExists = ChatColor.RED + "Der Spieler " + ChatColor.BLUE + "%player%" + ChatColor.RED + " existiert nicht";
 		gotELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + "ELO bekommen";
 		lostELO = ChatColor.YELLOW + "Du hast " + ChatColor.BLUE + "%elo% " + ChatColor.YELLOW + "ELO verloren";
+		thereIsNoDuel = ChatColor.RED + "Es findet kein Duell statt";
+		thereIsNoTournament = ChatColor.RED + "Es findet kein Turnier statt";
 		
 		config.addDefault("tournament-win", tournamentWin);
 		config.addDefault("tournament-lose", tournamentLose);
@@ -159,6 +163,8 @@ public class Messages
 		config.addDefault("player-doesnt-exists", playerDoesntExists);
 		config.addDefault("got-elo", gotELO);
 		config.addDefault("lost-elo", lostELO);
+		config.addDefault("there-is-no-duel", thereIsNoDuel);
+		config.addDefault("there-is-no-tournament", thereIsNoTournament);
 		
 		config.options().copyDefaults(true);
 		
@@ -322,6 +328,8 @@ public class Messages
 		hasLifeLeftTeam = config.getString("has-life-left-team");
 		gotELO = config.getString("got-elo");
 		lostELO = config.getString("lost-elo");
+		thereIsNoDuel = config.getString("there-is-no-duel");
+		thereIsNoTournament = config.getString("there-is-no-tournament");
 	}
 	
 	public static void setup()

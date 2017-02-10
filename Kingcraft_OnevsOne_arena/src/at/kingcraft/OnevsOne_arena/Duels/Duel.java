@@ -84,8 +84,8 @@ public class Duel {
 	private int timeCountdownID = -1;
 	private boolean timer = false;
 	private int kitMode;
-	private static final int OWN_KITS = 0;
-	private static final int ENEMY_KITS = 1;
+	public static final int OWN_KITS = 0;
+	public static final int ENEMY_KITS = 1;
 	private Kit kit = null;
 	private ArrayList<UUID> leftPlayers;
 	
@@ -303,7 +303,7 @@ public class Duel {
 		return timeMin;
 	}
 	
-	public int getMode()
+	public int getMaxRounds()
 	{
 		return mode;
 	}
@@ -620,6 +620,11 @@ public class Duel {
 		}
 		
 		return null;
+	}
+	
+	public int getKitMode()
+	{
+		return kitMode;
 	}
 	
 	private void setupKit(Player p)

@@ -172,7 +172,7 @@ public class CreateNewTournRun implements Runnable
 	@Override
 	public void run()
 	{
-		tourn = TournamentManager.getTournamentFromMySQL(null, tournamentID, homeServer, kit,d.getMode(),d.getMaxTime());
+		tourn = TournamentManager.getTournamentFromMySQL(null, tournamentID, homeServer, kit,d.getMaxRounds(),d.getMaxTime());
 		
 		if(tourn == null)
 		{
