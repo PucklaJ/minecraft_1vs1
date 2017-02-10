@@ -77,6 +77,9 @@ public class GiveUpCommand implements CommandExecutor {
 	
 	public static void handleFinishedDuel(Duel d,Player p,Challenge c)
 	{
+		if(d == null)
+			return;
+		
 		if(d.isTournament())
 		{
 			tourn = TournamentManager.getTournamentFromMySQL(p, d.getTournamentID(),d.getHomeServer(p),d.getKit(),d.getMaxRounds(),d.getMaxTime());
@@ -96,7 +99,8 @@ public class GiveUpCommand implements CommandExecutor {
 					handleWinners(d);
 				}
 				
-				handleLosers(d,maxRoundLevel,tourn.getRound(p));
+				if(p != null)
+					handleLosers(d,maxRoundLevel,tourn.getRound(p));
 				
 				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 					
@@ -253,7 +257,21 @@ public class GiveUpCommand implements CommandExecutor {
 		return true;
 	}
 	
-	private static void handleWinners(Duel d)
+	private static void addToTournamentWinners(Player p)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_TournamentWinner (UUID) VALUES (?)");
+			ps.setString(1, p.getUniqueId().toString());
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public static void handleWinners(Duel d)
 	{
 		ArrayList<Player> winner = d.getWinner();
 		
@@ -262,6 +280,7 @@ public class GiveUpCommand implements CommandExecutor {
 			winner.get(i).sendMessage(Messages.tournamentWin);
 			winner.get(i).playSound(winner.get(i).getLocation(), Sounds.tournamentWin, Sounds.tournamentWinVolume, Sounds.DEFAULT_PITCH);
 			d.updateStatistics(winner.get(i), 0, 0, 0, 0, 0, 1);
+			addToTournamentWinners(winner.get(i));
 		}
 		
 		Bukkit.getScheduler().runTaskLater(plugin, new Runnable()
@@ -399,7 +418,7 @@ public class GiveUpCommand implements CommandExecutor {
 	private static void handleNextRounds(Duel d,Player p)
 	{
 		
-		tourn = TournamentManager.getTournamentFromMySQL(null, tourn.getID(), p!=null ? d.getHomeServer(p) : "Server", d.getKit(), d.getMaxRounds(), d.getMaxTime());
+		tourn = TournamentManager.getTournamentFromMySQL(null, tourn.getID(), p!=null ? d.getHomeServer(p) : "pvp-1", d.getKit(), d.getMaxRounds(), d.getMaxTime());
 		
 		tourn.removeRound(p != null ? tourn.getRound(p) : tourn.getRound(MainClass.getInstance().serverName));
 		

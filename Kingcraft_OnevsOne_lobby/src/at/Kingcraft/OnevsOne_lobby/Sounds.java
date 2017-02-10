@@ -44,6 +44,8 @@ public class Sounds
 	public static float waitingSnakeEnterVolume;
 	public static Sound waitingSnakeLeave;
 	public static float waitingSnakeLeaveVolume;
+	public static Sound tournamentWin;
+	public static float tournamentWinVolume;
 	
 	
 	private static void addDefaults()
@@ -78,6 +80,8 @@ public class Sounds
 		waitingSnakeEnterVolume = DEFAULT_VOL;
 		waitingSnakeLeave = Sound.PORTAL_TRIGGER;
 		waitingSnakeLeaveVolume = DEFAULT_VOL;
+		tournamentWin = Sound.FIREWORK_LARGE_BLAST2;
+		tournamentWinVolume = DEFAULT_VOL;
 		
 		config.addDefault("got-challenge.sound", gotChallenge.toString());
 		config.addDefault("got-challenge.volume", gotChallengeVolume);
@@ -109,6 +113,8 @@ public class Sounds
 		config.addDefault("waiting-snake-enter.volume", waitingSnakeEnterVolume);
 		config.addDefault("waiting-snake-leave.sound", waitingSnakeLeave.toString());
 		config.addDefault("waiting-snake-leave.volume", waitingSnakeLeaveVolume);
+		config.addDefault("tournament-win.sound", tournamentWin.toString());
+		config.addDefault("tournament-win.volume", tournamentWinVolume);
 		
 		config.options().copyDefaults(true);
 		
@@ -154,6 +160,8 @@ public class Sounds
 		waitingSnakeEnterVolume = (float)config.getDouble("waiting-snake-enter.volume");
 		waitingSnakeLeave = Sound.valueOf(config.getString("waiting-snake-leave.sound"));
 		waitingSnakeLeaveVolume = (float)config.getDouble("waiting-snake-leave.volume");
+		tournamentWin = Sound.valueOf(config.getString("tournament-win.sound"));
+		tournamentWinVolume = (float)config.getDouble("tournament-win.volume");
 	}
 	
 	public static void setup()

@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import at.Kingcraft.OnevsOne_lobby.MainClass;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
 import at.Kingcraft.OnevsOne_lobby.Messaging.Messenger;
 import net.md_5.bungee.api.ChatColor;
 
@@ -35,6 +36,11 @@ public class TestCommand implements CommandExecutor {
 		}
 		
 		sender.sendMessage(ChatColor.YELLOW + "Plugin " + ChatColor.GREEN + "[" + ChatColor.GREEN + plugin.getName() + ChatColor.GREEN + "]" + ChatColor.YELLOW + " erfolgreich installiert");
+		
+		if(p != null)
+		{
+			LobbyListener.spawnFireWork(p.getLocation());
+		}
 		
 		return true;
 	}

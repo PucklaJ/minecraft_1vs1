@@ -49,6 +49,16 @@ public class TournamentManager
 		leftBySpectator = new ArrayList<>();
 		needsSpecCheckStart = true;
 		needsSpecUpdate = false;
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_TournamentWinner (UUID VARCHAR(100))");
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public static void removeSpectatorArray(Player p)

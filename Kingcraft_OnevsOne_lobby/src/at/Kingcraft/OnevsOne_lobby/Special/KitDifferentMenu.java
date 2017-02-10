@@ -26,9 +26,6 @@ public class KitDifferentMenu extends Menu
 	private static final short ACTIVATE_COLOR = 10;
 	private static final short DEACTIVATE_COLOR = 8;
 	private static final int SET_DIF_POS = 53;
-	private static final int CAT_POS = 4;
-	private static final int CAT_PLUS_POS = CAT_POS+1;
-	private static final int CAT_MINUS_POS = CAT_POS-1;
 	
 	public KitDifferentMenu(Player owner,KitMainMenu parent)
 	{
@@ -66,31 +63,10 @@ public class KitDifferentMenu extends Menu
 			im.setDisplayName(Items.menuBackName);
 			back.setItemMeta(im);
 		}
-		ItemStack cat = new ItemStack(Material.FISHING_ROD);
-		{
-			ItemMeta im = cat.getItemMeta();
-			im.setDisplayName(ChatColor.YELLOW + "Verschiedene:1");
-			cat.setItemMeta(im);
-		}
-		ItemStack plus = new ItemStack(Material.WOOD_BUTTON);
-		{
-			ItemMeta im = plus.getItemMeta();
-			im.setDisplayName(ChatColor.GRAY + "Coming Soon...");
-			plus.setItemMeta(im);
-		}
-		ItemStack minus = new ItemStack(Material.WOOD_BUTTON);
-		{
-			ItemMeta im = minus.getItemMeta();
-			im.setDisplayName(ChatColor.GRAY + "Coming Soon...");
-			minus.setItemMeta(im);
-		}
 		
 		contents[KIT1_POS+9] = activate;
 		contents[KIT2_POS+9] = activate;
 		contents[KIT3_POS+9] = activate;
-		contents[CAT_POS] = cat;
-		contents[CAT_PLUS_POS] = plus;
-		contents[CAT_MINUS_POS] = minus;
 		contents[BACK_POS] = back;
 		
 		inventory.setContents(contents);

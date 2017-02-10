@@ -2,20 +2,13 @@ package at.kingcraft.OnevsOne_arena.Commands;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
 import MySQL.MySQL;
 import at.kingcraft.OnevsOne_arena.MainClass;
 import at.kingcraft.OnevsOne_arena.Duels.Duel;
 import at.kingcraft.OnevsOne_arena.Kits.Kit;
-import at.kingcraft.OnevsOne_arena.Messaging.Messages;
-import at.kingcraft.OnevsOne_arena.Messaging.Messenger;
 import at.kingcraft.OnevsOne_arena.Tournaments.Tournament;
 import at.kingcraft.OnevsOne_arena.Tournaments.TournamentManager;
-import at.kingcraft.OnevsOne_setup.Maps.MapManager;
 
 public class CreateNewTournRun implements Runnable
 {
@@ -26,7 +19,7 @@ public class CreateNewTournRun implements Runnable
 	private String homeServer;
 	private Kit kit;
 	private Duel d;
-	private int sendBackID;
+	//private int sendBackID;
 
 	public CreateNewTournRun(MainClass plugin,Tournament tourn,int roundLevel,int tourID,Kit kit,String homeServer,Duel d)
 	{
@@ -40,7 +33,7 @@ public class CreateNewTournRun implements Runnable
 		
 	}
 	
-	private String getHomeServer(Duel d,Player p)
+	/*private String getHomeServer(Duel d,Player p)
 	{
 		ArrayList<Player> chers = d.getChallenge().getChallengers();
 		ArrayList<Player> ched = d.getChallenge().getChallenged();
@@ -65,16 +58,16 @@ public class CreateNewTournRun implements Runnable
 		
 		return "";
 		
-	}
+	}*/
 	
-	private void teleportPlayerBack(Player p,String server)
+	/*private void teleportPlayerBack(Player p,String server)
 	{
 		String[] args = new String[1];
 		args[0] = server;
 		
 		
 		Messenger.sendMessage(p, "BungeeCord", "Connect",args);
-	}
+	}*/
 	
 	public void sendBackToFreeServers(String server)
 	{
@@ -124,7 +117,8 @@ public class CreateNewTournRun implements Runnable
 	
 	private void handleWinners(Duel d)
 	{
-		ArrayList<Player> winner = d.getWinner();
+		GiveUpCommand.handleWinners(d);
+		/*ArrayList<Player> winner = d.getWinner();
 		
 		for(int i = 0;i<winner.size();i++)
 		{
@@ -166,7 +160,7 @@ public class CreateNewTournRun implements Runnable
 		}, 0, 20).getTaskId();
 		
 		TournamentManager.deleteTournament(tourn, false);
-		tournamentID = -1;
+		tournamentID = -1;*/
 	}
 	
 	@Override

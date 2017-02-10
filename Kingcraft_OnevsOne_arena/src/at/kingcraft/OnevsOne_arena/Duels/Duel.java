@@ -91,7 +91,6 @@ public class Duel {
 	private Kit kit = null;
 	private ArrayList<UUID> leftPlayers;
 	
-	
 	public Duel(Challenge c,JavaPlugin plugin,int mode)
 	{
 		p1 = new ArrayList<Player>();
@@ -352,6 +351,7 @@ public class Duel {
 		});
 		
 		
+		
 		waitCD = Bukkit.getScheduler().runTaskTimer(plugin, new Runnable() {
 			
 			@Override
@@ -361,7 +361,7 @@ public class Duel {
 				{
 					waitTime = -1;
 				}
-				
+
 				if(p1.size() == maxP1Size && P1isOnline() && p2.size() == maxP2Size && P2isOnline() && allAlive())
 				{
 					if(map == null)
@@ -451,20 +451,33 @@ public class Duel {
 					
 					Bukkit.getScheduler().cancelTask(waitCD.getTaskId());
 					
-					if(!allOnline())
-					{
-						endDuel(null,false);
-						stopCountdown();
-						Challenge c = getChallenge();
-						ChallangeManager.deleteChallenge(c.ID);
-						GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
-					}
-					else
-					{
-						Player p = getRandomPlayer();
-						GiveUpCommand.giveUp(p,null);
-					}
-					
+						if(!allOnline())
+						{
+							endDuel(null,false);
+							stopCountdown();
+							Challenge c = getChallenge();
+							ChallangeManager.deleteChallenge(c.ID);
+							GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
+						}
+						else
+						{
+							if(isTournament())
+							{
+								if(P1isOnline() || P2isOnline())
+								{
+									endDuel(null,true);
+									stopCountdown();
+									Challenge c = getChallenge();
+									ChallangeManager.deleteChallenge(c.ID);
+									GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
+								}
+							}
+							else
+							{
+								Player p = getRandomPlayer();
+								GiveUpCommand.giveUp(p,null);
+							}
+						}
 				}
 				
 			}
@@ -1969,6 +1982,9 @@ public class Duel {
 	
 	public String getHomeServer(Player p1)
 	{
+		if(p1 == null)
+			return "pvp-1";
+		
 		String hs = "";
 		Challenge c = getChallenge();
 		

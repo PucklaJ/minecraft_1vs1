@@ -3,16 +3,25 @@ package at.Kingcraft.OnevsOne_lobby.Lobby;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.FireworkEffect.Type;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftZombie;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -38,6 +47,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.google.common.io.ByteArrayDataOutput;
@@ -63,6 +73,8 @@ import at.Kingcraft.OnevsOne_lobby.Stats.StatisticsManager;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.Tournament;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
 import at.Kingcraft.OnevsOne_lobby.WaitingSnake.Settings;
+import de.xAdler.Title;
+import de.xAdler.TitleAPI.Colors;
 import net.md_5.bungee.api.ChatColor;
 
 @SuppressWarnings("deprecation")
@@ -281,6 +293,39 @@ public class LobbyListener implements Listener {
 		
 	}
  	
+ 	private boolean isTournamentWinner(Player p)
+ 	{
+ 		try
+ 		{
+ 			boolean rv;
+ 			
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT * FROM Duel_TournamentWinner WHERE UUID = ?");
+			ps.setString(1, p.getUniqueId().toString());
+			ResultSet rs = ps.executeQuery();
+			
+			if(rs.first())
+			{
+				rv = true;
+			}
+			else
+			{
+				rv = false;
+			}
+			
+			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("DELETE FROM Duel_TournamentWinner WHERE UUID = ?");
+			ps.setString(1, p.getUniqueId().toString());
+			ps.executeUpdate();
+			
+			return rv;
+		}
+ 		catch (SQLException e) 
+ 		{
+			e.printStackTrace();
+		}
+ 		
+ 		return false;
+ 	}
+ 	
 	@EventHandler
 	public void onJoin(PlayerJoinEvent e)
 	{
@@ -369,6 +414,124 @@ public class LobbyListener implements Listener {
 		{
 			leftByTour.remove(p.getUniqueId());
 		}
+		
+		if(isTournamentWinner(p))
+		{
+			Title title = new Title();
+			title.addText("Gratulation",Colors.GOLD);
+			title.setTiming(10, 80, 30);
+			
+			Title subTitle = new Title();
+			subTitle.addText("Du hast das Turnier gewonnen",Colors.YELLOW);
+			
+			title.setSubTitle(subTitle);
+			
+			title.send(p);
+			//p.playSound(p.getLocation(), Sounds.tournamentWin, Sounds.tournamentWinVolume, Sounds.DEFAULT_PITCH);
+			
+				
+					for(int i = 0;i<20;i++)
+					{
+						Bukkit.getScheduler().runTaskLater(MainClass.getInstance(), new Runnable() {
+							
+							@Override
+							public void run() {
+								Location loc = p.getLocation().clone();
+								spawnFireWork(loc.add(loc.getDirection().multiply(3.0)));
+							}
+						}, 10*(i+1));
+						
+					}
+			
+           
+		}
+	}
+	
+	public static void spawnFireWork(Location loc)
+	{
+		Random rand = new Random();
+		Firework fw = (Firework) loc.getWorld().spawn(loc.add(rand.nextDouble() * 3.0 - 1.5, rand.nextDouble() * 3.0 - 1.5, rand.nextDouble() * 3.0 - 1.5), Firework.class);
+        FireworkMeta fwm = fw.getFireworkMeta();
+       
+        //Our random generator
+        Random r = new Random();   
+
+        //Get the type
+        int rt = r.nextInt(5) + 1;
+        Type type = Type.BALL;       
+        if (rt == 1) type = Type.BALL;
+        if (rt == 2) type = Type.BALL_LARGE;
+        if (rt == 3) type = Type.BURST;
+        if (rt == 4) type = Type.CREEPER;
+        if (rt == 5) type = Type.STAR;
+       
+        //Get our random colours   
+        int rc1 = r.nextInt(256);
+        int gc1 = r.nextInt(256);
+        int bc1 = r.nextInt(256);
+        int rc2 = r.nextInt(256);
+        int gc2 = r.nextInt(256);
+        int bc2 = r.nextInt(256);
+        Color c1 = Color.fromRGB(rc1,gc1,bc1);
+        Color c2 = Color.fromRGB(rc2,gc2,bc2);
+       
+        //Create our effect with this
+        FireworkEffect effect = FireworkEffect.builder().flicker(false).withColor(c1).withFade(c2).with(type).trail(true).build();
+        
+        fwm.clearEffects();
+       
+        //Then apply the effect to the meta
+        fwm.addEffect(effect);
+       
+        //Generate some random power and set it
+        int rp = r.nextInt(3) + 1;
+        rp = 0;
+        
+        try {
+			Field f = fwm.getClass().getDeclaredField("power");
+			f.setAccessible(true);
+			try {
+				f.set(fwm,rp);
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		}
+       
+        //Then apply this to our rocket
+        fw.setFireworkMeta(fwm);
+		
+		/*Firework fw = (Firework) loc.getWorld().spawn(loc, Firework.class);
+        FireworkEffect effect = FireworkEffect.builder().trail(true).flicker(false).withColor(Color.BLUE).with(Type.CREEPER).build();
+        FireworkMeta fwm = fw.getFireworkMeta();
+        fwm.clearEffects();
+        fwm.addEffect(effect);
+        Field f;
+        try {
+                f = fwm.getClass().getDeclaredField("power");
+                f.setAccessible(true);
+                f.set(fwm, -2);
+        } catch (NoSuchFieldException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        } catch (SecurityException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        } catch (IllegalAccessException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+        }
+       
+       
+        fw.setFireworkMeta(fwm);*/
 	}
 	
 	@EventHandler
