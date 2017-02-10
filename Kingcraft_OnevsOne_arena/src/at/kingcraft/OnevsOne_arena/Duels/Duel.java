@@ -2079,7 +2079,7 @@ public class Duel {
 							continue;
 						
 						name += Messages.playerInHasLifeLeft(alive1.get(i).getDisplayName()) + (i+1==alive1.size() ? "" : Messages.seperatorInHasLifeLfeft);
-						health += alive1.get(i).getHealth();
+						health += alive1.get(i).getHealth()/2.0;
 						
 						if(isSoup)
 						{
@@ -2096,7 +2096,7 @@ public class Duel {
 							continue;
 						
 						name = alive1.get(i).getDisplayName();
-						health = alive1.get(i).getHealth();
+						health = alive1.get(i).getHealth()/2.0;
 						if(isSoup)
 						{
 							soups += getAmountInInventory(alive1.get(i), Material.MUSHROOM_SOUP);
@@ -2119,7 +2119,7 @@ public class Duel {
 						for(int i = 0;i<alive2.size();i++)
 						{
 							name += Messages.playerInHasLifeLeft(alive2.get(i).getDisplayName()) + (i+1==alive2.size() ? "" : Messages.seperatorInHasLifeLfeft);
-							health += alive2.get(i).getHealth();
+							health += alive2.get(i).getHealth()/2.0;
 							if(isSoup)
 							{
 								soups += getAmountInInventory(alive2.get(i), Material.MUSHROOM_SOUP);
@@ -2130,7 +2130,7 @@ public class Duel {
 					else
 					{
 						name = alive2.get(0).getDisplayName();
-						health = alive2.get(0).getHealth();
+						health = alive2.get(0).getHealth()/2.0;
 						if(isSoup)
 						{
 							soups += getAmountInInventory(alive2.get(0), Material.MUSHROOM_SOUP);
@@ -2158,7 +2158,7 @@ public class Duel {
 					else
 					{
 						name = alive1.get(0).getDisplayName();
-						health = alive1.get(0).getHealth();
+						health = alive1.get(0).getHealth()/2.0;
 						if(isSoup)
 						{
 							soups += getAmountInInventory(alive1.get(0), Material.MUSHROOM_SOUP);
