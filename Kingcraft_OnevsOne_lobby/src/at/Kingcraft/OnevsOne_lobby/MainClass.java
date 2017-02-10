@@ -79,7 +79,12 @@ public class MainClass extends JavaPlugin {
 		getCommand("setminnormal").setExecutor(new KitPlaceCommand(this));
 		getCommand("setmaxnormal").setExecutor(new KitPlaceCommand(this));
 		getCommand("warteschlange").setExecutor(new WaitingSnakeCommand(ws));
-		getCommand("turnier").setExecutor(new TournamentCommand());
+		TournamentCommand tcmd = new TournamentCommand();
+		getCommand("turnier").setExecutor(tcmd);
+		getCommand("join").setExecutor(tcmd);
+		getCommand("create").setExecutor(tcmd);
+		getCommand("cancel").setExecutor(tcmd);
+		getCommand("start").setExecutor(tcmd);
 		getCommand("setdifkit").setExecutor(new SetDifKitCommand());
 		getCommand("setprekit").setExecutor(new SetPreKitCommand());
 		getCommand("ffa").setExecutor(new FFACommand());

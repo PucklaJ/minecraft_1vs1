@@ -42,9 +42,23 @@ commands:
     aliases: [ws,queue,q]
     permission: command.warteschlange
   turnier:
-    usage: /<command> <create|start|join [player]|spectate <id>>
-    description: Turniercommand
+    usage: /<command> [leave]
+    description: Zeigt Tunrierinformationen
     aliases: t
+  create:
+    usage: /<command>
+    description: Erstellt ein Turnier
+    permission: command.turnier.create
+  join:
+    usage: /<command> <player>
+    description: Tritt einem Turnier bei
+    permission: command.turnier.join
+  cancel:
+    usage: /<command>
+    description: Bricht den Countdown eines Turniers ab
+  start:
+    usage: /<command> [seconds]
+    description: Startet Turniercountdown
   setdifkit:
     usage: /<command> <1|2|3> [set] 
     description: Laesst jeweiliges Verschiedenes Kit einstellen
