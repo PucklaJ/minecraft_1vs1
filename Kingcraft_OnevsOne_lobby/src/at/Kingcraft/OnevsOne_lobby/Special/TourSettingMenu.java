@@ -106,7 +106,7 @@ public class TourSettingMenu extends Menu
 	private void setKit(int mode)
 	{
 		kit = mode;
-		ItemStack is = new ItemStack(Material.PUMPKIN);
+		ItemStack is = new ItemStack(mode == OWN_KITS ? Material.PUMPKIN : Material.JACK_O_LANTERN);
 		ItemMeta im = is.getItemMeta();
 		im.setDisplayName(kit == OWN_KITS ? (ChatColor.YELLOW + "Eigenes Kit") : (ChatColor.YELLOW + "Kit der Gegner"));
 		is.setItemMeta(im);
