@@ -1061,10 +1061,26 @@ public class KitManager {
 	
 	public static void viewKit(Player p, Kit kit)
 	{
-		LobbyListener.kitViewer.add(p.getUniqueId());
-		
-		kit.kitItemsToInventory(p);
-		p.sendMessage(Messages.yourKit(kit.getName(true,!(kit.getOwnerName().equals("Server") || kit.getOwnerName().equals("Verschieden")),false), kit.getKitSettings()));
+		if(KitManager.isKitPlayer(p))
+		{
+			kit.kitItemsToInventory(p);
+			Kit ck = KitManager.getChoosenKitKit(p);
+			if(ck.isDif() || ck.getOwnerName().equals("Server"))
+			{
+				ck = KitManager.getKits(p).get(0);
+			}
+			
+			ck.setSettings(kit.getSettingsAsInt());
+
+			p.sendMessage(Messages.kitCommandInKitPlace(kit.getName(true, !kit.getOwnerName().equals("Server"), false)));
+		}
+		else
+		{
+			LobbyListener.kitViewer.add(p.getUniqueId());
+			
+			kit.kitItemsToInventory(p);
+			p.sendMessage(Messages.yourKit(kit.getName(true,!(kit.getOwnerName().equals("Server") || kit.getOwnerName().equals("Verschieden")),false), kit.getKitSettings()));
+		}
 	}
 	
 	public static ArrayList<Kit> getAllKits(Player p)

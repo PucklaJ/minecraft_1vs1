@@ -35,6 +35,7 @@ public class Kit
 	private boolean dif;
 	private int id;
 	private String ownerName = "Server";
+	private int settingsAsInt = 0;
 	
 	public Kit(Player owner,int number,boolean dif)
 	{
@@ -128,7 +129,18 @@ public class Kit
 			{
 				settings.add(ks);
 			}
+			else
+			{
+				settings.remove(ks);
+			}
 		}
+		
+		settingsAsInt = i;
+	}
+	
+	public int getSettingsAsInt()
+	{
+		return settingsAsInt;
 	}
 	
 	public void toggleSetting(KitSettings ks)

@@ -128,6 +128,7 @@ public class Messages
 	public static String noPermissionStatsResetOther;
 	public static String addToRankedQueue;
 	public static String removeFromRankedQueue;
+	private static String kitCommandInKitPlace;
 	
 	private static void addDefaults()
 	{
@@ -244,6 +245,7 @@ public class Messages
 		noPermissionStatsResetOther = ChatColor.RED + "Du hast keine Rechte die Statistiken von jemand anderem zurückzusetzen";
 		addToRankedQueue = ChatColor.YELLOW + "Du wurdest zur Ranked Warteschlange hinzugefügt";
 		removeFromRankedQueue = ChatColor.YELLOW + "Du wurdest von der Ranked Warteschlange entfernt";
+		kitCommandInKitPlace = ChatColor.YELLOW + "Das Kit " + ChatColor.BLUE + "%kit% " + ChatColor.YELLOW + "wird als Vorlage verwendet";
 		
 		config.addDefault("min-kit-set", minKitSet);
 		config.addDefault("max-kit-set", maxKitSet);
@@ -358,6 +360,7 @@ public class Messages
 		config.addDefault("no-permission-stats-reset-other", noPermissionStatsResetOther);
 		config.addDefault("add-to-ranked-queue", addToRankedQueue);
 		config.addDefault("remove-from-ranked-queue", removeFromRankedQueue);
+		config.addDefault("kit-command-in-kit-place", kitCommandInKitPlace);
 		
 		config.options().copyDefaults(true);
 		
@@ -613,6 +616,10 @@ public class Messages
 	{
 		return statsNotResetOther.replaceAll("%player%",player);
 	}
+	public static String kitCommandInKitPlace(String kit)
+	{
+		return kitCommandInKitPlace.replaceAll("%kit%", kit);
+	}
 	
 	private static void setValues()
 	{
@@ -729,6 +736,7 @@ public class Messages
 		addToRankedQueue = config.getString("add-to-ranked-queue");
 		removeFromRankedQueue = config.getString("remove-from-ranked-queue");
 		stats = config.getString("stats");
+		kitCommandInKitPlace = config.getString("kit-command-in-kit-place");
 	}
 	
 	public static void setup()

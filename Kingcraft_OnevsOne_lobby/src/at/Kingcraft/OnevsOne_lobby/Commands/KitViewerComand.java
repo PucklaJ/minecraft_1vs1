@@ -31,11 +31,6 @@ public class KitViewerComand implements CommandExecutor {
 		
 		Player p = (Player) sender;
 		
-		if(KitManager.isKitPlayer(p))
-		{
-			p.sendMessage(Messages.noKitCommandInKitPlace);
-			return true;
-		}
 		
 		if(args.length == 0)
 		{
@@ -131,32 +126,34 @@ public class KitViewerComand implements CommandExecutor {
 					KitManager.viewKit(p, kit);
 					
 					// Choose Kit
-					if(!kit.isDif())
+					if(!KitManager.isKitPlayer(p))
 					{
-						int choosenKit = 0;
-						
-						if(KitManager.isPreKit(kit))
+						if(!kit.isDif())
 						{
-							choosenKit = -kit.getNumber();
+							int choosenKit = 0;
+							
+							if(KitManager.isPreKit(kit))
+							{
+								choosenKit = -kit.getNumber();
+							}
+							else
+							{
+								choosenKit = kit.getNumber()-1;
+							}
+							
+							KitManager.setDif(p, false);
+							KitManager.setChoosenKit(p,null,choosenKit,Integer.MAX_VALUE);
 						}
 						else
 						{
-							choosenKit = kit.getNumber()-1;
+							KitManager.setDif(p, true);
+							KitManager.setChoosenDifKit(p, kit.getNumber());
 						}
 						
-						KitManager.setDif(p, false);
-						KitManager.setChoosenKit(p,null,choosenKit,Integer.MAX_VALUE);
+						MenuManager.getSettingMenu(p).getKitMainMenu().getKitPreMenu().update();
+						MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().update();
+						MenuManager.getSettingMenu(p).getKitMainMenu().getKitDifMenu().update();
 					}
-					else
-					{
-						KitManager.setDif(p, true);
-						KitManager.setChoosenDifKit(p, kit.getNumber());
-					}
-					
-					MenuManager.getSettingMenu(p).getKitMainMenu().getKitPreMenu().update();
-					MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().update();
-					//MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().update();
-					MenuManager.getSettingMenu(p).getKitMainMenu().getKitDifMenu().update();
 					
 					return true;
 				}
@@ -231,9 +228,13 @@ public class KitViewerComand implements CommandExecutor {
 						{
 							if(KitManager.getPreKits().get(i).getName(false,false,false).equalsIgnoreCase(complete[1]))
 							{
-								p.sendMessage(Messages.kitOfPlayer(KitManager.getPreKits().get(i).getOwnerName()));
+								if(!KitManager.isKitPlayer(p))
+								{
+									p.sendMessage(Messages.kitOfPlayer(KitManager.getPreKits().get(i).getOwnerName()));
+									KitManager.setChoosenKit(p, player, KitManager.getChoosenKit(p).myNumber, -KitManager.getPreKits().get(i).getNumber());
+								}
 								KitManager.viewKit(p, KitManager.getPreKits().get(i));
-								KitManager.setChoosenKit(p, player, KitManager.getChoosenKit(p).myNumber, -KitManager.getPreKits().get(i).getNumber());
+								
 								return true;
 							}
 						}
@@ -244,10 +245,14 @@ public class KitViewerComand implements CommandExecutor {
 						{
 							if(KitManager.getDifKits().get(i).getName(false, false,false).equalsIgnoreCase(complete[1]))
 							{
-								p.sendMessage(Messages.kitOfPlayer(KitManager.getDifKits().get(i).getOwnerName()));
+								if(!KitManager.isKitPlayer(p))
+								{
+									p.sendMessage(Messages.kitOfPlayer(KitManager.getDifKits().get(i).getOwnerName()));
+									KitManager.setChoosenDifKit(p, i+1);
+									KitManager.setDif(p, true);
+								}
 								KitManager.viewKit(p, KitManager.getDifKits().get(i));
-								KitManager.setChoosenDifKit(p, i+1);
-								KitManager.setDif(p, true);
+								
 								return true;
 							}
 						}
@@ -296,9 +301,13 @@ public class KitViewerComand implements CommandExecutor {
 					{
 						if(pKits.get(i).getName(false,false,false).equalsIgnoreCase(complete[1]))
 						{
-							p.sendMessage(Messages.kitOfPlayer(pKits.get(i).getOwnerName()));
+							if(!KitManager.isKitPlayer(p))
+							{
+								p.sendMessage(Messages.kitOfPlayer(pKits.get(i).getOwnerName()));
+								KitManager.setChoosenKit(p, player, KitManager.getChoosenKit(p).myNumber, pKits.get(i).getNumber()-1);
+							}
 							KitManager.viewKit(p, pKits.get(i));
-							KitManager.setChoosenKit(p, player, KitManager.getChoosenKit(p).myNumber, pKits.get(i).getNumber()-1);
+							
 							return true;
 						}
 					}
@@ -352,9 +361,13 @@ public class KitViewerComand implements CommandExecutor {
 				{
 					if(kits.get(i).getName(false,false,false).equalsIgnoreCase(complete[1]))
 					{
-						p.sendMessage(Messages.kitOfPlayer(kits.get(i).getOwnerName()));
+						if(!KitManager.isKitPlayer(p))
+						{
+							p.sendMessage(Messages.kitOfPlayer(kits.get(i).getOwnerName()));
+							KitManager.setChoosenKit(p,op,KitManager.getChoosenKit(p).myNumber, kits.get(i).getNumber()-1);
+						}
 						KitManager.viewKit(p, kits.get(i));
-						KitManager.setChoosenKit(p,op,KitManager.getChoosenKit(p).myNumber, kits.get(i).getNumber()-1);
+						
 						return true;
 					}
 				}
