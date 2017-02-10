@@ -43,6 +43,8 @@ import at.kingcraft.OnevsOne_arena.Tournaments.TournamentManager;
 import at.kingcraft.OnevsOne_arena.Waiting.WaitingHouse;
 import at.kingcraft.OnevsOne_setup.Maps.Map;
 import at.kingcraft.OnevsOne_setup.Maps.MapManager;
+import de.xAdler.Title;
+import de.xAdler.TitleAPI.Colors;
 import net.md_5.bungee.api.ChatColor;
 
 public class Duel {
@@ -1745,16 +1747,35 @@ public class Duel {
 				
 				int difElo = calculateELO(elo1, elo2);
 				
+				Title mainWin=new Title(),mainLose=new Title();
+				
+				mainWin.addText("+",Colors.GOLD);
+				mainLose.addText("-",Colors.GRAY);
+				
+				Title winTitle = new Title();
+				winTitle.addText(difElo+"",Colors.BLUE).addText(" ELO",Colors.YELLOW);
+				
+				Title loseTitle = new Title();
+				loseTitle.addText(difElo+"",Colors.BLUE).addText(" ELO",Colors.YELLOW);
+				
+				mainWin.setTiming(20, 40, 20);
+				mainLose.setTiming(20, 40, 20);
+				
+				mainWin.setSubTitle(winTitle);
+				mainLose.setSubTitle(loseTitle);
+				
 				for(int i = 0;i<getWinner().size();i++)
 				{
 					addELO(getWinner().get(i), difElo);
 					getWinner().get(i).sendMessage(Messages.gotELO(difElo));
+					mainWin.send(getWinner().get(i));
 				}
 				
 				for(int i = 0;i<getLoser().size();i++)
 				{
 					addELO(getLoser().get(i),-difElo);
 					getLoser().get(i).sendMessage(Messages.lostELO(difElo));
+					mainLose.send(getLoser().get(i));
 				}
 			}
 			

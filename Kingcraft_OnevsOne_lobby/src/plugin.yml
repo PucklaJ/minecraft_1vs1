@@ -3,6 +3,9 @@ version: 1.0.0
 main: at.Kingcraft.OnevsOne_lobby.MainClass
 description: Plugin for One vs One Fights
 author: PucklaMUGLA03
+
+depend: [TitleAPI]
+
 commands:
   test:
     usage: /<command>

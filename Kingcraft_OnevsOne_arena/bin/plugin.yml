@@ -3,6 +3,8 @@ version: 0.0.1
 main: at.kingcraft.OnevsOne_arena.MainClass
 author: PucklaMUGLA03
 
+depend: [TitleAPI]
+
 commands:
   giveup:
     usage: /<command>

@@ -36,8 +36,6 @@ public class TestCommand implements CommandExecutor {
 		
 		sender.sendMessage(ChatColor.YELLOW + "Plugin " + ChatColor.GREEN + "[" + ChatColor.GREEN + plugin.getName() + ChatColor.GREEN + "]" + ChatColor.YELLOW + " erfolgreich installiert");
 		
-		
-		
 		return true;
 	}
 
