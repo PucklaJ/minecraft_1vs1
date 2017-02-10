@@ -1032,6 +1032,15 @@ public class Duel {
 			}
 		}
 		
+		for(int i = 0;i<p1.size();i++)
+		{
+			DuelListener.specOnRespawn.remove(p1.get(i).getUniqueId());
+		}
+		for(int i = 0;i<p2.size();i++)
+		{
+			DuelListener.specOnRespawn.remove(p2.get(i).getUniqueId());
+		}
+		
 		
 		countdown = 2;
 		startCD = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin,new Runnable() {
