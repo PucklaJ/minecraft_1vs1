@@ -28,6 +28,7 @@ import at.Kingcraft.OnevsOne_lobby.Scoreboard.MyScoreboardManager;
 import at.Kingcraft.OnevsOne_lobby.Special.KitSettingMenu;
 import at.Kingcraft.OnevsOne_lobby.Special.MenuManager;
 import at.Kingcraft.OnevsOne_lobby.Special.SettingMenu;
+import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
 import at.Kingcraft.OnevsOne_lobby.WaitingSnake.Settings;
 import net.md_5.bungee.api.ChatColor;
 
@@ -983,7 +984,7 @@ public class KitManager {
 		
 		
 		normalPlayers.add(p);
-		LobbyListener.setupSpawnItems(p, false);
+		LobbyListener.setupSpawnItems(p, false, TournamentManager.getTournament(p) != null);
 		p.sendMessage(Messages.kitPlaceLeave);
 		p.playSound(p.getLocation(), Sounds.kitPlaceLeave, Sounds.kitPlaceLeaveVolume, Sounds.DEFAULT_PITCH);
 		if(kitPlayers.contains(p))

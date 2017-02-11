@@ -206,33 +206,133 @@ public class LobbyListener implements Listener {
 							       Math.max(z1, z2));
 	}
 	
- 	public static void setupSpawnItems(Player p,boolean first)
+ 	public static void setupSpawnItems(Player p,boolean first,boolean tournament)
 	{
 		
  		p.setGameMode(GameMode.ADVENTURE);
  		
 		p.getInventory().clear();
 		
-		// Sword
-		// For challenging other players 
-		Material challengeItem = Material.getMaterial(Items.challengeItemMaterial);
-		
-		if(challengeItem == null)
+		if(!tournament)
 		{
-			System.out.println("[" + plugin.getName() + "] Fehler bei ChallengeItem! (Vielleicht falsches Material!)" );
-			challengeItem = Material.DIAMOND_SWORD;
-			return;
+			// Sword
+			// For challenging other players 
+			Material challengeItem = Material.getMaterial(Items.challengeItemMaterial);
+			
+			if(challengeItem == null)
+			{
+				System.out.println("[" + plugin.getName() + "] Fehler bei ChallengeItem! (Vielleicht falsches Material!)" );
+				challengeItem = Material.DIAMOND_SWORD;
+				return;
+			}
+			
+			ItemStack item = new ItemStack(challengeItem);
+			ItemMeta meta = item.getItemMeta();
+			
+			meta.setDisplayName(Items.challengeItemName);
+			
+			meta.setLore(Items.challengeItemLore);
+			item.setItemMeta(meta);
+			
+			p.getInventory().setItem(0, item);
+			
+			//Head
+			// For showing challenges
+			ChallangeManager.setupSkull(p, p,first);
+			
+			//FFA-Apple
+			Team t = TeamManager.getTeam(p);
+			if(t != null && t.getLeader().getUniqueId().equals(p.getUniqueId()))
+			{
+				Material mat = Material.getMaterial(Items.ffaItemMaterial);
+				if(mat == null)
+				{
+					mat = Material.APPLE;
+				}
+				ItemStack ffaapple = new ItemStack(mat);
+				ItemMeta im = ffaapple.getItemMeta();
+				im.setDisplayName(Items.ffaItemName);
+				im.setLore(Items.ffaItemLore);
+				ffaapple.setItemMeta(im);
+				
+				p.getInventory().setItem(4, ffaapple);
+			}
+			else
+			{
+				ItemStack apple = new ItemStack(Material.GOLDEN_APPLE);
+				ItemMeta im = apple.getItemMeta();
+				im.setDisplayName(ChatColor.GOLD + "Ranked");
+				ArrayList<String> lore = new ArrayList<>();
+				lore.add(ChatColor.GRAY + "" + ChatColor.ITALIC + "Comming Soon..");
+				im.setLore(lore);
+				apple.setItemMeta(im);
+				
+				p.getInventory().setItem(4, apple);
+			}
+			
+			// Kompass für Spectaten
+			{
+				ItemStack is = new ItemStack(Material.getMaterial(Items.spectateMaterial),1,Items.spectateDurability);
+				ItemMeta im = is.getItemMeta();
+				im.setDisplayName(Items.spectateName);
+				im.setLore(Items.spectateLore);
+				is.setItemMeta(im);
+				
+				p.getInventory().setItem(MainClass.getInstance().getConfig().getInt("Items.Spectate.HotbarPosition"), is);
+			}
+		}
+		else
+		{
+			// Ghast Tear
+			{
+				ItemStack is = new ItemStack(Material.GHAST_TEAR);
+				ItemMeta im = is.getItemMeta();
+				im.setDisplayName(ChatColor.YELLOW + "Turnier-Informationen");
+				ArrayList<String> lore = new ArrayList<>();
+				lore.add(ChatColor.YELLOW + "RECHTS" + ChatColor.WHITE + "-Klick für Turnierinformationen");
+				im.setLore(lore);
+				is.setItemMeta(im);
+				p.getInventory().setItem(MainClass.getInstance().getConfig().getInt("Items.Spectate.HotbarPosition"), is);
+			}
+			
+			// Leave Item
+			{
+				ItemStack is = new ItemStack(Material.INK_SACK,1,(short)1);
+				ItemMeta im = is.getItemMeta();
+				im.setDisplayName(ChatColor.RED + "Turnier verlassen");
+				ArrayList<String> lore = new ArrayList<>();
+				lore.add(ChatColor.YELLOW + "RECHTS" + ChatColor.WHITE + "-Klick um das Turnier zu verlassen");
+				im.setLore(lore);
+				is.setItemMeta(im);
+				p.getInventory().setItem(1, is);
+			}
+			
+			// Start Item
+			{
+				Bukkit.getScheduler().runTaskLater(MainClass.getInstance(), new Runnable() {
+					
+					@Override
+					public void run()
+					{
+						Tournament t = TournamentManager.getTournament(p);
+						
+						if(t != null && t.getLeader().getUniqueId().equals(p.getUniqueId()))
+						{
+							ItemStack is = new ItemStack(Material.INK_SACK,1,(short)10);
+							ItemMeta im = is.getItemMeta();
+							im.setDisplayName(ChatColor.GREEN + "Turnier starten");
+							ArrayList<String> lore = new ArrayList<>();
+							lore.add(ChatColor.YELLOW + "RECHTS" + ChatColor.WHITE + "-Klick um das Turnier zu starten");
+							im.setLore(lore);
+							is.setItemMeta(im);
+							p.getInventory().setItem(0, is);
+						}
+						
+					}
+				}, 1);
+			}
 		}
 		
-		ItemStack item = new ItemStack(challengeItem);
-		ItemMeta meta = item.getItemMeta();
-		
-		meta.setDisplayName(Items.challengeItemName);
-		
-		meta.setLore(Items.challengeItemLore);
-		item.setItemMeta(meta);
-		
-		p.getInventory().setItem(0, item);
 		
 		//Equipment
 		p.getEquipment().setHelmet(new ItemStack(Material.AIR));
@@ -240,55 +340,11 @@ public class LobbyListener implements Listener {
 		p.getEquipment().setLeggings(new ItemStack(Material.AIR));
 		p.getEquipment().setBoots(new ItemStack(Material.AIR));
 		
-		//Head
-		// For showing challenges
-		ChallangeManager.setupSkull(p, p,first);
-		
 		
 		//SettingItem
 		MenuManager.giveSettingItem(p);
 		MenuManager.addSettingMenu(p);
 		
-		//FFA-Apple
-		Team t = TeamManager.getTeam(p);
-		if(t != null && t.getLeader().getUniqueId().equals(p.getUniqueId()))
-		{
-			Material mat = Material.getMaterial(Items.ffaItemMaterial);
-			if(mat == null)
-			{
-				mat = Material.APPLE;
-			}
-			ItemStack ffaapple = new ItemStack(mat);
-			ItemMeta im = ffaapple.getItemMeta();
-			im.setDisplayName(Items.ffaItemName);
-			im.setLore(Items.ffaItemLore);
-			ffaapple.setItemMeta(im);
-			
-			p.getInventory().setItem(4, ffaapple);
-		}
-		else
-		{
-			ItemStack apple = new ItemStack(Material.GOLDEN_APPLE);
-			ItemMeta im = apple.getItemMeta();
-			im.setDisplayName(ChatColor.GOLD + "Ranked");
-			ArrayList<String> lore = new ArrayList<>();
-			lore.add(ChatColor.GRAY + "" + ChatColor.ITALIC + "Comming Soon..");
-			im.setLore(lore);
-			apple.setItemMeta(im);
-			
-			p.getInventory().setItem(4, apple);
-		}
-		
-		// Kompass für Spectaten
-		{
-			ItemStack is = new ItemStack(Material.getMaterial(Items.spectateMaterial),1,Items.spectateDurability);
-			ItemMeta im = is.getItemMeta();
-			im.setDisplayName(Items.spectateName);
-			im.setLore(Items.spectateLore);
-			is.setItemMeta(im);
-			
-			p.getInventory().setItem(MainClass.getInstance().getConfig().getInt("Items.Spectate.HotbarPosition"), is);
-		}
 
 		MyScoreboardManager.updateScoreboard(p);
 		
@@ -375,7 +431,7 @@ public class LobbyListener implements Listener {
 		
 		e.setJoinMessage(ChatColor.GREEN + p.getDisplayName() + ChatColor.YELLOW + " joined the game");
 		
-		setupSpawnItems(p,true); // Adds Challenge Sword ++
+		setupSpawnItems(p,true,false); // Adds Challenge Sword ++
 				
 		// setup Position
 		p.teleport(spawn);
@@ -716,16 +772,7 @@ public class LobbyListener implements Listener {
 			
 			Player p = (Player)e.getWhoClicked();
 			
-			if(KitManager.isKitPlayer(p))
-			{
-				if(e.getCursor() != null && isBanedItem(e.getCursor()))
-				{
-					p.sendMessage(Messages.youCanNotUseThisItem);
-					e.setCancelled(true);
-				}
-				
-				return;
-			}
+			
 			
 			String settingText = Items.settingsItemName;
 			
@@ -765,16 +812,6 @@ public class LobbyListener implements Listener {
 			else if(inv.getName().equals("Kit1-Einstellungen"))
 			{
 				MenuManager.getSettingMenu(p).getKitMainMenu().getKitOwnMenu().getKitSettingMenu().onClick(e.getSlot(), e.getClick());
-				e.setCancelled(true);
-			}
-			else if(inv.getName().equals("Soup Kits"))
-			{
-				//MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().onClick(e.getSlot(), e.getClick());
-				e.setCancelled(true);
-			}
-			else if(inv.getName().equals("Soup-Einstellungen"))
-			{
-				//MenuManager.getSettingMenu(p).getKitMainMenu().getKitSoupMenu().getKitSettingMenu().onClick(e.getSlot(), e.getClick());
 				e.setCancelled(true);
 			}
 			else if(inv.getName().equals("Verschiedene Kits"))
@@ -830,9 +867,23 @@ public class LobbyListener implements Listener {
 					 e.getCurrentItem().getItemMeta().getDisplayName().equals(settingText) ||
 					 e.getCurrentItem().getItemMeta().getDisplayName().equals(Items.ffaItemName) ||
 					 e.getCurrentItem().getItemMeta().getDisplayName().equals(ChatColor.GOLD + "Ranked") ||
-					 e.getCurrentItem().getItemMeta().getDisplayName().equals(Items.spectateName)))
+					 e.getCurrentItem().getItemMeta().getDisplayName().equals(Items.spectateName) ||
+					 e.getCurrentItem().getItemMeta().getDisplayName().equals(ChatColor.YELLOW + "Turnier-Informationen") ||
+					 e.getCurrentItem().getItemMeta().getDisplayName().equals(ChatColor.RED + "Turnier verlassen") ||
+					 e.getCurrentItem().getItemMeta().getDisplayName().equals(ChatColor.GREEN + "Turnier starten")))
 			{
 				e.setCancelled(true);
+			}
+			
+			if(KitManager.isKitPlayer(p))
+			{
+				if(e.getCursor() != null && isBanedItem(e.getCursor()))
+				{
+					p.sendMessage(Messages.youCanNotUseThisItem);
+					e.setCancelled(true);
+				}
+				
+				return;
 			}
 			
 		}
@@ -934,6 +985,21 @@ public class LobbyListener implements Listener {
 				else if(item.getItemMeta().getDisplayName().equals(Items.spectateName))
 				{
 					e.getPlayer().performCommand("spectate");
+					e.setCancelled(true);
+				}
+				else if(item.getItemMeta().getDisplayName().equals(ChatColor.YELLOW + "Turnier-Informationen"))
+				{
+					e.getPlayer().performCommand("turnier");
+					e.setCancelled(true);
+				}
+				else if(item.getItemMeta().getDisplayName().equals(ChatColor.RED + "Turnier verlassen"))
+				{
+					e.getPlayer().performCommand("turnier leave");
+					e.setCancelled(true);
+				}
+				else if(item.getItemMeta().getDisplayName().equals(ChatColor.GREEN + "Turnier starten"))
+				{
+					e.getPlayer().performCommand("start 0");
 					e.setCancelled(true);
 				}
 				
@@ -1206,7 +1272,7 @@ public class LobbyListener implements Listener {
 		 if(xyzMove && kitViewer.contains(p.getUniqueId()))
 		 {
 			 kitViewer.remove(p.getUniqueId());
-			 setupSpawnItems(p, false);
+			 setupSpawnItems(p, false,TournamentManager.getTournament(p) != null);
 		 }
 		 
 	 }

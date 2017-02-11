@@ -87,6 +87,11 @@ public class Challenge {
 		return serverName[i];
 	}
 	
+	public int getPrevoisServerSize()
+	{
+		return serverName.length;
+	}
+	
 	public boolean isTournament()
 	{
 		return tournament > -1 ? true : false;

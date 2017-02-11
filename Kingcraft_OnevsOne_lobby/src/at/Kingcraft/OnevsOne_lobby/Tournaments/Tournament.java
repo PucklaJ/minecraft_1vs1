@@ -373,6 +373,9 @@ public class Tournament
 			stopCountdown();
 		}
 		
+		for(int i = 0;i<p.size();i++)
+			LobbyListener.setupSpawnItems(p.get(i), false, true);
+		
 		if(!updateMenus)
 		{
 			return;
@@ -535,6 +538,9 @@ public class Tournament
 			stopCountdown();
 		}
 		
+		for(int i = 0;i<p.size();i++)
+			LobbyListener.setupSpawnItems(p.get(i), false, false);
+		
 		if(!updateMenus)
 		{
 			return;
@@ -550,6 +556,9 @@ public class Tournament
 		
 		if(leader != null)
 		{
+			if(!contestants.isEmpty())
+			LobbyListener.setupSpawnItems(leader, false, true);
+			
 			ArrayList<TournamentViewMenu> menus = MenuManager.getTournamentViewMenus();
 			for(int i = 0;i<menus.size();i++)
 			{

@@ -850,9 +850,8 @@ public class DuelListener implements Listener {
 		}
 		else if(d == null)
 		{
-			
 			if(lastTournamentID != -1)
-			{
+			{	
 				Tournament t = TournamentManager.getTournamentFromMySQL(e.getPlayer(), lastTournamentID, "pvp-1", null, 3, 15);
 				if(t!=null)
 				{

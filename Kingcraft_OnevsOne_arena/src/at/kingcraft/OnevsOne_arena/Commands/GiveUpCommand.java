@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -75,7 +76,7 @@ public class GiveUpCommand implements CommandExecutor {
 		return true;
 	}
 	
-	public static void handleFinishedDuel(Duel d,Player p,Challenge c)
+	public static void handleFinishedDuel(Duel d,Player p,Challenge c,boolean bothLeave)
 	{
 		if(d == null)
 			return;
@@ -99,8 +100,7 @@ public class GiveUpCommand implements CommandExecutor {
 					handleWinners(d);
 				}
 				
-				if(p != null)
-					handleLosers(d,maxRoundLevel,tourn.getRound(p));
+				handleLosers(d,maxRoundLevel,tourn.getRound(p),bothLeave);
 				
 				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 					
@@ -191,62 +191,7 @@ public class GiveUpCommand implements CommandExecutor {
 			}
 			else
 			{
-				/*if(d.isTournament())
-				{
-					tourn = TournamentManager.getTournamentFromMySQL(p, d.getTournamentID(),homeServer,kit,d.getMode(),d.getMaxTime());
-					
-					if(tourn == null)
-					{
-						
-					}
-					else
-					{
-						roundLevel = tourn.getRoundLevel();
-						int maxRoundLevel = tourn.getMaxRoundLevel();
-						tournamentID = tourn.getID();
-						
-						if(roundLevel >= maxRoundLevel)
-						{
-							handleWinners(d);
-						}
-						
-						handleLosers(d,maxRoundLevel,tourn.getRound(p));
-						
-						Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-							
-							@Override
-							public void run()
-							{
-								map.reload(null);
-							}
-						}, 20*4);
-						
-						
-						Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-							
-							@Override
-							public void run()
-							{
-								DuelManager.deleteDuel(p);
-							}
-						}, 20*4);
-											
-						
-						if(roundLevel < maxRoundLevel)
-						{
-							handleNextRounds(d,p);
-						}
-						
-						TournamentManager.deleteTournamentArray(tourn);
-					}
-				
-				}
-				else
-				{
-					handleNormalDuel(c, p);
-				}*/
-				
-				handleFinishedDuel(d, p, c);
+				handleFinishedDuel(d, p, c,false);
 			}
 			
 			
@@ -333,7 +278,22 @@ public class GiveUpCommand implements CommandExecutor {
 		return tp;
 	}
 	
-	private static void handleLosers(Duel d,int maxRoundLevel,Round r)
+	private static ArrayList<TourPlayer> convert2(ArrayList<UUID> uuids)
+	{
+		ArrayList<TourPlayer> players = new ArrayList<>();
+		
+		for(int i = 0;i<uuids.size();i++)
+		{
+			OfflinePlayer op = Bukkit.getOfflinePlayer(uuids.get(i));
+			if(op == null)
+				continue;
+			players.add(new TourPlayer(op.getName(), op.getUniqueId()));
+		}
+		
+		return players;
+	}
+	
+	private static void handleLosers(Duel d,int maxRoundLevel,Round r,boolean both)
 	{
 		Tournament t = TournamentManager.getTournament(d.getTournamentID());
 		
@@ -341,6 +301,7 @@ public class GiveUpCommand implements CommandExecutor {
 		
 			ArrayList<Player> loser = d.getLoser();
 			ArrayList<TourPlayer> loser1 = convert1(loser);
+			ArrayList<TourPlayer> loser2 = convert2(d.getLoserUUID());
 			
 			Round round = r != null ? r : t.getAllRound(MainClass.getInstance().serverName);
 			
@@ -352,14 +313,27 @@ public class GiveUpCommand implements CommandExecutor {
 							loser.get(i).sendMessage(Messages.tournamentLose);
 					}
 					
-					tourn.setAllRoundLoser(r,loser1);
-					tourn.lose(loser1);
+					if(!loser1.isEmpty())
+					{
+						tourn.setAllRoundLoser(r,loser1);
+						tourn.lose(loser1);
+					}
+					else
+					{
+						tourn.setAllRoundLoser(r, loser2);
+						tourn.lose(loser2);
+					}
+					
 			}
-			else
+			else if(both)
 			{
 				round.setLoser("BOTH");
 				tourn.lose(loser1);
 				tourn.lose(convert1(d.getWinner()));
+			}
+			else if(round != null)
+			{
+				tourn.setAllRoundLoser(round, loser1);
 			}
 			
 				
@@ -379,8 +353,6 @@ public class GiveUpCommand implements CommandExecutor {
 							}
 							else
 							{
-								System.out.println("Loser Health: " + loser.get(i).getHealth());
-								
 								if(loser.get(i).getHealth() != 0.0)
 								{
 									TournamentManager.addSpectator(new Spectator(loser.get(i), tourn.getID(), getHomeServer(d,loser.get(i))),true,false);
@@ -417,8 +389,12 @@ public class GiveUpCommand implements CommandExecutor {
 	
 	private static void handleNextRounds(Duel d,Player p)
 	{
+		tourn = TournamentManager.getTournamentFromMySQL(null, tourn.getID(),d.getHomeServer(p), d.getKit(), d.getMaxRounds(), d.getMaxTime());
 		
-		tourn = TournamentManager.getTournamentFromMySQL(null, tourn.getID(), p!=null ? d.getHomeServer(p) : "pvp-1", d.getKit(), d.getMaxRounds(), d.getMaxTime());
+		if(kit == null)
+		{
+			kit = d.getKit();
+		}
 		
 		tourn.removeRound(p != null ? tourn.getRound(p) : tourn.getRound(MainClass.getInstance().serverName));
 		
@@ -510,29 +486,7 @@ public class GiveUpCommand implements CommandExecutor {
 	
 	private static String getHomeServer(Duel d,Player p)
 	{
-		ArrayList<Player> chers = d.getChallenge().getChallengers();
-		ArrayList<Player> ched = d.getChallenge().getChallenged();
-		
-		int u = 0;
-		for(int i = 0;i<chers.size();i++)
-		{
-			if(chers.get(i).getUniqueId().equals(p.getUniqueId()))
-			{
-				return d.getChallenge().getPreviousServer(u);
-			}
-			u++;
-		}
-		for(int i = 0;i<ched.size();i++)
-		{
-			if(ched.get(i).getUniqueId().equals(p.getUniqueId()))
-			{
-				return d.getChallenge().getPreviousServer(u);
-			}
-			u++;
-		}
-		
-		return "";
-		
+		return d.getHomeServer(p);	
 	}
 	
 	private static void teleportPlayerBack(Player p,String server)

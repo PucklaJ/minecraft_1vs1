@@ -90,6 +90,7 @@ public class Duel {
 	public static final int ENEMY_KITS = 1;
 	private Kit kit = null;
 	private ArrayList<UUID> leftPlayers;
+	private ArrayList<UUID> loserUUID;
 	
 	public Duel(Challenge c,JavaPlugin plugin,int mode)
 	{
@@ -99,6 +100,7 @@ public class Duel {
 		alive2 = new ArrayList<Player>();
 		spectators = new ArrayList<>();
 		leftPlayers = new ArrayList<>();
+		loserUUID = new ArrayList<>();
 		this.c = c;
 		this.mode = mode;
 		ffa = c.getTournamentID() == -2;
@@ -459,13 +461,13 @@ public class Duel {
 					
 					Bukkit.getScheduler().cancelTask(waitCD.getTaskId());
 					
-						if(!allOnline())
+						if(!isTournament() && !allOnline())
 						{
 							endDuel(null,false);
 							stopCountdown();
 							Challenge c = getChallenge();
 							ChallangeManager.deleteChallenge(c.ID);
-							GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
+							GiveUpCommand.handleFinishedDuel(instance, null, c,true);
 						}
 						else
 						{
@@ -473,11 +475,20 @@ public class Duel {
 							{
 								if(P1isOnline() || P2isOnline())
 								{
+									if(!P1isOnline())
+									{
+										loserUUID = c.getChallengersUUID();
+									}
+									else
+									{
+										loserUUID = c.getChallengedUUID();
+									}
+									
 									endDuel(null,true);
 									stopCountdown();
 									Challenge c = getChallenge();
 									ChallangeManager.deleteChallenge(c.ID);
-									GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), null, c);
+									GiveUpCommand.handleFinishedDuel(instance, null, c,false);
 								}
 							}
 							else
@@ -490,6 +501,11 @@ public class Duel {
 				
 			}
 		}, 0, 20*1);
+	}
+	
+	public ArrayList<UUID> getLoserUUID()
+	{
+		return loserUUID;
 	}
 	
 	private boolean allOnline()
@@ -1349,7 +1365,7 @@ public class Duel {
 					stopCountdown();
 					Challenge c = ChallangeManager.getChallenge(p1.get(0));
 					ChallangeManager.deleteChallenge(c.ID);
-					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), p1.get(0), c);
+					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), p1.get(0), c,false);
 					return;
 				}
 				else if(!P2isOnline())
@@ -1359,7 +1375,7 @@ public class Duel {
 					stopCountdown();
 					Challenge c = ChallangeManager.getChallenge(p2.get(0));
 					ChallangeManager.deleteChallenge(c.ID);
-					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), p2.get(0), c);
+					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), p2.get(0), c,false);
 					return;
 				}
 				
@@ -1991,7 +2007,16 @@ public class Duel {
 	public String getHomeServer(Player p1)
 	{
 		if(p1 == null)
-			return "pvp-1";
+		{
+			if(c.getPrevoisServerSize() > 0)
+			{
+				return c.getPreviousServer(0);
+			}
+			else
+			{
+				return "pvp-1";
+			}
+		}
 		
 		String hs = "";
 		Challenge c = getChallenge();

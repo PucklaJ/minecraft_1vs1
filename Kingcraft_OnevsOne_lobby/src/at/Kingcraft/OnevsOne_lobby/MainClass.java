@@ -362,7 +362,7 @@ public class MainClass extends JavaPlugin {
 			
 			Settings.loadSettings(p);
 			
-			LobbyListener.setupSpawnItems(p, true);
+			LobbyListener.setupSpawnItems(p, true,false);
 		}
 		
 		updateTimer();
@@ -457,8 +457,6 @@ public class MainClass extends JavaPlugin {
 			{
 				TournamentManager.deleteTournament(TournamentManager.getTournaments().get(i), false);
 			}
-			
-			System.out.println("After checking Tournaments");
 			
 			MenuManager.getSettingMenu(p).getTourSettingMenu().loadToMySQL();
 			MenuManager.deleteSettingMenu(p);
