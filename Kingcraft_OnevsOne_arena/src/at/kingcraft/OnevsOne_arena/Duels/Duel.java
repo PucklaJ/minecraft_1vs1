@@ -215,7 +215,7 @@ public class Duel {
 		{
 			if(!minU.equals(alive1.get(i).getUniqueId()))
 			{
-				handleDeath(alive1.get(i),null,false);
+				handleDeath(alive1.get(i),null,false,false);
 			}
 		}
 		
@@ -223,7 +223,7 @@ public class Duel {
 		{
 			if(!minU.equals(alive2.get(i).getUniqueId()))
 			{
-				handleDeath(alive2.get(i),null,false);
+				handleDeath(alive2.get(i),null,false,false);
 			}
 		}
 	}
@@ -340,6 +340,12 @@ public class Duel {
 		return true;
 	}
 	
+
+	private void revive(Player p)
+	{
+		p.spigot().respawn();
+	}
+	
 	private void waitingCountdown(JavaPlugin plugin)
 	{
 		Bukkit.getScheduler().runTask(MainClass.getInstance(), new Runnable() {
@@ -420,19 +426,21 @@ public class Duel {
 				{
 					for(int i = 0;i<p1.size();i++)
 					{
-						p1.get(i).sendMessage(Messages.waitingForOtherPlayers(String.valueOf(waitTime)));
+						if(waitTime <= 5)
+							p1.get(i).sendMessage(Messages.waitingForOtherPlayers(String.valueOf(waitTime)));
 						if(p1.get(i).getHealth() == 0.0)
 						{
-							p1.get(i).sendMessage(Messages.pleaseRespawn);
+							revive(p1.get(i));
 						}
 					}
 					
 					for(int i = 0;i<p2.size();i++)
 					{
-						p2.get(i).sendMessage(Messages.waitingForOtherPlayers(String.valueOf(waitTime)));
+						if(waitTime <= 5)
+							p2.get(i).sendMessage(Messages.waitingForOtherPlayers(String.valueOf(waitTime)));
 						if(p2.get(i).getHealth() == 0.0)
 						{
-							p2.get(i).sendMessage(Messages.pleaseRespawn);
+							revive(p2.get(i));
 						}
 					}
 					
@@ -2095,7 +2103,7 @@ public class Duel {
 		return Math.min(Math.min(getAmountInInventory(p, Material.BOWL), getAmountInInventory(p, Material.BROWN_MUSHROOM)), getAmountInInventory(p, Material.RED_MUSHROOM));
 	}
 	
-	public void handleDeath(Player p,Player killer,boolean leave)
+	public void handleDeath(Player p,Player killer,boolean leave,boolean die)
 	{
 		if(killer != null)
 		{	
@@ -2184,7 +2192,7 @@ public class Duel {
 						for(int i = 0;i<alive1.size();i++)
 						{
 							name += Messages.playerInHasLifeLeft(alive1.get(i).getDisplayName()) + (i+1==alive1.size() ? "" : Messages.seperatorInHasLifeLfeft);
-							health += alive1.get(i).getHealth();
+							health += alive1.get(i).getHealth()/2.0;
 							if(isSoup)
 							{
 								soups += getAmountInInventory(alive1.get(i), Material.MUSHROOM_SOUP);
@@ -2218,8 +2226,8 @@ public class Duel {
 					p.sendMessage(Messages.soupsLeftTeam(name, soups, recrafts));
 			}
 		}
-			
-		if(p.getHealth() == 0.0)
+		
+		if(die)
 			updateStatistics(p,0, 1, 0, 0, 0, 0);
 		if(killer != null)
 			updateStatistics(killer, 1, 0, 0, 0, 0, 0);

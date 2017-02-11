@@ -69,7 +69,7 @@ public class GiveUpCommand implements CommandExecutor {
 		if(d != null)
 		{
 			p.playSound(p.getLocation(), Sounds.giveUp, Sounds.giveUpVolume, Sounds.DEFAULT_PITCH);
-			d.handleDeath(p, null,false);
+			d.handleDeath(p, null,false,false);
 		}
 		
 		return true;

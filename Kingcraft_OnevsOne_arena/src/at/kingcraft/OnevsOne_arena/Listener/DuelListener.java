@@ -496,18 +496,26 @@ public class DuelListener implements Listener {
 	public void onDeath(PlayerDeathEvent e)
 	{
 		Player p = e.getEntity();
+		if(onDeath(p))
+			e.setDeathMessage("");
+	}
+	
+	public boolean onDeath(Player p)
+	{
 		Duel d = DuelManager.getDuel(p);
 		if(d!= null)
 		{
 			if(d.isSpectator(p,false))
 			{
-				return;
+				return false;
 			}
 			
-			d.handleDeath(p,getKit(p).getSettings().contains(KitSettings.NO_KNOCKBACK) ? lastDamager.get(p.getUniqueId()) : p.getKiller(),false);
+			d.handleDeath(p,getKit(p).getSettings().contains(KitSettings.NO_KNOCKBACK) || p.getKiller() == null ? lastDamager.get(p.getUniqueId()) : p.getKiller(),false,true);
 			
-			e.setDeathMessage("");
+			return true;
 		}
+		
+		return false;
 	}
 	
 	@EventHandler
@@ -612,6 +620,11 @@ public class DuelListener implements Listener {
 		return true;
 	}
 	
+	public void onDamagebyPlayer(Player damager,Player damaged,boolean byHand)
+	{
+		
+	}
+	
 	@EventHandler
 	public void onPlayerDamagePlayer(EntityDamageByEntityEvent e)
 	{
@@ -689,7 +702,6 @@ public class DuelListener implements Listener {
 				e.setCancelled(true);
 			}
 		}
-		
 	}
 	
 	
@@ -858,7 +870,7 @@ public class DuelListener implements Listener {
 		{
 			d.removeSpectator(e.getPlayer());
 			if(!d.hasEnded())
-				d.handleDeath(e.getPlayer(),null,true);
+				d.handleDeath(e.getPlayer(),null,true,false);
 			
 			Settings.getSettings(e.getPlayer()).addToWSOnJoin(false);
 			Settings.getSettings(e.getPlayer()).loadToMySQL();
@@ -895,13 +907,38 @@ public class DuelListener implements Listener {
 		{
 			if(d.isTournament())
 			{
-				for(int i = 0;i<specOnRespawn.size();i++)
+				if(d.isAlive(p))
 				{
-					if(specOnRespawn.get(i).player.getUniqueId().equals(p.getUniqueId()))
+					for(int i = 0;i<specOnRespawn.size();i++)
 					{
-						TournamentManager.addSpectator(specOnRespawn.get(i),true,false);
-						specOnRespawn.remove(i);
-						return;
+						if(specOnRespawn.get(i).uuid.equals(p.getUniqueId()))
+						{
+							specOnRespawn.remove(i);
+							break;
+						}
+					}
+					
+					switch(d.getRole(p))
+					{
+					case Duel.P1:
+						p.teleport(d.getMap().getSpawn1());
+						break;
+					case Duel.P2:
+						p.teleport(d.getMap().getSpawn2());
+						break;
+					}
+					d.setupPlayer(p,false);
+				}
+				else
+				{
+					for(int i = 0;i<specOnRespawn.size();i++)
+					{
+						if(specOnRespawn.get(i).player.getUniqueId().equals(p.getUniqueId()))
+						{
+							TournamentManager.addSpectator(specOnRespawn.get(i),true,false);
+							specOnRespawn.remove(i);
+							return;
+						}
 					}
 				}
 				
