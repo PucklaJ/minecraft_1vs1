@@ -20,6 +20,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftSkeleton;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftZombie;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
@@ -32,6 +33,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -1088,6 +1090,16 @@ public class LobbyListener implements Listener {
 		{
 			MenuManager.getSettingMenu(e.getPlayer()).getWSMenu().open();
 		}
+		else if(e.getRightClicked() instanceof CraftSkeleton)
+		{
+			Kit kit = KitManager.getChoosenKitKit(e.getPlayer());
+			if(kit.isDif() || kit.getOwnerName().equals("Server"))
+			{
+				kit = KitManager.getKits(e.getPlayer()).get(0);
+			}
+			
+			MenuManager.getSettingMenu(e.getPlayer()).getKitMainMenu().getKitOwnMenu().getKitSettingMenu().open(kit);
+		}
 	}
 	
 	@EventHandler
@@ -1421,5 +1433,11 @@ public class LobbyListener implements Listener {
 		for(int i = 0;i<servers.size();i++)
 			sendChatToServer(e.getPlayer(),getPrefix(e.getPlayer()), servers.get(i), e.getMessage());
 	 }
+	
+	@EventHandler
+	public void onBow(EntityShootBowEvent e)
+	{
+		e.setCancelled(true);
+	}
 
 }

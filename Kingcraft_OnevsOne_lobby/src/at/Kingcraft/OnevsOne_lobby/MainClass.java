@@ -67,6 +67,7 @@ public class MainClass extends JavaPlugin {
 	public String serverName = "null";
 	private WaitingSnake ws;
 	private WaitingEntity we;
+	private KitSkeleton kitS;
 	private LobbyListener lobbyL;
 	
 	private void setupCommands()
@@ -195,6 +196,11 @@ public class MainClass extends JavaPlugin {
 		this.getConfig().addDefault("Scoreboard.Player.Prefix", ChatColor.YELLOW + "Spieler: " + ChatColor.BLUE);
 		this.getConfig().addDefault("Scoreboard.Player.Suffix", "");
 		
+		this.getConfig().addDefault("Kit-Skeleton.world", "world");
+		this.getConfig().addDefault("Kit-Skeleton.x",0.0);
+		this.getConfig().addDefault("Kit-Skeleton.y",0.0);
+		this.getConfig().addDefault("Kit-Skeleton.z",0.0);
+		
 
 		this.getConfig().options().copyDefaults(true);
 		this.saveConfig();
@@ -211,6 +217,11 @@ public class MainClass extends JavaPlugin {
 		return instance;
 	}
 	
+	public KitSkeleton getKitSkeleton()
+	{
+		return kitS;
+	}
+	
 	@SuppressWarnings("unchecked")
 	private void registerEntities()
 	{
@@ -220,6 +231,8 @@ public class MainClass extends JavaPlugin {
              Field f = EntityTypes.class.getDeclaredField("f");
              c.setAccessible(true);
              f.setAccessible(true);
+             ((Map<Class<? extends EntityInsentient>, String>) c.get(null)).put(KitSkeleton.class, "Skeleton");
+             ((Map<Class<? extends EntityInsentient>, Integer>) f.get(null)).put(KitSkeleton.class, 51);
              ((Map<Class<? extends EntityInsentient>, String>) c.get(null)).put(WaitingEntity.class, "Zombie");
              ((Map<Class<? extends EntityInsentient>, Integer>) f.get(null)).put(WaitingEntity.class, 54);
 		 }
@@ -227,6 +240,8 @@ public class MainClass extends JavaPlugin {
 		 {
 			 e.printStackTrace();
 		 }
+		 
+		 //CustomEntites.registerEntities();
 	}
 	
 	private void updateTimer()
@@ -251,6 +266,34 @@ public class MainClass extends JavaPlugin {
 		}
 		
 		Messenger.sendMessage(null, "BungeeCord", "GetServers", (String[])null);
+	}
+	
+	private void spawnWEntity(World world)
+	{
+		Location weLoc = null;
+		if(world != null)
+			weLoc = new Location(world,
+										  getConfig().getDouble("WaitingSnake.Entity.Location.X"),
+										  getConfig().getDouble("WaitingSnake.Entity.Location.Y"),
+										  getConfig().getDouble("WaitingSnake.Entity.Location.Z"));
+		
+		
+		
+		if(world != null)
+			we = new WaitingEntity(((CraftWorld)world).getHandle(),weLoc);
+	}
+	
+	private void spawnKitSkeleton()
+	{
+		World kitWorld = Bukkit.getWorld(this.getConfig().getString("Kit-Skeleton.world"));
+		
+		if(kitWorld != null)
+		{
+			kitS = new KitSkeleton(((CraftWorld)kitWorld).getHandle(), new Location(kitWorld,
+					this.getConfig().getDouble("Kit-Skeleton.x"),
+					this.getConfig().getDouble("Kit-Skeleton.y"),
+					this.getConfig().getDouble("Kit-Skeleton.z")));
+		}
 	}
 	
 	@Override
@@ -315,20 +358,8 @@ public class MainClass extends JavaPlugin {
 			System.out.println("[" + getName() + "] Unknown Worldname: \"" + getConfig().getString("World.Name") + "\"");
 		}
 		
-		Location weLoc = null;
-		if(world != null)
-			weLoc = new Location(world,
-										  getConfig().getDouble("WaitingSnake.Entity.Location.X"),
-										  getConfig().getDouble("WaitingSnake.Entity.Location.Y"),
-										  getConfig().getDouble("WaitingSnake.Entity.Location.Z"));
-		
-		
-		
-		if(world != null)
-			we = new WaitingEntity(((CraftWorld)world).getHandle(),weLoc);
-		
-		
-		
+		spawnKitSkeleton();
+		spawnWEntity(world);
 		
 		// SEtup Messeging System
 		Messenger.setup(this);
@@ -491,6 +522,8 @@ public class MainClass extends JavaPlugin {
 		OnlinePlayers.deleteFromMySQL();
 		
 		mysql.disconnect();
+		
+		//CustomEntites.unregisterEntities();
 	}
 	
 	public WaitingSnake getWaitingSnake()
