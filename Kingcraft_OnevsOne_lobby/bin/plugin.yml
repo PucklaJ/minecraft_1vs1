@@ -97,7 +97,7 @@ commands:
     description: Zeigt Spieler, die in der Ranked Warteschlange sind
     permission: command.rankedqueueinfo
   forcequeue:
-    usage: /<command> <player>
+    usage: /<command> <player>|<cancel>
     description: Zwingt einen Spieler mit dir zu kaempfen
     aliases: [fqueue,forceq,fq]
     permission: command.forcequeue

@@ -57,6 +57,17 @@ public class ForceQueueCommand implements CommandExecutor {
 		}
 	}
 	
+	private Player getPlayer(String name)
+	{
+		for(Player p : Bukkit.getOnlinePlayers())
+		{
+			if(p.getDisplayName().equals(name))
+				return p;
+		}
+		
+		return null;
+	}
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String lbl, String[] args)
@@ -71,15 +82,43 @@ public class ForceQueueCommand implements CommandExecutor {
 		
 		if(args.length == 1)
 		{
-			OfflinePlayer op = Bukkit.getOfflinePlayer(args[0]);
+			UUID uuid = null;
+			String name = "";
 			
-			if(op == null)
+			
+			Player p1 = getPlayer(args[0]);
+			if(p1 == null)
 			{
-				p.sendMessage(Messages.playerDoesntExists(args[0]));
-				return true;
+				if(args[0].equalsIgnoreCase("cancel"))
+				{	
+					remove(p.getUniqueId());
+					
+					p.sendMessage(ChatColor.YELLOW +  "You have been deleted from the forcequeue");
+					return true;
+				}
+				else
+				{
+					OfflinePlayer op = Bukkit.getOfflinePlayer(args[0]);
+					
+					if(op == null)
+					{
+						p.sendMessage(Messages.playerDoesntExists(args[0]));
+						return true;
+					}
+					
+					uuid = op.getUniqueId();
+					name = op.getName();
+				}
+			}
+			else
+			{
+				uuid = p1.getUniqueId();
+				name = p1.getDisplayName();
 			}
 			
-			if(p.getUniqueId().equals(op.getUniqueId()))
+			
+			
+			if(p.getUniqueId().equals(uuid))
 			{
 				p.sendMessage(ChatColor.RED + "You cannot forcequeue yourself");
 				return true; 
@@ -89,16 +128,14 @@ public class ForceQueueCommand implements CommandExecutor {
 			{
 				PreparedStatement ps;
 				
-				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("DELETE FROM Duel_ForceQueue WHERE UUID = ?");
-				ps.setString(1, p.getUniqueId().toString());
-				ps.executeUpdate();
+				remove(p.getUniqueId());
 				
 				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_ForceQueue (UUID,Player) VALUES (?,?)");
 				ps.setString(1, p.getUniqueId().toString());
-				ps.setString(2, op.getUniqueId().toString());
+				ps.setString(2, uuid.toString());
 				ps.executeUpdate();
 				
-				p.sendMessage(ChatColor.YELLOW + "You are forcequeueing " + ChatColor.GREEN + op.getName());
+				p.sendMessage(ChatColor.YELLOW + "You are forcequeueing " + ChatColor.GREEN + name);
 			}
 			catch (SQLException e) 
 			{

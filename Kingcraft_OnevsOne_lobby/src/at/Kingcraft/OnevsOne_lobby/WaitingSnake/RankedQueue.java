@@ -43,7 +43,6 @@ public class RankedQueue
 		}
 		catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -100,6 +99,8 @@ public class RankedQueue
 			if(force != null)
 			{
 				RankedUpload forceUpload = new RankedUpload(force,getELO(force),playersInQueue.get(i).kit,playersInQueue.get(i).map,playersInQueue.get(i).homeServer);
+				
+				removePlayerFromMySQL(playersInQueue.get(i));
 				
 				makeDuel(playersInQueue.get(i), forceUpload);
 				

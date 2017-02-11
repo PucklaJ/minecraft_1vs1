@@ -55,6 +55,7 @@ import com.google.common.io.ByteStreams;
 
 import at.Kingcraft.OnevsOne_lobby.MainClass;
 import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
+import at.Kingcraft.OnevsOne_lobby.Commands.ForceQueueCommand;
 import at.Kingcraft.OnevsOne_lobby.Commands.RefuseCommand;
 import at.Kingcraft.OnevsOne_lobby.Duels.ChallangeManager;
 import at.Kingcraft.OnevsOne_lobby.Duels.Team;
@@ -659,16 +660,6 @@ public class LobbyListener implements Listener {
 			}
 		}
 		
-		/*kits = KitManager.getSoupKits(p);
-		
-		if(kits != null)
-		{
-			for(int i = 0;i<kits.size();i++)
-			{
-				kits.get(i).loadToMySQL(plugin.getMySQL());
-			}
-		}*/
-		
 		KitManager.uploadDifKit(p);
 		KitManager.uploadChoosenKit(p);
 		KitManager.deleteKits(p);
@@ -688,6 +679,11 @@ public class LobbyListener implements Listener {
 		
 		KitManager.removeDifKitSettingsMenu(p);
 		kitViewer.remove(p.getUniqueId());
+		
+		if(p.hasPermission("command.forcequeue"))
+		{
+			ForceQueueCommand.remove(p.getUniqueId());
+		}
 		
 	}
 	
