@@ -41,6 +41,7 @@ import at.Kingcraft.OnevsOne_lobby.Duels.TeamManager;
 import at.Kingcraft.OnevsOne_lobby.Items.Items;
 import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
 import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Kits.PreKitsTabCompleter;
 import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
 import at.Kingcraft.OnevsOne_lobby.Lobby.OnlinePlayers;
 import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
@@ -91,6 +92,7 @@ public class MainClass extends JavaPlugin {
 		getCommand("setprekit").setExecutor(new SetPreKitCommand());
 		getCommand("ffa").setExecutor(new FFACommand());
 		getCommand("kit").setExecutor(new KitViewerComand());
+		getCommand("kit").setTabCompleter(new PreKitsTabCompleter());
 		getCommand("spectate").setExecutor(new SpectateCommand());
 		getCommand("stats").setExecutor(new StatsCommand());
 	 	QueueInfoCommand qinfo = new QueueInfoCommand();
