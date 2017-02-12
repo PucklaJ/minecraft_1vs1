@@ -76,7 +76,7 @@ public class DuelsMenu extends Menu
 				kit = d.getKit();
 			
 			ItemMeta im = config.getItemMeta();
-			im.setDisplayName(ChatColor.YELLOW + "Konfigurationen");
+			im.setDisplayName(ChatColor.YELLOW + "" + ChatColor.UNDERLINE + "Konfigurationen");
 			
 			String kitName,time,rounds;
 			if(tournament == null)
@@ -110,6 +110,7 @@ public class DuelsMenu extends Menu
 			}
 			
 			ArrayList<String> lore = new ArrayList<>();
+			lore.add("");
 			lore.add(ChatColor.YELLOW + "Kit: " + ChatColor.BLUE + kitName);
 			lore.add(ChatColor.YELLOW + "Zeit: " + ChatColor.BLUE + time  + ChatColor.YELLOW + " Minuten");
 			lore.add(ChatColor.YELLOW + "Runden: " + ChatColor.BLUE + rounds);

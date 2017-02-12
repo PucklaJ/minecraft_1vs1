@@ -932,66 +932,14 @@ public class Duel {
 	{
 		for(int i = 0;i<p1.size();i++)
 		{
-			String[] args = new String[1];
-			Challenge c = getChallenge();
-			
-			
-			int u = 0;
-			for(Player p : c.getChallengers())
-			{
-				if(p.getUniqueId().equals(p1.get(i).getUniqueId()))
-				{
-					args[0] = c.getPreviousServer(u);
-				}
-				u++;
-			}
-			for(Player p : c.getChallenged())
-			{
-				if(p.getUniqueId().equals(p1.get(i).getUniqueId()))
-				{
-					args[0] = c.getPreviousServer(u);
-				}
-				u++;
-			}
-			if(args[0] == null || args[0] == "")
-			{
-				args[0] = c.getPreviousServer(0);
-			}
-			
-			
-			Messenger.sendMessage(p1.get(i), "BungeeCord", "Connect", args);
+			String server = getHomeServer(p1.get(i));
+			Messenger.sendMessage(p1.get(i), "BungeeCord", "Connect", server);
 		}
 		
 		for(int i = 0;i<p2.size();i++)
 		{
-			String[] args = new String[1];
-			Challenge c = getChallenge();
-			
-			
-			int u = 0;
-			for(Player p : c.getChallengers())
-			{
-				if(p.getUniqueId().equals(p2.get(i).getUniqueId()))
-				{
-					args[0] = c.getPreviousServer(u);
-				}
-				u++;
-			}
-			for(Player p : c.getChallenged())
-			{
-				if(p.getUniqueId().equals(p2.get(i).getUniqueId()))
-				{
-					args[0] = c.getPreviousServer(u);
-				}
-				u++;
-			}
-			if(args[0] == null || args[0] == "")
-			{
-				args[0] = c.getPreviousServer(0);
-			}
-			
-			
-			Messenger.sendMessage(p2.get(i), "BungeeCord", "Connect", args);
+			String server = getHomeServer(p2.get(i));
+			Messenger.sendMessage(p2.get(i), "BungeeCord", "Connect", server);
 		}
 		
 		// Spectators

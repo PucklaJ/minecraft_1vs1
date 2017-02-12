@@ -53,7 +53,7 @@ public class ParticleHandler implements Listener
 		{
 			for(int j = 0;j<5;j++)
 			{
-				ParticleEffect.CLOUD.send(Bukkit.getOnlinePlayers(),arrows.get(i).getLocation(), r.nextDouble()*0.25 - 0.125, r.nextDouble()*0.25 - 0.125, r.nextDouble()*0.25 - 0.125,r.nextDouble()*0.25 - 0.125, 2);
+				ParticleEffect.VILLAGER_HAPPY.send(Bukkit.getOnlinePlayers(),arrows.get(i).getLocation(), r.nextDouble()*0.25 - 0.125, r.nextDouble()*0.25 - 0.125, r.nextDouble()*0.25 - 0.125,r.nextDouble()*0.25 - 0.125, 2);
 			}
 		}
 	}
@@ -155,7 +155,7 @@ public class ParticleHandler implements Listener
 					{
 						for(int j = 0;j<10;j++)
 						{
-							ParticleEffect.FIREWORKS_SPARK.send(Bukkit.getOnlinePlayers(),e.getEntity().getLocation().clone().add(new Vector(0.0,1.0,0.0)), r.nextDouble()*0.3 - 0.15, r.nextDouble()*0.5, r.nextDouble()*0.3 - 0.15,0.1,3);
+							ParticleEffect.HEART.send(Bukkit.getOnlinePlayers(),e.getEntity().getLocation().clone().add(new Vector(0.0,1.0,0.0)), r.nextDouble()*0.3 - 0.15, r.nextDouble()*0.5, r.nextDouble()*0.3 - 0.15,0.05,3);
 						}
 					}
 				}

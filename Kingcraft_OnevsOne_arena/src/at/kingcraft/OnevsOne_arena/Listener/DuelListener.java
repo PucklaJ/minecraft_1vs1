@@ -1308,6 +1308,13 @@ public class DuelListener implements Listener {
 			
 			e.setCancelled(true);
 		}
+		else
+		{
+			if(inv.getName().equals("Runden"))
+			{
+				e.setCancelled(true);
+			}
+		}
 		
 		if(!e.isCancelled() && d != null && !d.isStarted() && !d.hasEnded())
 		{
