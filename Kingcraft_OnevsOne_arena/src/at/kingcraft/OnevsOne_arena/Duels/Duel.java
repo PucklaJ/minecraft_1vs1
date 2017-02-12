@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -101,6 +103,7 @@ public class Duel {
 		spectators = new ArrayList<>();
 		leftPlayers = new ArrayList<>();
 		loserUUID = new ArrayList<>();
+		
 		this.c = c;
 		this.mode = mode;
 		ffa = c.getTournamentID() == -2;
@@ -490,6 +493,14 @@ public class Duel {
 									ChallangeManager.deleteChallenge(c.ID);
 									GiveUpCommand.handleFinishedDuel(instance, null, c,false);
 								}
+								else
+								{
+									endDuel(null,false);
+									stopCountdown();
+									Challenge c = getChallenge();
+									ChallangeManager.deleteChallenge(c.ID);
+									GiveUpCommand.handleFinishedDuel(instance, null, c,true);
+								}
 							}
 							else
 							{
@@ -667,13 +678,11 @@ public class Duel {
 	}
 	
 	private void setupKit(Player p)
-	{
+	{	
 		if(c.getKit().isDifKit())
 		{
 			kit = Kit.getDifKit(p);
-			if(kit != null)
-				kit.kitItemsToInventory(p);
-			else
+			if(kit == null)
 			{
 				kit = new Kit(p,1,true);
 				ItemStack is = new ItemStack(Material.PAPER);
@@ -681,22 +690,15 @@ public class Duel {
 				im.setDisplayName("null");
 				is.setItemMeta(im);
 				kit.addItem(0, is);
-				
-				kit.kitItemsToInventory(p);
 			}
 		}
 		else
 		{
-			if(kit != null)
-			{
-				kit.kitItemsToInventory(p);
-			}
-			else
+			if(kit == null)
 			{
 				if(kitMode == -1 || kitMode == OWN_KITS)
 				{
 					kit = c.getKit();
-					c.getKit().kitItemsToInventory(p);
 				}
 				else if(kitMode == ENEMY_KITS)
 				{
@@ -725,13 +727,116 @@ public class Duel {
 					{
 						kit = c.getKit();
 					}
-					
-					kit.kitItemsToInventory(p);
 				}
 				else
 				{
 					kit = c.getKit();
-					kit.kitItemsToInventory(p);
+				}
+			}
+		}
+		
+		if(DuelListener.kitPresetsKits.get(p.getUniqueId()) == null || !DuelListener.kitPresetsKits.get(p.getUniqueId()).equals(kit.getOwnerName() + ":" + kit.getNumber()))
+		{
+			DuelListener.kitPresetsKits.put(p.getUniqueId(), kit.getOwnerName() + ":" + kit.getNumber());
+			DuelListener.kitPresets.put(p.getUniqueId(),new HashMap<>());
+			DuelListener.kitPresetsEquipment.put(p.getUniqueId(), new HashMap<>());
+		}
+		
+		if(DuelListener.kitPresets.get(p.getUniqueId()).isEmpty())
+		{
+			kit.kitItemsToInventory(p);
+		}
+		else
+		{
+			for(int i = 0;i<p.getInventory().getSize();i++)
+			{
+				ItemStack is = DuelListener.kitPresets.get(p.getUniqueId()).get(i);
+				if(is != null)
+				{
+					p.getInventory().setItem(i, is);
+				}
+			}
+			
+			for(int i = 0;i<4;i++)
+			{
+				ItemStack is = DuelListener.kitPresetsEquipment.get(p.getUniqueId()).get(i);
+				
+				if(is == null)
+					continue;
+				
+				switch(i)
+				{
+				case 0:
+					p.getEquipment().setHelmet(is.clone());
+					break;
+				case 1:
+					p.getEquipment().setChestplate(is.clone());
+					break;
+				case 2:
+					p.getEquipment().setLeggings(is.clone());
+					break;
+				case 3:
+					p.getEquipment().setBoots(is.clone());
+					break;
+				}
+			}
+			
+		}
+		
+		
+	}
+	
+	private void setKitpreset(Player p)
+	{
+		if(DuelListener.kitPresets.get(p.getUniqueId()) == null)
+			return;
+		
+		DuelListener.kitPresets.get(p.getUniqueId()).clear();
+		DuelListener.kitPresetsEquipment.get(p.getUniqueId()).clear();
+		
+		for(int i = 0;i<p.getInventory().getSize();i++)
+		{
+			if(p.getInventory().getItem(i) != null)
+				DuelListener.kitPresets.get(p.getUniqueId()).put(i, p.getInventory().getItem(i).clone());
+			else
+				DuelListener.kitPresets.get(p.getUniqueId()).put(i, new ItemStack(Material.AIR));
+		}
+		
+		for(int i = 0;i<4;i++)
+		{
+			ItemStack is = null;
+			EntityEquipment e = p.getEquipment();
+			
+			switch(i)
+			{
+			case 0:
+				is = e.getHelmet();
+				break;
+			case 1:
+				is = e.getChestplate();
+				break;
+			case 2:
+				is = e.getLeggings();
+				break;
+			case 3:
+				is = e.getBoots();
+				break;
+			}
+			
+			if(is != null && !is.getType().equals(Material.AIR))
+			{
+				DuelListener.kitPresetsEquipment.get(p.getUniqueId()).put(i, is.clone());
+			}
+		}
+		
+		if(DuelListener.lastCursor.get(p.getUniqueId()) != null)
+		{
+			for(int i = 0;i<p.getInventory().getSize();i++)
+			{
+				if(DuelListener.kitPresets.get(p.getUniqueId()).get(i) == null || DuelListener.kitPresets.get(p.getUniqueId()).get(i).getType().equals(Material.AIR))
+				{
+					DuelListener.kitPresets.get(p.getUniqueId()).put(i,DuelListener.lastCursor.get(p.getUniqueId()));
+					break;
 				}
 			}
 		}
@@ -1150,12 +1255,14 @@ public class Duel {
 					{
 						p1.get(i).sendMessage(Messages.duelStarts);
 						p1.get(i).playSound(p1.get(i).getLocation(), Sounds.duelStart, Sounds.duelStartVolume, Sounds.DEFAULT_PITCH);
+						setKitpreset(p1.get(i));
 					}
 					
 					for(int i = 0;i<p2.size();i++)
 					{
 						p2.get(i).sendMessage(Messages.duelStarts);
 						p2.get(i).playSound(p2.get(i).getLocation(), Sounds.duelStart, Sounds.duelStartVolume, Sounds.DEFAULT_PITCH);
+						setKitpreset(p2.get(i));
 					}
 					
 					if(c.getTime() != -1)
@@ -1382,7 +1489,6 @@ public class Duel {
 				
 				for(int i = 0;i<p1.size();i++)
 				{
-					//p1.get(i).sendMessage(Messages.duelStartsTimer(String.valueOf(cdTime)));
 					if(p1.get(i).getGameMode().equals(GameMode.CREATIVE))
 					{
 						Bukkit.getScheduler().runTask(plugin,new ResetSpecDuelRun(p1.get(i), instance));
@@ -1392,7 +1498,6 @@ public class Duel {
 				
 				for(int i = 0;i<p2.size();i++)
 				{
-					//p2.get(i).sendMessage(Messages.duelStartsTimer(String.valueOf(cdTime)));
 					if(p2.get(i).getGameMode().equals(GameMode.CREATIVE))
 					{
 						Bukkit.getScheduler().runTask(plugin,new ResetSpecDuelRun(p2.get(i), instance));

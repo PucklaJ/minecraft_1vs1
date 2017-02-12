@@ -73,7 +73,7 @@ public class TourSettingMenu extends Menu
 		im.setDisplayName(ChatColor.YELLOW + "Konfigurationen");
 		ArrayList<String> lore = new ArrayList<>();
 		Kit kit = KitManager.getChoosenKitKit(owner);
-		String kitName = kit.getName(true,true,false);
+		String kitName = kit.getName(true,!kit.getOwnerName().equals("Server"),false);
 		lore.add(ChatColor.YELLOW + "Kit: " + ChatColor.BLUE + (this.kit == ENEMY_KITS ? "Kit der Gegner" : kitName));
 		lore.add(ChatColor.YELLOW + "Spieler bis zum Start: " + ChatColor.BLUE + players);
 		lore.add(ChatColor.YELLOW + "Maximale Runden: " + ChatColor.BLUE + rounds);

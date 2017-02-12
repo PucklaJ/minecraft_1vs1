@@ -96,8 +96,12 @@ public class DuelListener implements Listener {
 	public static ArrayList<Spectator> specOnRespawn;
 	public static ArrayList<UUID> canDoubleJump;
 	public static HashMap<UUID,Player> lastDamager;
+	public static HashMap<UUID,ItemStack> lastCursor;
 	public static ArrayList<String> lobbyServerToChatTo;
 	public static int lastTournamentID = -1;
+	public static HashMap<UUID,HashMap<Integer,ItemStack>> kitPresets;
+	public static HashMap<UUID,HashMap<Integer,ItemStack>> kitPresetsEquipment;
+	public static HashMap<UUID,String> kitPresetsKits;
 	
 	public DuelListener(MainClass plugin)
 	{
@@ -107,6 +111,10 @@ public class DuelListener implements Listener {
 		canDoubleJump = new ArrayList<>();
 		lastDamager = new HashMap<>();
 		lobbyServerToChatTo = new ArrayList<>();
+		lastCursor = new HashMap<>();
+		kitPresets = new HashMap<>();
+		kitPresetsEquipment = new HashMap<>();
+		kitPresetsKits = new HashMap<>();
 	}
 	
 	
@@ -893,6 +901,9 @@ public class DuelListener implements Listener {
 		}
 		
 		lastDamager.remove(e.getPlayer().getUniqueId());
+		
+		DuelListener.kitPresets.remove(e.getPlayer().getUniqueId());
+		DuelListener.kitPresetsKits.remove(e.getPlayer().getUniqueId());
 	}
 	
 	@EventHandler
@@ -1298,6 +1309,19 @@ public class DuelListener implements Listener {
 			e.setCancelled(true);
 		}
 		
+		if(!e.isCancelled())
+		{
+			lastCursor.put(p.getUniqueId(), e.getCurrentItem() == null ? null : e.getCurrentItem().clone());
+			
+			
+			if(e.getCurrentItem() != null && p.getInventory().getItem(e.getSlot()) != null)
+			{
+				if(lastCursor.get(p.getUniqueId()).getAmount() == 0)
+					lastCursor.get(p.getUniqueId()).setAmount(p.getInventory().getItem(e.getSlot()).getAmount());
+			}
+				
+		}
+		
 	}
 	
 	@EventHandler
@@ -1308,16 +1332,23 @@ public class DuelListener implements Listener {
 			return;
 		
 		Duel d = DuelManager.getDuel((Player)e.getEntity());
-			if(d != null && d.isStarted())
+			if(d != null)
 			{
-				Kit kit = getKit((Player)e.getEntity());
-				
-				if(kit == null)
+				if(d.isStarted())
 				{
-					return;
+					Kit kit = getKit((Player)e.getEntity());
+					
+					if(kit == null)
+					{
+						return;
+					}
+					
+					if(!kit.getSettings().contains(KitSettings.HUNGER))
+					{
+						e.setCancelled(true);
+					}
 				}
-				
-				if(!kit.getSettings().contains(KitSettings.HUNGER))
+				else
 				{
 					e.setCancelled(true);
 				}
