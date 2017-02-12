@@ -103,8 +103,8 @@ public class Map
 		loadCorners(corners);
 		loadInsideCorners(insideCorners);
 		
-		sizeX = Math.abs((int) corners[7].toVector().subtract(corners[0].toVector()).getX());
-		sizeY = Math.abs((int) corners[7].toVector().subtract(corners[0].toVector()).getY());
+		sizeX = Math.abs((int) corners[5].toVector().subtract(corners[0].toVector()).getX());
+		sizeY = Math.abs((int) corners[5].toVector().subtract(corners[0].toVector()).getZ());
 		
 		this.spawns = new Location[2];
 		

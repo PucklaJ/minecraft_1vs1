@@ -1309,7 +1309,7 @@ public class DuelListener implements Listener {
 			e.setCancelled(true);
 		}
 		
-		if(!e.isCancelled())
+		if(!e.isCancelled() && d != null && !d.isStarted() && !d.hasEnded())
 		{
 			lastCursor.put(p.getUniqueId(), e.getCurrentItem() == null ? null : e.getCurrentItem().clone());
 			
