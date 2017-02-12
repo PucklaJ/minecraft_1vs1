@@ -359,4 +359,29 @@ public class RankedQueue
 		p.sendMessage(Messages.removeFromRankedQueue);
 		p.playSound(p.getLocation(), Sounds.rankedLeave, Sounds.rankedLeaveVolume, Sounds.DEFAULT_PITCH);
 	}
+	
+	public static ArrayList<OfflinePlayer> getTopPlayers()
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT * FROM Duel_RankedELO ORDER BY ELO DESC LIMIT 10");
+			ResultSet rs = ps.executeQuery();
+			
+			ArrayList<OfflinePlayer> players = new ArrayList<>();
+			
+			while(rs.next())
+			{
+				OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(rs.getString(1)));
+				players.add(op);
+			}
+			
+			return players;
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return new ArrayList<>();
+	}
 }

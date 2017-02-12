@@ -42,6 +42,8 @@ public class TestCommand implements CommandExecutor {
 			LobbyListener.spawnFireWork(p.getLocation());
 		}
 		
+		MainClass.getInstance().spawnKitSkeleton();
+		
 		return true;
 	}
 

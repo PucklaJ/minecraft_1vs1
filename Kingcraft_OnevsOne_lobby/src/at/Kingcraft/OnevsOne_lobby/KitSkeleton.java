@@ -44,9 +44,6 @@ public class KitSkeleton extends EntitySkeleton
 	{
 		if(!needsReload)
 		{
-			getBukkitEntity().getLocation().getChunk().unload(true, false);
-			getBukkitEntity().getLocation().getChunk().load();
-			
 			world.addEntity(this);
 		}
 	}
@@ -63,7 +60,7 @@ public class KitSkeleton extends EntitySkeleton
 			((CraftSkeleton)this.getBukkitEntity()).getEquipment().setBoots(new ItemStack(Material.CHAINMAIL_BOOTS));
 			((CraftSkeleton)this.getBukkitEntity()).getEquipment().setItemInHand(new ItemStack(Material.BOW));
 			
-			am = (ArmorStand)Bukkit.getWorld(MainClass.getInstance().getConfig().getString("World.Name")).spawn(loc, ArmorStand.class);
+			am = (ArmorStand)Bukkit.getWorld(MainClass.getInstance().getConfig().getString("Kit-Skeleton.world")).spawn(loc, ArmorStand.class);
 			
 			am.setVisible(false);
 			am.setCustomName(ChatColor.YELLOW + "Kit-Einstellungen");

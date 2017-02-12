@@ -21,6 +21,7 @@ public class MenuManager {
 	private static HashMap<UUID,SpectateMenu> spectateMenus;
 	private static HashMap<UUID,TournamentViewMenu> tourViewMenus;
 	private static HashMap<UUID,RankedMenu> rankedMenus;
+	private static HashMap<UUID,TopMenu> topMenus;
 	private static MainClass plugin;
 	
 	public static void setup(MainClass plugin)
@@ -31,6 +32,7 @@ public class MenuManager {
 		spectateMenus = new HashMap<>();
 		tourViewMenus = new HashMap<>();
 		rankedMenus = new HashMap<>();
+		topMenus = new HashMap<>();
 	}
 	
 	public static void addSettingMenu(Player owner)
@@ -69,9 +71,22 @@ public class MenuManager {
 		return menus;
 	}
 	
+	public static TopMenu getTopMenu(Player p)
+	{
+		if(topMenus.get(p.getUniqueId()) == null)
+			topMenus.put(p.getUniqueId(), new TopMenu(p));
+		
+		return topMenus.get(p.getUniqueId());
+	}
+	
 	public static void deleteSettingMenu(Player owner)
 	{
 		settingMenus.remove(owner.getUniqueId());
+	}
+	
+	public static void deleteTopMenu(Player owner)
+	{
+		topMenus.remove(owner.getUniqueId());
 	}
 	
 	public static SettingMenu getSettingMenu(Player owner)

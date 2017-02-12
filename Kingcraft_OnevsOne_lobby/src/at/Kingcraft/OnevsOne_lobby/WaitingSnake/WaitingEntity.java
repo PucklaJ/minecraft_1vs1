@@ -41,9 +41,6 @@ public class WaitingEntity extends EntityZombie
 	{
 		if(!needsReload)
 		{
-			getBukkitEntity().getLocation().getChunk().unload(true, false);
-			getBukkitEntity().getLocation().getChunk().load();
-			
 			world.addEntity(this);
 		}
 	}

@@ -413,6 +413,7 @@ public class LobbyListener implements Listener {
 						@Override
 						public void run()
 						{
+							plugin.getKitSkeleton().reload();
 							plugin.getWaitingEntity().reload();
 						}
 					});
@@ -452,7 +453,7 @@ public class LobbyListener implements Listener {
 		
 		if(plugin.getServer().getOnlinePlayers().size() == 1 || plugin.getServer().getOnlinePlayers().size() == 0)
 		{
-			plugin.getWaitingEntity().reloadChunk();
+			plugin.reloadEntities();
 		}
 		
 		if(Settings.getSettings(p).addToWSOnJoin())
@@ -732,6 +733,7 @@ public class LobbyListener implements Listener {
 		MenuManager.deleteSpectateMenu(p);
 		MenuManager.deleteTournamentViewMenu(p);
 		MenuManager.deleteRankedMenu(p);
+		MenuManager.deleteTopMenu(p);
 		
 		StatisticsManager.deleteStatistics(p);
 		
@@ -742,7 +744,6 @@ public class LobbyListener implements Listener {
 		{
 			ForceQueueCommand.remove(p.getUniqueId());
 		}
-		
 	}
 	
 	private static boolean isBanedItem(ItemStack is)
@@ -859,6 +860,11 @@ public class LobbyListener implements Listener {
 			else if(inv.getName().startsWith("Ranked"))
 			{
 				MenuManager.getRankedMenu(p).onClick(e.getSlot(), e.getClick());
+				e.setCancelled(true);
+			}
+			else if(inv.getName().equals("Top-Spieler"))
+			{
+				MenuManager.getTopMenu(p).onClick(e.getSlot(), e.getClick());
 				e.setCancelled(true);
 			}
 			else if(e.getCurrentItem().getType() != Material.AIR &&
@@ -1064,6 +1070,10 @@ public class LobbyListener implements Listener {
 			return;
 		}
 		else if(e.getEntity().getLocation().equals(plugin.getWaitingEntity().getBukkitEntity().getLocation()))
+		{
+			return;
+		}
+		else if(e.getEntity().getLocation().equals(plugin.getKitSkeleton().getBukkitEntity().getLocation()))
 		{
 			return;
 		}

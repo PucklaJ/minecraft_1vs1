@@ -365,8 +365,6 @@ public class KitManager {
 			p.playSound(p.getLocation(), Sounds.kitPlaceJoin, Sounds.kitPlaceJoinVolume, Sounds.DEFAULT_PITCH);
 		}
 		
-		
-		
 	}
 	
 	public static void addToNormal(Player p)

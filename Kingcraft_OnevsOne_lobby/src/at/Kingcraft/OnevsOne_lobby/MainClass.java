@@ -112,6 +112,25 @@ public class MainClass extends JavaPlugin {
 		return mysql;
 	}
 	
+	public void reloadEntities()
+	{
+		Bukkit.getScheduler().runTaskLater(this, new Runnable() {
+			
+			@Override
+			public void run()
+			{
+				getWaitingEntity().getBukkitEntity().getLocation().getChunk().unload(true, false);
+				getWaitingEntity().getBukkitEntity().getLocation().getChunk().load();
+				getKitSkeleton().getBukkitEntity().getLocation().getChunk().unload(true, false);
+				getKitSkeleton().getBukkitEntity().getLocation().getChunk().load();
+				
+				getKitSkeleton().reloadChunk();
+				getWaitingEntity().reloadChunk();
+			}
+		},5);
+		
+	}
+	
 	private void setupConfig() {
 		this.getConfig().options().header("Einstellungen fuer OnevsOne plugin");
 
@@ -270,8 +289,9 @@ public class MainClass extends JavaPlugin {
 		Messenger.sendMessage(null, "BungeeCord", "GetServers", (String[])null);
 	}
 	
-	private void spawnWEntity(World world)
+	public void spawnWEntity(World world)
 	{
+		
 		Location weLoc = null;
 		if(world != null)
 			weLoc = new Location(world,
@@ -285,7 +305,7 @@ public class MainClass extends JavaPlugin {
 			we = new WaitingEntity(((CraftWorld)world).getHandle(),weLoc);
 	}
 	
-	private void spawnKitSkeleton()
+	public void spawnKitSkeleton()
 	{
 		World kitWorld = Bukkit.getWorld(this.getConfig().getString("Kit-Skeleton.world"));
 		
@@ -497,6 +517,7 @@ public class MainClass extends JavaPlugin {
 			MenuManager.deleteSpectateMenu(p);
 			MenuManager.deleteTournamentViewMenu(p);
 			MenuManager.deleteRankedMenu(p);
+			MenuManager.deleteTopMenu(p);
 			
 			StatisticsManager.deleteStatistics(p);
 			

@@ -12,6 +12,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import at.Kingcraft.OnevsOne_lobby.MainClass;
 import at.Kingcraft.OnevsOne_lobby.Items.Items;
 import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
+import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
 import at.Kingcraft.OnevsOne_lobby.Kits.KitSettings;
 import at.Kingcraft.OnevsOne_lobby.Special.AnvilGUI.AnvilClickEvent;
 import at.Kingcraft.OnevsOne_lobby.Special.AnvilGUI.AnvilClickEventHandler;
@@ -202,7 +203,10 @@ public class KitSettingMenu extends Menu implements AnvilClickEventHandler
 	{
 		if(slot == BACK_POS && ct.isLeftClick())
 		{
-			close();
+			if(KitManager.isKitPlayer(owner))
+				owner.closeInventory();
+			else
+				close();
 		}
 		else if(isActivateClick(slot) && ct.isLeftClick())
 		{

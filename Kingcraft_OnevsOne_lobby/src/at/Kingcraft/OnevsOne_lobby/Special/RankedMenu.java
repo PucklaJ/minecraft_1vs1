@@ -1,5 +1,7 @@
 package at.Kingcraft.OnevsOne_lobby.Special;
 
+import java.util.ArrayList;
+
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -18,11 +20,12 @@ public class RankedMenu extends Menu
 	private static final int KIT1_POS = 11;
 	private static final int KIT2_POS = 13;
 	private static final int KIT3_POS = 15;
+	private static final int TOP_POS = 31;
 	private boolean inRanked = false; 
 	
 	public RankedMenu(Player owner)
 	{
-		super(owner, 27, "Ranked (ELO:" + RankedQueue.getELO(owner) + ")", null);
+		super(owner, 45, "Ranked (ELO:" + RankedQueue.getELO(owner) + ")", null);
 	}
 	
 	@Override
@@ -48,9 +51,22 @@ public class RankedMenu extends Menu
 			Kit kit2 = KitManager.getPreKit(16);
 			Kit kit3 = KitManager.getPreKit(17);
 			
+			ItemStack top = new ItemStack(Material.EMERALD);
+			{
+				ItemMeta im = top.getItemMeta();
+				im.setDisplayName(ChatColor.YELLOW + "Top-Spieler");
+				ArrayList<String> lore = new ArrayList<>();
+				lore.add(ChatColor.WHITE + "Hinter diesem Edelstein");
+				lore.add(ChatColor.WHITE + "verbergen sich die besten Spieler");
+				lore.add(ChatColor.WHITE + "des Netzwerkes");
+				im.setLore(lore);
+				top.setItemMeta(im);
+			}
+			
 			inventory.setItem(KIT1_POS, kit1.getSymbol(true));
 			inventory.setItem(KIT2_POS, kit2.getSymbol(true));
 			inventory.setItem(KIT3_POS, kit3.getSymbol(true));
+			inventory.setItem(TOP_POS, top);
 		}
 		else
 		{
@@ -75,29 +91,36 @@ public class RankedMenu extends Menu
 		{
 			if(!inRanked)
 			{
-				switch(slot)
+				if(slot == TOP_POS)
 				{
-				case KIT1_POS:
-					kit = 0;
-					break;
-				case KIT2_POS:
-					kit = 1;
-					break;
-				case KIT3_POS:
-					kit = 2;
-					break;
+					MenuManager.getTopMenu(owner).open();
 				}
-				
-				if(kit != -1)
+				else
 				{
-					Team t = TeamManager.getTeam(owner);
-					if(t == null)
+					switch(slot)
 					{
-						RankedQueue.addPlayer(owner, kit);
-						toogleLeaveItem();
-						close();
+					case KIT1_POS:
+						kit = 0;
+						break;
+					case KIT2_POS:
+						kit = 1;
+						break;
+					case KIT3_POS:
+						kit = 2;
+						break;
 					}
-					return;
+					
+					if(kit != -1)
+					{
+						Team t = TeamManager.getTeam(owner);
+						if(t == null)
+						{
+							RankedQueue.addPlayer(owner, kit);
+							toogleLeaveItem();
+							close();
+						}
+						return;
+					}
 				}
 			}
 			else
