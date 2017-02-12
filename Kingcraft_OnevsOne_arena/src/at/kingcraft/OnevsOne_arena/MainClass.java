@@ -23,6 +23,7 @@ import at.kingcraft.OnevsOne_arena.Listener.DuelListener;
 import at.kingcraft.OnevsOne_arena.Menus.MenuManager;
 import at.kingcraft.OnevsOne_arena.Messaging.Messages;
 import at.kingcraft.OnevsOne_arena.Messaging.Messenger;
+import at.kingcraft.OnevsOne_arena.Particles.ParticleHandler;
 import at.kingcraft.OnevsOne_arena.Scoreboard.MyScoreboardManager;
 import at.kingcraft.OnevsOne_arena.Tournaments.TournamentManager;
 import at.kingcraft.OnevsOne_arena.Waiting.WaitingHouse;
@@ -179,6 +180,7 @@ public class MainClass extends JavaPlugin{
 		
 		// Register Listeners
 		this.getServer().getPluginManager().registerEvents(new DuelListener(this), this);
+		this.getServer().getPluginManager().registerEvents(new ParticleHandler(), this);
 		OnlinePlayers.setup();
 		MyScoreboardManager.setup();
 		

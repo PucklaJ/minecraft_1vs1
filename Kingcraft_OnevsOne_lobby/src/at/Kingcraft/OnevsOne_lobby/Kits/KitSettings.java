@@ -13,20 +13,21 @@ import net.md_5.bungee.api.ChatColor;
 
 public enum KitSettings
 {
-	NO_FALL_DAMAGE (setSymbol(0),1,false,"Kein Fallschaden"),
-	PLACE_BREAK_BLOCKS (setSymbol(1),2,true,"Blöcke (ab)bauen"),
-	HUNGER (setSymbol(2),4,false,"Hunger"),
-	REGENARATION(setSymbol(3),8,true,"Regeneration"),
-	NO_EXPLOSION_DESTRUCTION(setSymbol(4),16,false,"Keine Zerstörung durch Explosionen"),
-	INSTANT_TNT(setSymbol(5),32,false,"Sofort TNT"),
-	NO_KNOCKBACK(setSymbol(6),64,false,"Kein Rückstoß"),
-	FRIENDLY_FIRE(setSymbol(7),128,false,"Teamschaden"),
-	NO_CRAFTING(setSymbol(8),256,false,"Kein Crafting"),
-	DOUBLE_JUMP(setSymbol(9),512,false,"Doppelsprung"),
-	SOUP(setSymbol(10),1024,false,"Suppen-Heilung"),
-	NO_SOUP_DROP(setSymbol(11),2048,false,"Keine Suppen fallenlassen"),
-	NO_HIT_DELAY(setSymbol(12),4096,false,"Keine Schlagverzögerung"),
-	NO_ARROW_COLLECT(setSymbol(13),8192,false,"Keine Pfeile einsammeln");
+	NO_FALL_DAMAGE (setSymbol(0),1 << 0,false,"Kein Fallschaden"),
+	PLACE_BREAK_BLOCKS (setSymbol(1),1 << 1,true,"Blöcke (ab)bauen"),
+	HUNGER (setSymbol(2),1 << 2,false,"Hunger"),
+	REGENARATION(setSymbol(3),1 << 3,true,"Regeneration"),
+	NO_EXPLOSION_DESTRUCTION(setSymbol(4),1 << 4,false,"Keine Zerstörung durch Explosionen"),
+	INSTANT_TNT(setSymbol(5),1 << 5,false,"Sofort TNT"),
+	NO_KNOCKBACK(setSymbol(6),1 << 6,false,"Kein Rückstoß"),
+	FRIENDLY_FIRE(setSymbol(7),1 << 7,false,"Teamschaden"),
+	NO_CRAFTING(setSymbol(8),1 << 8,false,"Kein Crafting"),
+	DOUBLE_JUMP(setSymbol(9),1 << 9,false,"Doppelsprung"),
+	SOUP(setSymbol(10),1 << 10,false,"Suppen-Heilung"),
+	NO_SOUP_DROP(setSymbol(11),1 << 11,false,"Keine Suppen fallenlassen"),
+	NO_HIT_DELAY(setSymbol(12),1 << 12,false,"Keine Schlagverzögerung"),
+	NO_ARROW_COLLECT(setSymbol(13),1 << 13,false,"Keine Pfeile einsammeln"),
+	MORE_PARTICLES(setSymbol(14),1 << 14,false,"Mehr Partikel");
 	
 	private ItemStack symbol;
 	private final int BIT;
@@ -178,6 +179,14 @@ public enum KitSettings
 				is.setType(Material.ARROW);
 				im.setDisplayName(ChatColor.YELLOW + "Keine Pfeile aufsammeln");
 				lore.add(ChatColor.WHITE + "Bestimmt, ob man Pfeile aufsammeln kann");
+				im.setLore(lore);
+				is.setItemMeta(im);
+				break;
+			case 14:
+				is.setType(Material.ENCHANTED_BOOK);
+				im.setDisplayName(ChatColor.YELLOW + "Mehr Partikel");
+				lore.add(ChatColor.WHITE + "Spawnt mehr Partikel bei");
+				lore.add(ChatColor.WHITE + "Schlägen, Krits und Pfeilen");
 				im.setLore(lore);
 				is.setItemMeta(im);
 				break;

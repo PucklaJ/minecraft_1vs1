@@ -2,20 +2,21 @@ package at.kingcraft.OnevsOne_arena.Kits;
 
 public enum KitSettings
 {
-	NO_FALL_DAMAGE (1,false,"Kein Fallschaden"),
-	PLACE_BREAK_BLOCKS (2,true,"Blöcke (ab)bauen"),
-	HUNGER (4,false,"Hunger"),
-	REGENARATION(8,true,"Regeneration"),
-	NO_EXPLOSION_DESTRUCTION(16,false,"Keine Zerstörung durch Explosionen"),
-	INSTANT_TNT(32,false,"Sofort TNT"),
-	NO_KNOCKBACK(64,false,"Kein Rückstoß"),
-	FRIENDLY_FIRE(128,false,"Teamschaden"),
-	NO_CRAFTING(256,false,"Kein Crafting"),
-	DOUBLE_JUMP(512,false,"Doppelsprung"),
-	SOUP(1024,false,"Suppen-Heilung"),
-	NO_SOUP_DROP(2048,false,"Keine Suppen fallenlassen"),
-	NO_HIT_DELAY(4096,false,"Keine Schlagverzögerung"),
-	NO_ARROW_COLLECT(8192,false,"Keine Pfeile aufsammeln");
+	NO_FALL_DAMAGE (1 << 0,false,"Kein Fallschaden"),
+	PLACE_BREAK_BLOCKS (1 << 1,true,"Blöcke (ab)bauen"),
+	HUNGER (1 << 2,false,"Hunger"),
+	REGENARATION(1 << 3,true,"Regeneration"),
+	NO_EXPLOSION_DESTRUCTION(1 << 4,false,"Keine Zerstörung durch Explosionen"),
+	INSTANT_TNT(1 << 5,false,"Sofort TNT"),
+	NO_KNOCKBACK(1 << 6,false,"Kein Rückstoß"),
+	FRIENDLY_FIRE(1 << 7,false,"Teamschaden"),
+	NO_CRAFTING(1 << 8,false,"Kein Crafting"),
+	DOUBLE_JUMP(1 << 9,false,"Doppelsprung"),
+	SOUP(1 << 10,false,"Suppen-Heilung"),
+	NO_SOUP_DROP(1 << 11,false,"Keine Suppen fallenlassen"),
+	NO_HIT_DELAY(1 << 12,false,"Keine Schlagverzögerung"),
+	NO_ARROW_COLLECT(1 << 13,false,"Keine Pfeile aufsammeln"),
+	MORE_PARTICLES(1 << 14,false,"Mehr Partikel");
 	
 	private final int BIT;
 	private final boolean D_A;
