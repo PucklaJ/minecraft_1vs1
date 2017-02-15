@@ -129,6 +129,9 @@ public class Messages
 	public static String addToRankedQueue;
 	public static String removeFromRankedQueue;
 	private static String kitCommandInKitPlace;
+	private static String forceQueueAdd;
+	public static String forceQueueRemove;
+	public static String forceQueueSelf;
 	
 	private static void addDefaults()
 	{
@@ -246,6 +249,9 @@ public class Messages
 		addToRankedQueue = ChatColor.YELLOW + "Du wurdest zur Ranked Warteschlange hinzugefügt";
 		removeFromRankedQueue = ChatColor.YELLOW + "Du wurdest von der Ranked Warteschlange entfernt";
 		kitCommandInKitPlace = ChatColor.YELLOW + "Das Kit " + ChatColor.BLUE + "%kit% " + ChatColor.YELLOW + "wird als Vorlage verwendet";
+		forceQueueAdd = ChatColor.YELLOW + "You are forecqueueing " + ChatColor.GREEN + "%player%";
+		forceQueueRemove = ChatColor.YELLOW + "You have been deleted from the forcequeue";
+		forceQueueSelf = ChatColor.RED + "You cannot forcequeue yourself";
 		
 		config.addDefault("min-kit-set", minKitSet);
 		config.addDefault("max-kit-set", maxKitSet);
@@ -361,6 +367,9 @@ public class Messages
 		config.addDefault("add-to-ranked-queue", addToRankedQueue);
 		config.addDefault("remove-from-ranked-queue", removeFromRankedQueue);
 		config.addDefault("kit-command-in-kit-place", kitCommandInKitPlace);
+		config.addDefault("forcequeue-add", forceQueueAdd);
+		config.addDefault("forcequeue-remove", forceQueueRemove);
+		config.addDefault("forcequeue-self", forceQueueSelf);
 		
 		config.options().copyDefaults(true);
 		
@@ -621,6 +630,11 @@ public class Messages
 		return kitCommandInKitPlace.replaceAll("%kit%", kit);
 	}
 	
+	public static String forceQueueAdd(String player)
+	{
+		return forceQueueAdd.replaceAll("%player%", player);
+	}
+	
 	private static void setValues()
 	{
 		minKitSet = config.getString("min-kit-set");
@@ -737,6 +751,9 @@ public class Messages
 		removeFromRankedQueue = config.getString("remove-from-ranked-queue");
 		stats = config.getString("stats");
 		kitCommandInKitPlace = config.getString("kit-command-in-kit-place");
+		forceQueueAdd = config.getString("forcequeue-add");
+		forceQueueRemove = config.getString("forcequeue-remove");
+		forceQueueSelf = config.getString("forcequeue-self");
 	}
 	
 	public static void setup()

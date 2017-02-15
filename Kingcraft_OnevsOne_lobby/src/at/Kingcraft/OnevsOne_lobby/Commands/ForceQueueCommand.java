@@ -93,7 +93,7 @@ public class ForceQueueCommand implements CommandExecutor {
 				{	
 					remove(p.getUniqueId());
 					
-					p.sendMessage(ChatColor.YELLOW +  "You have been deleted from the forcequeue");
+					p.sendMessage(Messages.forceQueueRemove);
 					return true;
 				}
 				else
@@ -120,7 +120,7 @@ public class ForceQueueCommand implements CommandExecutor {
 			
 			if(p.getUniqueId().equals(uuid))
 			{
-				p.sendMessage(ChatColor.RED + "You cannot forcequeue yourself");
+				p.sendMessage(Messages.forceQueueSelf);
 				return true; 
 			}
 			
@@ -135,7 +135,7 @@ public class ForceQueueCommand implements CommandExecutor {
 				ps.setString(2, uuid.toString());
 				ps.executeUpdate();
 				
-				p.sendMessage(ChatColor.YELLOW + "You are forcequeueing " + ChatColor.GREEN + name);
+				p.sendMessage(Messages.forceQueueAdd(name));
 			}
 			catch (SQLException e) 
 			{
