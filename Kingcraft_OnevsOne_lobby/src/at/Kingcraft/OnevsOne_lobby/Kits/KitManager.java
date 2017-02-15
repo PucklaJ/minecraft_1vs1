@@ -916,19 +916,11 @@ public class KitManager {
 		{
 			playerKits.put(p.getUniqueId(), new ArrayList<>());
 		}
-		/*if(soupKits.get(p.getUniqueId()) == null)
-		{
-			soupKits.put(p.getUniqueId(), new ArrayList<>());
-		}*/
 		
 		if(playerKits.get(p.getUniqueId()).size() == 0)
 		{
 			playerKits.get(p.getUniqueId()).add(new Kit(p,1,false));
 		}
-		/*if(soupKits.get(p.getUniqueId()).size() == 0)
-		{
-			soupKits.get(p.getUniqueId()).add(new Kit(p,6,false));
-		}*/
 		
 		if(difKitSetter.get(p.getUniqueId()) != null)
 		{
@@ -966,11 +958,7 @@ public class KitManager {
 		{
 			int cKit = getChoosenKit(p).myNumber;
 			
-			/*if(cKit >= 5)
-			{
-				soupKits.get(p.getUniqueId()).get(cKit).getItemsFromInventory(p);
-			}
-			else */if(cKit >=0)
+			if(cKit >=0)
 			{
 				playerKits.get(p.getUniqueId()).get(cKit).getItemsFromInventory(p);
 			}
@@ -982,16 +970,13 @@ public class KitManager {
 		
 		
 		normalPlayers.add(p);
-		LobbyListener.setupSpawnItems(p, false, TournamentManager.getTournament(p) != null);
-		p.sendMessage(Messages.kitPlaceLeave);
-		p.playSound(p.getLocation(), Sounds.kitPlaceLeave, Sounds.kitPlaceLeaveVolume, Sounds.DEFAULT_PITCH);
 		if(kitPlayers.contains(p))
 		{
 			kitPlayers.remove(p);
 		}
-		
-		
-		
+		LobbyListener.setupSpawnItems(p, false, TournamentManager.getTournament(p) != null);
+		p.sendMessage(Messages.kitPlaceLeave);
+		p.playSound(p.getLocation(), Sounds.kitPlaceLeave, Sounds.kitPlaceLeaveVolume, Sounds.DEFAULT_PITCH);
 	}
 	
 	private static String getPreKitNameForMySQL(int number)

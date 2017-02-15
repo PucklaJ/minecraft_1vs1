@@ -19,6 +19,7 @@ import at.Kingcraft.OnevsOne_lobby.Arenas.ArenaManager;
 import at.Kingcraft.OnevsOne_lobby.Items.Items;
 import at.Kingcraft.OnevsOne_lobby.Kits.Kit;
 import at.Kingcraft.OnevsOne_lobby.Kits.KitManager;
+import at.Kingcraft.OnevsOne_lobby.Lobby.LobbyListener;
 import at.Kingcraft.OnevsOne_lobby.Messaging.Messages;
 import at.Kingcraft.OnevsOne_lobby.Special.EnquieryMenu;
 import at.Kingcraft.OnevsOne_lobby.Special.MapMenu;
@@ -128,11 +129,14 @@ public class ChallangeManager {
 	
 	public static void setupSkull(Player p, Player other)
 	{
-		ItemStack item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
-		
-		ArrayList<String> lore = null;
-		
-		setupSkullHotbar(item, other, p, lore);
+		if(!KitManager.isKitPlayer(p) && !LobbyListener.kitViewer.contains(p.getUniqueId()))
+		{
+			ItemStack item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+			
+			ArrayList<String> lore = null;
+			
+			setupSkullHotbar(item, other, p, lore);
+		}
 
 		setupSkullInventory(p);
 
@@ -162,19 +166,22 @@ public class ChallangeManager {
 	}
 
 	public static void setupSkull(Player p, Player other, boolean first) {
-		ItemStack item = null;
-		if(first)
+		if(!KitManager.isKitPlayer(p) && !LobbyListener.kitViewer.contains(p.getUniqueId()))
 		{
-			item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
-		}
-		else
-		{
-			item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
-		}
+			ItemStack item = null;
+			if(first)
+			{
+				item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+			}
+			else
+			{
+				item = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+			}
 
-		ArrayList<String> lore = null;
-		
-		setupSkullHotbar(item, other, p,lore);
+			ArrayList<String> lore = null;
+			
+			setupSkullHotbar(item, other, p,lore);
+		}
 
 
 		if (first)
