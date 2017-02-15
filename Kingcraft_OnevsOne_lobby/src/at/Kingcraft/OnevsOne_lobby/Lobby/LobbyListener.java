@@ -75,6 +75,7 @@ import at.Kingcraft.OnevsOne_lobby.Stats.Statistics;
 import at.Kingcraft.OnevsOne_lobby.Stats.StatisticsManager;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.Tournament;
 import at.Kingcraft.OnevsOne_lobby.Tournaments.TournamentManager;
+import at.Kingcraft.OnevsOne_lobby.WaitingSnake.RankedQueue;
 import at.Kingcraft.OnevsOne_lobby.WaitingSnake.Settings;
 import de.xAdler.Title;
 import de.xAdler.TitleAPI.Colors;
@@ -744,6 +745,8 @@ public class LobbyListener implements Listener {
 		{
 			ForceQueueCommand.remove(p.getUniqueId());
 		}
+		
+		RankedQueue.removePlayer(p);
 	}
 	
 	private static boolean isBanedItem(ItemStack is)
