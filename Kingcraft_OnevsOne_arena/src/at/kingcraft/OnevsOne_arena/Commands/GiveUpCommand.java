@@ -102,15 +102,18 @@ public class GiveUpCommand implements CommandExecutor {
 				
 				handleLosers(d,maxRoundLevel,tourn.getRound(p),bothLeave);
 				
-				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
-					
-					@Override
-					public void run()
-					{
-						map.reload(null);
-					}
-				}, 20*4);
-				
+				if(map != null)
+				{
+					Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+						
+						@Override
+						public void run()
+						{
+							map.reload(null);
+						}
+					}, 20*4);
+				}	
+			
 				
 				Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
 					
@@ -303,7 +306,7 @@ public class GiveUpCommand implements CommandExecutor {
 			ArrayList<TourPlayer> loser1 = convert1(loser);
 			ArrayList<TourPlayer> loser2 = convert2(d.getLoserUUID());
 			
-			Round round = r != null ? r : t.getAllRound(MainClass.getInstance().serverName);
+			Round round = r != null ? r : (t != null ? t.getAllRound(MainClass.getInstance().serverName) : null);
 			
 			if(r != null)
 			{
@@ -427,7 +430,7 @@ public class GiveUpCommand implements CommandExecutor {
 			public void run()
 			{
 				for(int i = 0;i<d.getWinner().size();i++)
-				{
+				{					
 					boolean isOnline = false;
 					for(Player p1: Bukkit.getOnlinePlayers())
 					{
@@ -443,6 +446,8 @@ public class GiveUpCommand implements CommandExecutor {
 					
 					if(!TournamentManager.isSpectator(d.getWinner().get(i), false))
 					{
+						if(tourn == null)
+							break;
 						TournamentManager.addSpectator(new Spectator(d.getWinner().get(i), tourn.getID(), d.getHomeServer(d.getWinner().get(i))), true, false);
 					}
 				}

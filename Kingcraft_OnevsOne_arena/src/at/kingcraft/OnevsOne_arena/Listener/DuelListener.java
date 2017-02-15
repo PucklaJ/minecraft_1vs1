@@ -1316,10 +1316,18 @@ public class DuelListener implements Listener {
 			}
 		}
 		
-		if(!e.isCancelled() && d != null && !d.isStarted() && !d.hasEnded())
+		if(!e.isCancelled() && d != null && !d.isStarted() && !d.hasEnded() && !e.getClick().isShiftClick() && !d.isSpectator(p, true))
 		{
-			lastCursor.put(p.getUniqueId(), e.getCurrentItem() == null ? null : e.getCurrentItem().clone());
+			if(e.getCurrentItem() != null)
+			{
+				System.out.println("LastCursor: " + e.getCurrentItem().getType().toString());
+			}
+			else
+			{
+				System.out.println("is null");
+			}
 			
+			lastCursor.put(p.getUniqueId(), e.getCurrentItem() == null ? null : e.getCurrentItem().clone());
 			
 			if(e.getCurrentItem() != null && p.getInventory().getItem(e.getSlot()) != null)
 			{
@@ -1555,7 +1563,9 @@ public class DuelListener implements Listener {
 			return null;
 		}
 		
-		if(d.getKit().isDifKit())
+		Kit kit = d.getKit();
+		
+		if(kit != null && kit.isDifKit())
 		{
 			if(Kit.getDifKitNumber(p) == -1)
 				return Kit.getDifKit(p);
@@ -1572,7 +1582,7 @@ public class DuelListener implements Listener {
 		}
 		else
 		{
-			return d.getKit();
+			return kit;
 		}
 	}
 	

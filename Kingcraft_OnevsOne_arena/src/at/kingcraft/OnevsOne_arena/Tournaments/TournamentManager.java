@@ -26,6 +26,7 @@ import at.kingcraft.OnevsOne_arena.Kits.Kit;
 import at.kingcraft.OnevsOne_arena.Menus.DuelsMenu;
 import at.kingcraft.OnevsOne_arena.Menus.MenuManager;
 import at.kingcraft.OnevsOne_arena.Messaging.Messenger;
+import at.kingcraft.OnevsOne_arena.Waiting.WaitingHouse;
 import at.kingcraft.OnevsOne_setup.Maps.Map;
 import net.md_5.bungee.api.ChatColor;
 
@@ -518,6 +519,15 @@ public class TournamentManager
 	{
 		Map map = d.getMap();
 		
+		if(map == null)
+		{
+			Location loc = WaitingHouse.getWaitngSpawn();
+			if(loc != null)
+				p.teleport(loc);
+			
+			return;
+		}
+		
 		if(!map.isLoaded())
 		{
 			Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
@@ -709,7 +719,7 @@ public class TournamentManager
 							}
 							else
 							{
-								if(t.getRounds().get(0).getServer().equals(plugin.serverName))
+								if(t.getRounds().get(0).getServer() != null && t.getRounds().get(0).getServer().equals(plugin.serverName))
 								{
 									if(isOnServer(s.player.getUniqueId()))
 									{
@@ -717,25 +727,26 @@ public class TournamentManager
 										if(d != null)
 										{
 											Map map = d.getMap();
-											Location loc = map.getMid();
-											
-											if(!loc.getWorld().equals(s.player.getWorld()))
+											if(map != null)
 											{
-												Bukkit.getScheduler().runTask(plugin, new Runnable() {
-													
-													@Override
-													public void run()
-													{
-														s.player.teleport(loc);
-													}
-												});
-											}
-											else
-											{
-												s.player.teleport(loc);
-											}
+												Location loc = map.getMid();
 												
-											
+												if(!loc.getWorld().equals(s.player.getWorld()))
+												{
+													Bukkit.getScheduler().runTask(plugin, new Runnable() {
+														
+														@Override
+														public void run()
+														{
+															s.player.teleport(loc);
+														}
+													});
+												}
+												else
+												{
+													s.player.teleport(loc);
+												}
+											}
 											continue;
 										}
 									}

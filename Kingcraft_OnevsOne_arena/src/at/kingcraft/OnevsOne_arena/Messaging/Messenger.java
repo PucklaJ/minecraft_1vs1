@@ -146,12 +146,16 @@ public class Messenger implements PluginMessageListener {
 	public static boolean sendMessage(Player p,String plugin,String subChannel,String[] args)
 	{
 		ByteArrayDataOutput bo = ByteStreams.newDataOutput();
+		if(bo == null)
+			return false;
 		bo.writeUTF(subChannel);
+		
 		
 		if(args != null)
 		{
 			for(int i = 0;i<args.length;i++)
 			{
+				if(bo != null)
 				bo.writeUTF(args[i]);
 			}
 		}
@@ -170,7 +174,8 @@ public class Messenger implements PluginMessageListener {
 			}
 		}
 		
-		p.sendPluginMessage(MainClass.getInstance(), plugin, bo.toByteArray());
+		if(bo != null)
+			p.sendPluginMessage(MainClass.getInstance(), plugin, bo.toByteArray());
 		
 		return true;
 	}
