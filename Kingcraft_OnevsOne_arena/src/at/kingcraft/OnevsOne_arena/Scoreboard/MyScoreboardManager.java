@@ -204,22 +204,15 @@ public class MyScoreboardManager
 	
 	public static void updateScoreboard()
 	{
-			//if(whichScoreboard)
-			{
-				sb = createScoreboard(sb);
-			}
-			/*else
-			{
-				buffer = createScoreboard(buffer);
-			}*/
+			sb = createScoreboard(sb);
 			
-			
-			for(Player p : Bukkit.getOnlinePlayers())
+			if(sb != null)
 			{
-				if(p.getHealth()!=0.0)
-					p.setScoreboard(/*whichScoreboard ?*/ sb /*: buffer*/);
+				for(Player p : Bukkit.getOnlinePlayers())
+				{
+					if(p.getHealth()!=0.0)
+						p.setScoreboard(sb);
+				}
 			}
-		
-			//whichScoreboard = !whichScoreboard;
 	}
 }

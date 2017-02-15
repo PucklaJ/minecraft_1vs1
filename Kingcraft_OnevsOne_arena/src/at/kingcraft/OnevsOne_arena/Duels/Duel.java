@@ -394,8 +394,22 @@ public class Duel {
 								@Override
 								public void run()
 								{
-									sendBackToLobby();
-									GiveUpCommand.sendBackToFreeServers();
+									SpectateManager.deleteFromMySQL(id);
+									
+									if(isTournament())
+									{
+										endDuel(null, true);
+										stopCountdown();
+										Challenge c = getChallenge();
+										if(c != null)
+											ChallangeManager.deleteChallenge(c.ID);
+										GiveUpCommand.handleFinishedDuel(instance, null, c, false);
+									}
+									else
+									{
+										sendBackToLobby();
+										GiveUpCommand.sendBackToFreeServers();
+									}
 									
 								}
 							}, 20*5);
@@ -875,7 +889,7 @@ public class Duel {
 			
 			Kit kit = DuelListener.getKit(p);
 			
-			if(kit.getSettings().contains(KitSettings.DOUBLE_JUMP))
+			if(kit != null && kit.getSettings().contains(KitSettings.DOUBLE_JUMP))
 			{
 				p.setAllowFlight(true);
 			}
@@ -888,7 +902,10 @@ public class Duel {
 				public void run()
 				{
 					p.setAllowFlight(false);
-					if(DuelListener.getKit(p).getSettings().contains(KitSettings.DOUBLE_JUMP))
+					
+					Kit kit = DuelListener.getKit(p);
+					
+					if(kit != null && kit.getSettings().contains(KitSettings.DOUBLE_JUMP))
 					{
 						p.setAllowFlight(true);
 					}	
@@ -1419,7 +1436,8 @@ public class Duel {
 					endDuel(p1.get(0),true);
 					stopCountdown();
 					Challenge c = ChallangeManager.getChallenge(p1.get(0));
-					ChallangeManager.deleteChallenge(c.ID);
+					if(c != null)
+						ChallangeManager.deleteChallenge(c.ID);
 					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), p1.get(0), c,false);
 					return;
 				}
@@ -1429,7 +1447,8 @@ public class Duel {
 					endDuel(p2.get(0),true);
 					stopCountdown();
 					Challenge c = ChallangeManager.getChallenge(p2.get(0));
-					ChallangeManager.deleteChallenge(c.ID);
+					if(c != null)
+						ChallangeManager.deleteChallenge(c.ID);
 					GiveUpCommand.handleFinishedDuel(DuelManager.getDuel(id), p2.get(0), c,false);
 					return;
 				}
@@ -2410,13 +2429,13 @@ public class Duel {
 				
 				for(int j = 0;j<p1.size();j++)
 				{
-					if(kit1.getSettings().contains(KitSettings.NO_HIT_DELAY))
+					if(kit1 != null && kit1.getSettings().contains(KitSettings.NO_HIT_DELAY))
 					{
 						p1.get(i).setMaximumNoDamageTicks(0);
 					}
 					
 					Kit kit = DuelListener.getKit(p1.get(j));
-					if(kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
+					if(kit != null && kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
 					{
 						p.setMaximumNoDamageTicks(0);
 					}
@@ -2428,14 +2447,16 @@ public class Duel {
 				for(int j = 0;j<p2.size();j++)
 				{
 					Kit kit = DuelListener.getKit(p2.get(j));
-					if(kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
+					if(kit != null && kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
 					{
 						p.setMaximumNoDamageTicks(0);
 						break;
 					}
 				}
 				
-				if(DuelListener.getKit(p).getSettings().contains(KitSettings.NO_HIT_DELAY))
+				Kit kit = DuelListener.getKit(p);
+				
+				if(kit != null && kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
 				{
 					for(int j = 0;j<p2.size();j++)
 					{
@@ -2450,14 +2471,16 @@ public class Duel {
 			for(int j = 0;j<p1.size();j++)
 			{
 				Kit kit = DuelListener.getKit(p1.get(j));
-				if(kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
+				if(kit != null && kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
 				{
 					p.setMaximumNoDamageTicks(0);
 					break;
 				}
 			}
 			
-			if(DuelListener.getKit(p).getSettings().contains(KitSettings.NO_HIT_DELAY))
+			Kit kit = DuelListener.getKit(p);
+			
+			if(kit != null && kit.getSettings().contains(KitSettings.NO_HIT_DELAY))
 			{
 				for(int j = 0;j<p1.size();j++)
 				{
