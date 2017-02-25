@@ -1545,9 +1545,13 @@ public class Duel {
 				return rs.getInt(1);
 			}
 			
-			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_RankedELO (UUID,ELO) VALUES(?,100)");
-			ps.setString(1, u.toString());
-			ps.executeUpdate();
+			if(!MainClass.getInstance().serverName.startsWith("test-pvparena"))
+			{
+				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_RankedELO (UUID,ELO) VALUES(?,100)");
+				ps.setString(1, u.toString());
+				ps.executeUpdate();
+			}
+			
 		}
 		catch (SQLException e)
 		{

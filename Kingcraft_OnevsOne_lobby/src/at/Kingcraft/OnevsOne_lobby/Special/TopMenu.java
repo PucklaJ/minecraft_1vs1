@@ -38,7 +38,7 @@ public class TopMenu extends Menu
 			SkullMeta im = (SkullMeta) is.getItemMeta();
 			ArrayList<String> lore = new ArrayList<>();
 			
-			if(i<players.size())
+			if(i<players.size() && players.get(i).getName() != null && !players.get(i).getName().equals("null"))
 			{
 				im.setOwner(players.get(i).getName());
 				im.setDisplayName((i==0 ? ChatColor.GOLD : ChatColor.YELLOW) + "" + ChatColor.UNDERLINE + players.get(i).getName());
