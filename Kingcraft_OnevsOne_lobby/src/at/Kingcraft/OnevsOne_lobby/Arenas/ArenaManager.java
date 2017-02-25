@@ -304,9 +304,10 @@ public class ArenaManager {
 			
 			while(rs.next())
 			{
-				if(rs.getString(1).startsWith(getPrefix()))
+				String server = rs.getString(1);
+				if(server.startsWith(getPrefix()))
 				{
-					servers.add(rs.getString(1));
+					servers.add(server);
 				}
 			}
 		}

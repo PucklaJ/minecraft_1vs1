@@ -2435,7 +2435,7 @@ public class Duel {
 				{
 					if(kit1 != null && kit1.getSettings().contains(KitSettings.NO_HIT_DELAY))
 					{
-						p1.get(i).setMaximumNoDamageTicks(0);
+						p1.get(j).setMaximumNoDamageTicks(0);
 					}
 					
 					Kit kit = DuelListener.getKit(p1.get(j));

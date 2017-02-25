@@ -188,10 +188,13 @@ public class RankedQueue
 	
 	private static void matchPlayers()
 	{
+		if(ArenaManager.getServers(1).isEmpty())
+			return;
+		
 		HashMap<UUID, UUID> forceQueue = ForceQueueCommand.getForceQueued();
 		
 		for(int i = 0;i<playersInQueue.size() && !ArenaManager.getServers(1).isEmpty();i++)
-		{
+		{	
 			UUID force = forceQueue.get(playersInQueue.get(i).uuid);
 			
 			if(force != null)
@@ -316,10 +319,10 @@ public class RankedQueue
 			ps.setDate(4, week);
 			ps.setDate(5, day);
 			ps.setDate(6, hour);
-			ps.setString(7, ru1.uuid.toString());
-			ps.setInt(8, weekM);
-			ps.setInt(9, dayM);
-			ps.setInt(10, hourM);
+			ps.setInt(7, weekM);
+			ps.setInt(8, dayM);
+			ps.setInt(9, hourM);
+			ps.setString(10, ru1.uuid.toString());
 			ps.setString(11, ru2.uuid.toString());
 			ps.setString(12, ru2.uuid.toString());
 			ps.setString(13, ru1.uuid.toString());
@@ -482,6 +485,9 @@ public class RankedQueue
 			{
 				e.printStackTrace();
 			}
+			
+			setLastPlayed(ru1, ru2);
+			setLastPlayed(ru2, ru1);
 		}
 		else
 		{
@@ -521,7 +527,14 @@ public class RankedQueue
 		
 		kit = KitManager.getPreKit(15 + ru1.kit);
 		
-		arenaServer = ArenaManager.getServers(1).get(0);
+		ArrayList<String> servers = ArenaManager.getServers(1);
+		
+		for(int i = 0;i<servers.size();i++)
+		{
+			System.out.println(i + ". Server: " + servers.get(i));
+		}
+		
+		arenaServer = servers.get(0);
 		
 		if(DuelManager.sendDuelToSQL(wsu11, wsu12, new Random().nextInt(Integer.MAX_VALUE),-5, null, kit.itemsToString(), serverNames, arenaServer, arena, 1, -1) != 1)
 		{
@@ -570,6 +583,9 @@ public class RankedQueue
 	
 	private static void update()
 	{
+		if(Bukkit.getOnlinePlayers().isEmpty())
+			return;
+		
 		uploadPlayers();
 		loadPlayers();
 		updatePlayTimes();
@@ -665,27 +681,23 @@ public class RankedQueue
 				
 				if(weeks)
 				{
-					qry += "Week = 0,LastWeek = CAST(NULL AS DATE),LastWeekMinutes = CAST(NULL AS INT)" + (days || hours ? "," : " ");
+					qry += "Week = 0,LastWeek = NULL,LastWeekMinutes = NULL" + (days || hours ? "," : " ");
 				}
 				if(days)
 				{
-					qry += "Day = 0,LastDay = CAST(NULL AS DATE),LastDayMinutes = CAST(NULL AS INT)" + (hours ? "," : " ");
+					qry += "Day = 0,LastDay = NULL,LastDayMinutes = NULL" + (hours ? "," : " ");
 				}
 				if(hours)
 				{
-					qry += "Hour = 0,LastHour = CAST(NULL AS DATE),LastHourMinutes = CAST(NULL AS INT) ";
+					qry += "Hour = 0,LastHour = NULL,LastHourMinutes = NULL ";
 				}
 				
-				qry += "WHERE (UUID1 = ? AND UUID2 = ?) OR (UUID1 = ? AND UUID2 = ?)";
+				qry += "WHERE (UUID1 = '" + p1.uuid.toString() + "' AND UUID2 = '" + p2.uuid.toString() + "') OR (UUID1 = '" + p2.uuid.toString() + "' AND UUID2 = '" + p1.uuid.toString() + "')";
 				
 				System.out.println("---- Query for reseting ----");
 				System.out.println(qry);
 				
 				PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement(qry);
-				ps.setString(1, p1.uuid.toString());
-				ps.setString(2, p2.uuid.toString());
-				ps.setString(3, p2.uuid.toString());
-				ps.setString(4, p1.uuid.toString());
 				
 				ps.executeUpdate();
 			}
@@ -697,9 +709,9 @@ public class RankedQueue
 		
 	}
 	
-	private static int minutesToMilliSeconds(int minutes)
+	private static long minutesToMilliSeconds(int minutes)
 	{
-		return minutes * 60 * 1000;
+		return (long)minutes * 60000L;
 	}
 	
 	private static void updatePlayTimes()
@@ -725,9 +737,9 @@ public class RankedQueue
 				
 				if(dates != null)
 				{
-					weekMS = dates[0] == null ? -1 : dates[0].getTime() + minutes[0];
-					dayMS = dates[1] == null ? -1 : dates[1].getTime() + minutes[1];
-					minutesMS = dates[2] == null ? -1 : dates[2].getTime() + minutes[2];
+					weekMS = dates[0] == null ? -1 : dates[0].getTime() + minutesToMilliSeconds(minutes[0]);
+					dayMS = dates[1] == null ? -1 : dates[1].getTime() + minutesToMilliSeconds(minutes[0]);
+					minutesMS = dates[2] == null ? -1 : dates[2].getTime() + minutesToMilliSeconds(minutes[0]);
 					
 					if(weekMS != -1)
 						weeksDif = millisecondsToWeeks(curMS - weekMS);
