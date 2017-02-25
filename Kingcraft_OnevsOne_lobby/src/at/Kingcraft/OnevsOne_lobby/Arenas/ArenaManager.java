@@ -39,7 +39,7 @@ public class ArenaManager {
 					continue;
 				}
 				name = rs.getString(1);
-				if(!(name.length() < prefix.length()) && name.substring(0, prefix.length()).equals(prefix))
+				if(!(name.length() < prefix.length()) && name.startsWith(prefix))
 				return name;
 			}
 			
@@ -93,7 +93,7 @@ public class ArenaManager {
 			
 			for(int i = 0;i<allServers.size();i++)
 			{
-				if(allServers.get(i).length() < prefix.length() || !getPrefix(allServers.get(i)).equals(prefix))
+				if(allServers.get(i).length() < prefix.length() || !allServers.get(i).startsWith(prefix))
 				{
 					continue;
 				}
@@ -120,7 +120,7 @@ public class ArenaManager {
 			
 			for(int i = 0;i<servers.length;i++)
 			{
-				if(servers[i].length() < prefix.length() || !getPrefix(servers[i]).equals(prefix))
+				if(servers[i].length() < prefix.length() || !servers[i].startsWith(prefix))
 				{
 					continue;
 				}
@@ -155,7 +155,7 @@ public class ArenaManager {
 				int servers = 0;
 				while(rs.next())
 				{
-					if(rs.getInt(2) == 1 && !(rs.getString(1).length() < prefix.length()) && getPrefix(rs.getString(1)).equals(prefix))
+					if(rs.getInt(2) == 1 && !(rs.getString(1).length() < prefix.length()) && rs.getString(1).startsWith(prefix))
 					{
 						servers++;
 					}
@@ -304,7 +304,7 @@ public class ArenaManager {
 			
 			while(rs.next())
 			{
-				if(getPrefix(rs.getString(1)).equals(getPrefix()))
+				if(rs.getString(1).startsWith(getPrefix()))
 				{
 					servers.add(rs.getString(1));
 				}

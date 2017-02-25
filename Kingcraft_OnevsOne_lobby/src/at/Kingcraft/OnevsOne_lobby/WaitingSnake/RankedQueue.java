@@ -1,9 +1,13 @@
 package at.Kingcraft.OnevsOne_lobby.WaitingSnake;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
@@ -27,7 +31,10 @@ public class RankedQueue
 {
 	private static ArrayList<RankedUpload> playersToUpload;
 	private static ArrayList<RankedUpload> playersInQueue;
-	private static final int MAX_ELO_DIF = 1000;
+	private static final int MAX_ELO_DIF = 1000,
+							 MAX_WEEK = 10,
+							 MAX_DAY = 3,
+							 MAX_HOUR = 1;
 	
 	public static void setup()
 	{
@@ -40,15 +47,14 @@ public class RankedQueue
 			ps.executeUpdate();
 			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_RankedELO (UUID VARCHAR(100),ELO INT(255))");
 			ps.executeUpdate();
-		}
-		catch (SQLException e)
-		{
-			e.printStackTrace();
-		}
-		
-		try
-		{
-			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_ForceQueue (UUID VARCHAR(100), Player VARCHAR(100))");
+			
+			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_ForceQueue (UUID VARCHAR(100), Player VARCHAR(100))");
+			ps.executeUpdate();
+			
+			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_RankedTimes (UUID1 VARCHAR(100),UUID2 VARCHAR(100),Week INT(10),Day INT(3), Hour INT(1),LastWeek DATE,LastDay DATE,LastHour DATE,LastWeekMinutes INT(24),LastDayMinutes INT(24),LastHourMinutes INT(24))");
+			ps.executeUpdate();
+			
+			ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS Duel_RankedLastFights (UUID VARCHAR(100),Last1 VARCHAR(100),Last2 VARCHAR(100),Last3 VARCHAR(100),Last4 VARCHAR(100),Last5 VARCHAR(100))");
 			ps.executeUpdate();
 		}
 		catch (SQLException e)
@@ -86,10 +92,102 @@ public class RankedQueue
 		}
 	}
 	
+	private static int[] getPlayTimes(RankedUpload ru1, RankedUpload ru2)
+	{
+		int[] times = new int[3];
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT Week,Day,Hour FROM Duel_RankedTimes WHERE (UUID1 = ? AND UUID2 = ?) OR (UUID1 = ? AND UUID2 = ?) LIMIT 1");
+			ps.setString(1, ru1.uuid.toString());
+			ps.setString(2, ru2.uuid.toString());
+			ps.setString(3, ru2.uuid.toString());
+			ps.setString(4, ru1.uuid.toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				times[0] = rs.getInt(1);
+				times[1] = rs.getInt(2);
+				times[2] = rs.getInt(3);
+				
+				return times;
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		times[0] = times[1] = times[2] = 0;
+		
+		return times;
+	}
+	
+	private static ArrayList<UUID> getLastPlayed(RankedUpload ru)
+	{
+		ArrayList<UUID> uuids = new ArrayList<>();
+		
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT * FROM Duel_RankedLastFights WHERE UUID = ? LIMIT 1");
+			ps.setString(1, ru.uuid.toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				for(int i = 2;i<=6;i++)
+				{
+					String str = rs.getString(i);
+					if(str != null)
+						uuids.add(UUID.fromString(str));
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return uuids;
+	}
+	
+	private static ArrayList<RankedUpload> getFightable(RankedUpload ru)
+	{
+		ArrayList<RankedUpload> fightable = new ArrayList<>();
+		int[] times;
+		ArrayList<UUID> lastPlayed = null;
+		
+		for(int i = 0;i<playersInQueue.size();i++)
+		{
+			if(playersInQueue.get(i).uuid.equals(ru.uuid))
+				continue;
+			
+			times = getPlayTimes(ru, playersInQueue.get(i));
+			lastPlayed = getLastPlayed(ru);
+			
+			if(times[0] < MAX_WEEK && times[1] < MAX_DAY && times[2] < MAX_HOUR && !lastPlayed.contains(playersInQueue.get(i).uuid))
+				fightable.add(playersInQueue.get(i));
+		}
+		
+		return fightable;
+	}
+	
+	private static void removeFromQueue(RankedUpload ru)
+	{
+		for(int i = 0;i<playersInQueue.size();i++)
+		{
+			if(playersInQueue.get(i).uuid.equals(ru.uuid))
+			{
+				playersInQueue.remove(i);
+			}
+		}
+	}
+	
 	private static void matchPlayers()
 	{
-		loadPlayers();
-		
 		HashMap<UUID, UUID> forceQueue = ForceQueueCommand.getForceQueued();
 		
 		for(int i = 0;i<playersInQueue.size() && !ArenaManager.getServers(1).isEmpty();i++)
@@ -111,17 +209,21 @@ public class RankedQueue
 				continue;
 			}
 			
-			int min = getLowestDifference(playersInQueue.get(i));
+			ArrayList<RankedUpload> fightable = getFightable(playersInQueue.get(i));
 			
-			if(min != -1)
+			RankedUpload min = getLowestDifference(playersInQueue.get(i),fightable);
+			
+			if(min != null)
 			{
-				removePlayerFromMySQL(playersInQueue.get(min));
+				removePlayerFromMySQL(min);
 				removePlayerFromMySQL(playersInQueue.get(i));
 				
-				makeDuel(playersInQueue.get(min), playersInQueue.get(i));
+				makeDuel(min, playersInQueue.get(i));
 				
-				playersInQueue.remove(min);
-				playersInQueue.remove(i);
+				RankedUpload ru = playersInQueue.get(i);
+				
+				removeFromQueue(min);
+				removeFromQueue(ru);
 				i=0;
 			}
 		}
@@ -147,32 +249,30 @@ public class RankedQueue
 		}
 	}
 	
-	private static int getLowestDifference(RankedUpload ru)
+	private static RankedUpload getLowestDifference(RankedUpload ru, ArrayList<RankedUpload> fightable)
 	{
-		if(playersInQueue.size() == 1)
+		if(fightable.size() == 0)
 		{
-			return -1;
+			return null;
 		}
 		
-		int minDif = -1, minIndex = -1;
+		int minDif = -1;
+		RankedUpload min = null;
 		
-		for(int i = 0;i<playersInQueue.size();i++)
+		for(int i = 0;i<fightable.size();i++)
 		{
-			if(playersInQueue.get(i).uuid.equals(ru.uuid) || playersInQueue.get(i).kit != ru.kit)
-				continue;
-			
-			int dif = Math.abs(ru.elo-playersInQueue.get(i).elo);
+			int dif = Math.abs(ru.elo-fightable.get(i).elo);
 			if(dif > MAX_ELO_DIF)
 				continue;
 			
-			if(dif < minDif || minIndex == -1)
+			if(dif < minDif || min == null)
 			{
 				minDif = dif;
-				minIndex = i;
+				min = fightable.get(i);
 			}
 		}
 		
-		return minIndex;
+		return min;
 		
 	}
 	
@@ -205,8 +305,194 @@ public class RankedQueue
 		return false;
 	}
 	
-	private static void makeDuel(RankedUpload ru1, RankedUpload ru2)
+	private static void setDatesAndTimes(RankedUpload ru1,RankedUpload ru2,Date week,Date day,Date hour,int weekT,int dayT, int hourT,int weekM,int dayM,int hourM)
 	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("UPDATE Duel_RankedTimes SET Week = ?,Day = ?,Hour = ?,LastWeek = ?,LastDay = ?,LastHour = ?,LastWeekMinutes = ?,LastDayMinutes = ?,LastHourMinutes = ? WHERE (UUID1 = ? AND UUID2 = ?) OR (UUID1 = ? OR UUID2 = ?)");
+			ps.setInt(1, weekT);
+			ps.setInt(2, dayT);
+			ps.setInt(3, hourT);
+			ps.setDate(4, week);
+			ps.setDate(5, day);
+			ps.setDate(6, hour);
+			ps.setString(7, ru1.uuid.toString());
+			ps.setInt(8, weekM);
+			ps.setInt(9, dayM);
+			ps.setInt(10, hourM);
+			ps.setString(11, ru2.uuid.toString());
+			ps.setString(12, ru2.uuid.toString());
+			ps.setString(13, ru1.uuid.toString());
+			
+			ps.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private static void setLastPlayed(RankedUpload ru,ArrayList<UUID> last)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT UUID FROM Duel_RankedLastFights WHERE UUID = ?");
+			ps.setString(1, ru.uuid.toString());
+			
+			if(ps.executeQuery().first())
+			{
+				String qry = "UPDATE Duel_RankedLastFights SET ";
+				
+				for(int i = 0;i<last.size();i++)
+				{
+					qry += "Last" + (i+1) + " = '" + last.get(i).toString() + "'" + (i+1 == last.size() ? "" : ",");
+				}
+				
+				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement(qry);
+				ps.executeUpdate();
+			}
+			else
+			{
+				ps.close();
+				
+				String qry = "INSERT INTO Duel_RankedLastFights (UUID,";
+				
+				for(int i = 0;i<last.size();i++)
+				{
+					qry += "Last" + (i+1) + (i+1==last.size() ? ") VALUES (?," : ",");
+				}
+				
+				for(int i = 0;i<last.size();i++)
+				{
+					qry += "'" + last.get(i).toString() + "'" + (i+1 == last.size() ? ") " : ",");
+				}
+				
+				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement(qry);
+				ps.setString(1, ru.uuid.toString());
+				
+				ps.executeUpdate();
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	private static void setLastPlayed(RankedUpload ru1,RankedUpload ru2)
+	{
+		ArrayList<UUID> lastPlayed = getLastPlayed(ru1);
+		
+		if(lastPlayed.isEmpty())
+		{
+			lastPlayed.add(ru2.uuid);
+		}
+		else
+		{
+			if(lastPlayed.size() < 5)
+				lastPlayed.add(lastPlayed.get(lastPlayed.size()-1));
+			
+			for(int i = lastPlayed.size()-(lastPlayed.size() < 5 ? 2 : 1);i>0;i--)
+			{
+				lastPlayed.set(i, lastPlayed.get(i-1));
+			}
+			
+			lastPlayed.set(0, ru2.uuid);
+		}	
+		
+		setLastPlayed(ru1, lastPlayed);
+	}
+	
+	private static int getCurrentDayMinutes()
+	{
+		java.util.Date date = new java.util.Date();
+		
+		Calendar cal = GregorianCalendar.getInstance();
+		cal.setTime(date);
+		
+		return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
+	}
+	
+	private static int[] getMinutes(RankedUpload p1,RankedUpload p2)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT LastWeekMinutes,LastDayMinutes,LastHourMinutes FROM Duel_RankedTimes WHERE (UUID1 = ? AND UUID2 = ?) OR (UUID1 = ? AND UUID2 = ?) LIMIT 1");
+			ps.setString(1, p1.uuid.toString());
+			ps.setString(2, p2.uuid.toString());
+			ps.setString(3, p2.uuid.toString());
+			ps.setString(4, p1.uuid.toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				int weeks,days,hours;
+				
+				weeks = rs.getInt(1);
+				days = rs.getInt(2);
+				hours = rs.getInt(3);
+				
+				int[] min = new int[3];
+				
+				min[0] = weeks;
+				min[1] = days;
+				min[2] = hours;
+				
+				return min;
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private static void updateDatesAndLastPlayed(RankedUpload ru1,RankedUpload ru2)
+	{
+		Date[] dates = getDates(ru1,ru2);
+		Date curDate = Date.valueOf(LocalDate.now());
+		int[] times = getPlayTimes(ru1, ru2);
+		int minutes = getCurrentDayMinutes();
+		int[] playMinutes = getMinutes(ru1, ru2);
+		
+		
+		if(dates == null)
+		{
+			try
+			{
+				PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("INSERT INTO Duel_RankedTimes (UUID1,UUID2,Week,Day,Hour,LastWeek,LastDay,LastHour,LastWeekMinutes,LastDayMinutes,LastHourMinutes) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+				ps.setString(1, ru1.uuid.toString());
+				ps.setString(2, ru2.uuid.toString());
+				ps.setInt(3, 1);
+				ps.setInt(4, 1);
+				ps.setInt(5, 1);
+				ps.setDate(6, curDate);
+				ps.setDate(7, curDate);
+				ps.setDate(8, curDate);
+				ps.setInt(9, minutes);
+				ps.setInt(10, minutes);
+				ps.setInt(11, minutes);
+				
+				ps.executeUpdate();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			setDatesAndTimes(ru1,ru2,dates[0] == null ? curDate : dates[0],dates[1] == null ? curDate : dates[1],dates[2] == null ? curDate : dates[2],times[0]+1,times[1]+1,times[0]+1,dates[0] == null ? playMinutes[0] : minutes,dates[1] == null ? playMinutes[1] : minutes,dates[2] == null ? playMinutes[2] : minutes);
+			setLastPlayed(ru1, ru2);
+			setLastPlayed(ru2, ru1);
+		}
+	}
+	
+	private static void makeDuel(RankedUpload ru1, RankedUpload ru2)
+	{	
 		WaitingSnakeUpload wsu1 = toWaitingSnakeUpload(ru1);
 		WaitingSnakeUpload wsu2 = toWaitingSnakeUpload(ru2);
 		
@@ -259,6 +545,8 @@ public class RankedQueue
 			System.out.println("[Ranked] Error while teleporting " + op2.getName());
 			return;
 		}
+		
+		updateDatesAndLastPlayed(ru1, ru2);
 	}
 	
 	private static void removePlayerFromMySQL(RankedUpload ru)
@@ -283,7 +571,175 @@ public class RankedQueue
 	private static void update()
 	{
 		uploadPlayers();
+		loadPlayers();
+		updatePlayTimes();
 		matchPlayers();
+	}
+	
+	private static double millisecondsToSeconds(long ms)
+	{
+		return (double)ms/1000.0;
+	}
+	
+	private static double secondsToMinutes(double s)
+	{
+		return s / 60.0;
+	}
+	
+	private static double minutesToHours(double m)
+	{
+		return m / 60.0;
+	}
+	
+	private static double hoursToDays(double h)
+	{
+		return h / 24.0;
+	}
+	
+	private static double daysToWeeks(double d)
+	{
+		return d / 7.0;
+	}
+	
+	private static double milliSecondsToMinutes(long ms)
+	{
+		return secondsToMinutes(millisecondsToSeconds(ms));
+	}
+	
+	private static double millisecondsToDays(long ms)
+	{
+		return hoursToDays(minutesToHours(milliSecondsToMinutes(ms)));
+	}
+	
+	private static double millisecondsToWeeks(long ms)
+	{
+		return daysToWeeks(millisecondsToDays(ms));
+	}
+	
+	private static Date[] getDates(RankedUpload p1,RankedUpload p2)
+	{
+		try
+		{
+			PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement("SELECT LastWeek,LastDay,LastHour FROM Duel_RankedTimes WHERE (UUID1 = ? AND UUID2 = ?) OR (UUID1 = ? AND UUID2 = ?) LIMIT 1");
+			ps.setString(1, p1.uuid.toString());
+			ps.setString(2, p2.uuid.toString());
+			ps.setString(3, p2.uuid.toString());
+			ps.setString(4, p1.uuid.toString());
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+			{
+				Date weeks,days,hours;
+				
+				weeks = rs.getDate(1);
+				days = rs.getDate(2);
+				hours = rs.getDate(3);
+				
+				Date[] dates = new Date[3];
+				
+				dates[0] = weeks;
+				dates[1] = days;
+				dates[2] = hours;
+				
+				return dates;
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private static void resetTimes(RankedUpload p1,RankedUpload p2,boolean weeks,boolean days,boolean hours)
+	{
+		if(weeks || days || hours)
+		{
+			try
+			{
+				String qry = "";
+				
+				qry = "UPDATE Duel_RankedTimes SET ";
+				
+				if(weeks)
+				{
+					qry += "Week = 0,LastWeek = CAST(NULL AS DATE),LastWeekMinutes = CAST(NULL AS INT)" + (days || hours ? "," : " ");
+				}
+				if(days)
+				{
+					qry += "Day = 0,LastDay = CAST(NULL AS DATE),LastDayMinutes = CAST(NULL AS INT)" + (hours ? "," : " ");
+				}
+				if(hours)
+				{
+					qry += "Hour = 0,LastHour = CAST(NULL AS DATE),LastHourMinutes = CAST(NULL AS INT) ";
+				}
+				
+				qry += "WHERE (UUID1 = ? AND UUID2 = ?) OR (UUID1 = ? AND UUID2 = ?)";
+				
+				System.out.println("---- Query for reseting ----");
+				System.out.println(qry);
+				
+				PreparedStatement ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement(qry);
+				ps.setString(1, p1.uuid.toString());
+				ps.setString(2, p2.uuid.toString());
+				ps.setString(3, p2.uuid.toString());
+				ps.setString(4, p1.uuid.toString());
+				
+				ps.executeUpdate();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private static int minutesToMilliSeconds(int minutes)
+	{
+		return minutes * 60 * 1000;
+	}
+	
+	private static void updatePlayTimes()
+	{
+		RankedUpload p1,p2;
+		Date curDate = Date.valueOf(LocalDate.now());
+		double weeksDif=0.0,daysDif=0.0,minutesDif=0.0;
+		int curMinutes = getCurrentDayMinutes();
+		long curMS = curDate.getTime() + minutesToMilliSeconds(curMinutes);
+		long weekMS,dayMS,minutesMS;
+		
+		for(int i = 0;i<playersInQueue.size();i++)
+		{
+			for(int j = i+1;j<playersInQueue.size();j++)
+			{
+				minutesDif = daysDif = weeksDif = 0.0;
+				
+				p1 = playersInQueue.get(i);
+				p2 = playersInQueue.get(j);
+				
+				Date[] dates = getDates(p1, p2);
+				int[] minutes = getMinutes(p1,p2);
+				
+				if(dates != null)
+				{
+					weekMS = dates[0] == null ? -1 : dates[0].getTime() + minutes[0];
+					dayMS = dates[1] == null ? -1 : dates[1].getTime() + minutes[1];
+					minutesMS = dates[2] == null ? -1 : dates[2].getTime() + minutes[2];
+					
+					if(weekMS != -1)
+						weeksDif = millisecondsToWeeks(curMS - weekMS);
+					if(dayMS != -1)
+						daysDif = millisecondsToDays(curMS - dayMS);
+					if(minutesMS != -1)
+						minutesDif = milliSecondsToMinutes(curMS - minutesMS);
+					
+					resetTimes(p1, p2, weeksDif > 1.0, daysDif > 1.0, minutesDif > 60.0);
+				}
+			}
+		}
 	}
 	
 	public static int getELO(Player p)

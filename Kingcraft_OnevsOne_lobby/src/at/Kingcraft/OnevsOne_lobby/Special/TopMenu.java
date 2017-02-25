@@ -41,12 +41,12 @@ public class TopMenu extends Menu
 			if(i<players.size() && players.get(i).getName() != null && !players.get(i).getName().equals("null"))
 			{
 				im.setOwner(players.get(i).getName());
-				im.setDisplayName((i==0 ? ChatColor.GOLD : ChatColor.YELLOW) + "" + ChatColor.UNDERLINE + players.get(i).getName());
+				im.setDisplayName(ChatColor.YELLOW + "" + ChatColor.UNDERLINE + players.get(i).getName());
 				lore.add(ChatColor.YELLOW + "ELO: " + ChatColor.BLUE + RankedQueue.getELO(players.get(i).getUniqueId()));
 			}
 			else
 			{
-				im.setDisplayName((i==0 ? ChatColor.GOLD : ChatColor.YELLOW) + "" + ChatColor.UNDERLINE +  "Spieler");
+				im.setDisplayName(ChatColor.YELLOW + "" + ChatColor.UNDERLINE +  "Spieler");
 				lore.add(ChatColor.YELLOW + "ELO: " + ChatColor.BLUE + 100);
 			}
 			
