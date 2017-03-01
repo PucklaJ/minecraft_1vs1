@@ -361,20 +361,17 @@ public class DuelListener implements Listener {
 					{
 						if(role == Challenge.IS_CHALLANGER)
 						{
-							//if(p.getHealth() != 0.0)
+							// Teleportation
+							if(asynchron && !map.getSpawn1().getWorld().equals(p.getWorld()))
 							{
-								// Teleportation
-								if(asynchron && !map.getSpawn1().getWorld().equals(p.getWorld()))
-								{
-									Bukkit.getScheduler().runTask(plugin, new TeleportPlayerRun(p, map.getSpawn1()));
-								}
+								Bukkit.getScheduler().runTask(plugin, new TeleportPlayerRun(p, map.getSpawn1()));
+							}
+							else
+							{
+								if(!d.isFFA())
+									p.teleport(map.getSpawn1());
 								else
-								{
-									if(!d.isFFA())
-										p.teleport(map.getSpawn1());
-									else
-										p.teleport(map.getMid());
-								}
+									p.teleport(map.getMid());
 							}
 							
 							d.addPlayer(p, 1,asynchron);

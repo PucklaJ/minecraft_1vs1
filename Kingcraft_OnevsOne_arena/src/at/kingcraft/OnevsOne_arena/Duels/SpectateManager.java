@@ -96,5 +96,7 @@ public class SpectateManager
 		{
 			e.printStackTrace();
 		}
+		
+		System.out.println("[SpectateManager] SpectateDuel " + id + " has been removed");
 	}
 }

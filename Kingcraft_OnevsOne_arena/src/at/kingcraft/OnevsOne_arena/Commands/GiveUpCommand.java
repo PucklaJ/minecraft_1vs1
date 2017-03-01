@@ -69,6 +69,8 @@ public class GiveUpCommand implements CommandExecutor {
 		Duel d = DuelManager.getDuel(p);
 		if(d != null)
 		{
+			System.out.println("[GiveUpCommand] " + p.getDisplayName() + " has given up");
+			
 			p.playSound(p.getLocation(), Sounds.giveUp, Sounds.giveUpVolume, Sounds.DEFAULT_PITCH);
 			d.handleDeath(p, null,false,false);
 		}

@@ -277,6 +277,7 @@ public class ArenaManager {
 	public static void setup(MySQL mysql)
 	{
 		ArenaManager.mysql = mysql;
+		prefix = MainClass.getInstance().getConfig().getString("Arenaserver.Prefix");
 		
 		if(mysql.isConnected())
 		{
@@ -303,9 +304,9 @@ public class ArenaManager {
 			ResultSet rs = ps.executeQuery();
 			
 			while(rs.next())
-			{
+			{	
 				String server = rs.getString(1);
-				if(server.startsWith(getPrefix()))
+				if(server != null && server.length() != 0 && server.startsWith(getPrefix()))
 				{
 					servers.add(server);
 				}

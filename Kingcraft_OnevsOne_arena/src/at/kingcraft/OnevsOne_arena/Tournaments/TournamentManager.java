@@ -87,7 +87,7 @@ public class TournamentManager
 	}
 	
 	public static void hideAllSpectators(Player p)
-	{
+	{	
 		for(Spectator s : spectators)
 		{
 			if(s.player.getUniqueId().equals(p.getUniqueId()))

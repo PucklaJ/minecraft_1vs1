@@ -354,6 +354,8 @@ public class ChallangeManager {
 						DuelListener.lastTournamentID = c.getTournamentID();
 					}
 					
+					System.out.println("[ChallangeManager] Create new Challenge");
+					
 					return c;
 				}
 				

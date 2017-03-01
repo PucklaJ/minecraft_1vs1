@@ -168,6 +168,9 @@ public class RankedQueue
 			times = getPlayTimes(ru, playersInQueue.get(i));
 			lastPlayed = getLastPlayed(ru);
 			
+			System.out.println("Ranked Check: UUID1: " + ru.uuid.toString() + "; UUID2: " + playersInQueue.get(i).uuid.toString() + "; : ");
+			System.out.println("Week: " + times[0] + "; Day: " + times[1] + "; Hour: " + times[2]);
+			
 			if(times[0] < MAX_WEEK && times[1] < MAX_DAY && times[2] < MAX_HOUR && !lastPlayed.contains(playersInQueue.get(i).uuid))
 				fightable.add(playersInQueue.get(i));
 		}
@@ -348,10 +351,16 @@ public class RankedQueue
 				
 				for(int i = 0;i<last.size();i++)
 				{
-					qry += "Last" + (i+1) + " = '" + last.get(i).toString() + "'" + (i+1 == last.size() ? "" : ",");
+					qry += "Last" + (i+1) + " = '" + last.get(i).toString() + "'" + (i+1 == last.size() ? " " : ",");
 				}
 				
+				qry += "WHERE UUID = ?";
+				
+				System.out.println("---- Query for LastPlayed ----");
+				System.out.println(qry);
+				
 				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement(qry);
+				ps.setString(1, ru.uuid.toString());
 				ps.executeUpdate();
 			}
 			else
@@ -370,6 +379,9 @@ public class RankedQueue
 					qry += "'" + last.get(i).toString() + "'" + (i+1 == last.size() ? ") " : ",");
 				}
 				
+				System.out.println("---- Query for LastPlayed ----");
+				System.out.println(qry);
+				
 				ps = MainClass.getInstance().getMySQL().getConnection().prepareStatement(qry);
 				ps.setString(1, ru.uuid.toString());
 				
@@ -386,6 +398,12 @@ public class RankedQueue
 	{
 		ArrayList<UUID> lastPlayed = getLastPlayed(ru1);
 		
+		System.out.println("LastPlayded of " + ru1.uuid.toString());
+		for(int i = 0;i<lastPlayed.size();i++)
+		{
+			System.out.println(i+ ". " + lastPlayed.get(i).toString());
+		}
+		
 		if(lastPlayed.isEmpty())
 		{
 			lastPlayed.add(ru2.uuid);
@@ -397,9 +415,11 @@ public class RankedQueue
 			
 			for(int i = lastPlayed.size()-(lastPlayed.size() < 5 ? 2 : 1);i>0;i--)
 			{
+				System.out.println("Set " + i + " to " + (i-1));
 				lastPlayed.set(i, lastPlayed.get(i-1));
 			}
 			
+			System.out.println("Set 0 to " + ru2.uuid.toString());
 			lastPlayed.set(0, ru2.uuid);
 		}	
 		
@@ -491,7 +511,7 @@ public class RankedQueue
 		}
 		else
 		{
-			setDatesAndTimes(ru1,ru2,dates[0] == null ? curDate : dates[0],dates[1] == null ? curDate : dates[1],dates[2] == null ? curDate : dates[2],times[0]+1,times[1]+1,times[0]+1,dates[0] == null ? playMinutes[0] : minutes,dates[1] == null ? playMinutes[1] : minutes,dates[2] == null ? playMinutes[2] : minutes);
+			setDatesAndTimes(ru1,ru2,dates[0] == null ? curDate : dates[0],dates[1] == null ? curDate : dates[1],dates[2] == null ? curDate : dates[2],times[0]+1,times[1]+1,times[2]+1,dates[0] != null ? playMinutes[0] : minutes,dates[1] != null ? playMinutes[1] : minutes,dates[2] != null ? playMinutes[2] : minutes);
 			setLastPlayed(ru1, ru2);
 			setLastPlayed(ru2, ru1);
 		}

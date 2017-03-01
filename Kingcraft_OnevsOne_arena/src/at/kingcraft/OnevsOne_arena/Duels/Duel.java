@@ -2540,6 +2540,8 @@ public class Duel {
 					setupDamageTicks(p, i);
 				}
 			});
+		
+		System.out.println("[Duel] Added Player " + p.getDisplayName() + " " + i);
 	}
 
 	public boolean isRestarting()

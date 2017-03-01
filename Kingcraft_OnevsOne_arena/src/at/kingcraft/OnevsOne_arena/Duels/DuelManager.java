@@ -32,6 +32,8 @@ public class DuelManager {
 		Duel d = getDuel(c.ID);
 		if(d == null)
 		{
+			System.out.println("[DuelManager] Creating new Duel " + c.ID);
+			
 			duels.add(new Duel(c, plugin,c.getMode()));
 			return duels.get(duels.size()-1);
 		}
@@ -72,6 +74,8 @@ public class DuelManager {
 		Duel d = getDuel(p);
 		if(d != null)
 		{
+			System.out.println("[DuelManager] delete Duel of " + (p == null ? "null" : p.getDisplayName()));
+			
 			d.endDuel(p,true);
 			
 			ArrayList<Player> rv = new ArrayList<Player>();
@@ -93,7 +97,6 @@ public class DuelManager {
 			
 			duels.remove(d);
 			return rv;
-			
 		}
 		
 		return null;
