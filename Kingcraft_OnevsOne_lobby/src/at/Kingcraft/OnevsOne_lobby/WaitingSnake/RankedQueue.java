@@ -162,7 +162,7 @@ public class RankedQueue
 		
 		for(int i = 0;i<playersInQueue.size();i++)
 		{
-			if(playersInQueue.get(i).uuid.equals(ru.uuid))
+			if(ru.kit != playersInQueue.get(i).kit || playersInQueue.get(i).uuid.equals(ru.uuid))
 				continue;
 			
 			times = getPlayTimes(ru, playersInQueue.get(i));
